@@ -173,6 +173,54 @@ describe("Engine", () => {
     expect(f).toMatchObject({ depTime: T0 - 90, flags: { depTimeSource: "observed" } });
   });
 
+  it("re-evaluates a callsign once its unknown route is replaced by a search", async () => {
+    const world = fakeWorld();
+    // Discovery sees the flight under a callsign adsbdb doesn't know...
+    world.states = [sv("aa9300", "DAL77", interpolate(IAH, LHR, 0.4), 11000)];
+    const { engine, store } = makeEngine(world);
+    expect((await warm(engine)).flights).toHaveLength(0);
+    expect(store.getRoute("DAL77")?.route).toBeNull();
+
+    // ...then a better source caches the real route under that callsign.
+    const real = store.getRoute("UAL880")?.route ?? (await new AdsbdbClient(world.fetch).route("UAL880"));
+    store.putRoute("DAL77", { route: real, at: T0 + 1 });
+    engine.rebuild();
+    await engine.enrich({ requests: 40 }); // weather
+    expect(engine.rebuild().flights.map((f) => f.callsign)).toEqual(["DAL77"]);
+  });
+
+  it("never jumps between a raw fix and its route projection", async () => {
+    const world = fakeWorld();
+    const offTrack = { ...interpolate(IAH, LHR, 0.4), lat: interpolate(IAH, LHR, 0.4).lat + 1.5 }; // ~170 km off
+    world.states = [sv("aa9300", "UAL880", offTrack, 11000)];
+    const { engine } = makeEngine(world);
+    const fresh = (await warm(engine)).flights[0]!;
+    world.time = T0 + 90;
+    const later = engine.rebuild().flights[0]!;
+    expect(distanceKm(fresh.pos, later.pos)).toBeLessThan(30); // 250 m/s x 90 s = 22 km along track
+  });
+
+  it("does not reuse a morning departure for an evening leg from the same airport", async () => {
+    const world = fakeWorld();
+    const { engine, store } = makeEngine(world);
+    world.states = [sv("cc0001", "UAL880", { lat: 30.0, lon: -95.3 }, 900, T0, 10)]; // climb-out at ~T0
+    await engine.pollTile(WORLD);
+    expect(store.getDep("cc0001")?.t).toBe(T0 - 90);
+
+    // 13 h later the same aircraft is 40% along IAH->LHR: only ~3 h in the air, so the
+    // morning take-off can't be this leg's departure.
+    world.time = T0 + 13 * 3600;
+    world.states = [sv("cc0001", "UAL880", interpolate(IAH, LHR, 0.4), 11000, world.time)];
+    const f = (await warm(engine)).flights[0]!;
+    expect(f.flags.depTimeSource).toBe("estimated");
+    expect(f.depTime).toBeGreaterThan(T0 + 8 * 3600); // ~T0 + 10 h, nowhere near the 06:00 take-off
+
+    // Caught climbing again: the new leg's take-off replaces the old one.
+    world.states = [sv("cc0001", "UAL880", { lat: 30.0, lon: -95.3 }, 900, world.time, 10)];
+    await engine.pollTile(WORLD);
+    expect(store.getDep("cc0001")?.t).toBe(world.time - 90);
+  });
+
   it("finds a flight by IATA flight number and keeps tracking it", async () => {
     const world = fakeWorld();
     world.states = [sv("aa9300", "UAL880", interpolate(IAH, LHR, 0.5), 11000)];

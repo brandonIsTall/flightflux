@@ -26,6 +26,8 @@ export const MIN_CANDIDATE_ALT_M = 6000;
 export const MIN_CANDIDATE_GS_MS = 150;
 /** A departure observed in the climb must start this close to the route's origin to be trusted. */
 export const DEP_MATCH_KM = 60;
+/** An observed departure further than this from the distance-based estimate is a previous leg. */
+export const DEP_AGREE_S = 90 * 60;
 /** Forget an untracked aircraft not seen for this long (a little over one sweep). */
 export const KNOWN_TTL_S = 100 * 60;
 /** Searched flights stay tracked this long even if they aren't curated. */
@@ -92,10 +94,11 @@ export class Engine {
   private pinned = new Map<string, number>();
   private searched = new Map<string, Flight>();
   /**
-   * Callsigns whose cached route can never be curated (unknown, or shorter than MIN_ROUTE_KM).
-   * Most traffic is short-haul, so skipping these keeps rebuild() well under the CPU limit.
+   * callsign -> `at` of a cached route that can never be curated (unknown, or shorter than
+   * MIN_ROUTE_KM). Keyed to the entry's timestamp so a refreshed or search-cached route is
+   * re-evaluated. Most traffic is short-haul, so skipping these keeps rebuild() cheap.
    */
-  private neverCurated = new Set<string>();
+  private neverCurated = new Map<string, number>();
   private adsbdbBackoffUntil = 0;
   private creditsRemaining: number | null = null;
 
@@ -176,9 +179,12 @@ export class Engine {
     const alt = s.baroAltM ?? s.geoAltM;
     const vr = s.vRateMs ?? 0;
     if (alt == null || alt >= 1500 || vr <= 2 || !isAirlineCallsign(s.callsign)) return;
-    if (this.deps.store.getDep(s.icao24)) return;
+    const depT = t - Math.round(alt / vr);
+    const prev = this.deps.store.getDep(s.icao24);
+    // Same climb seen twice: keep the first. Climbing again later: a new leg, replace it.
+    if (prev && depT - prev.t < 30 * 60) return;
     this.deps.store.putDep(s.icao24, {
-      t: t - Math.round(alt / vr),
+      t: depT,
       lat: s.lat!,
       lon: s.lon!,
       source: "observed",
@@ -229,7 +235,6 @@ export class Engine {
           if (r.status === "fulfilled") {
             this.deps.store.putRoute(cs, { route: r.value, at: this.nowS() });
             this.routeQueue.delete(cs);
-            this.neverCurated.delete(cs);
             if (r.value) stats.routeHits++;
           } else {
             const status = (r.reason as { status?: number }).status;
@@ -258,14 +263,14 @@ export class Engine {
 
     for (const k of this.known.values()) {
       const cs = k.s.callsign;
-      if (this.neverCurated.has(cs)) continue;
       const entry = store.getRoute(cs);
       if (!entry || nowS - entry.at > ROUTE_TTL_S) {
         this.routeQueue.set(cs, k.s.velocityMs ?? 0);
         continue;
       }
+      if (this.neverCurated.get(cs) === entry.at) continue;
       if (!entry.route || distanceKm(entry.route.origin, entry.route.dest) < MIN_ROUTE_KM) {
-        this.neverCurated.add(cs);
+        this.neverCurated.set(cs, entry.at);
         continue;
       }
       routed++;
@@ -310,9 +315,16 @@ export class Engine {
 
     const flownKm = Math.min(distKm, Math.max(0, projAlong));
     const eta = estimateEta(nowS, distKm - flownKm, gs);
+    const estDep = estimateDeparture(k.t, Math.max(0, alongKm), gs);
     const dep = this.deps.store.getDep(s.icao24);
-    const depObserved = !!dep && dep.t < k.t && distanceKm(dep, route.origin) <= DEP_MATCH_KM;
-    const depTime = depObserved ? dep.t : estimateDeparture(k.t, Math.max(0, alongKm), gs);
+    // Trust an observed take-off only if it left this origin and roughly agrees with the distance
+    // flown; otherwise it belongs to an earlier leg from the same airport.
+    const depObserved =
+      !!dep &&
+      dep.t < k.t &&
+      distanceKm(dep, route.origin) <= DEP_MATCH_KM &&
+      Math.abs(dep.t - estDep) <= DEP_AGREE_S;
+    const depTime = depObserved ? dep.t : estDep;
 
     const ow = this.weatherFor(route.origin);
     const dw = this.weatherFor(route.dest);
@@ -331,8 +343,9 @@ export class Engine {
   private materialize(c: Candidate): Flight {
     const { k, route, ow, dw } = c;
     const { s } = k;
-    // A fresh fix is shown as-is; an older one is advanced along the route.
-    const pos = c.ageS < 60 ? { lat: s.lat!, lon: s.lon! } : interpolate(route.origin, route.dest, c.flownKm / c.distKm);
+    // Always the great-circle projection, never the raw fix: mixing the two made every flight
+    // jump by its cross-track offset a minute after each refresh. Clients draw along the route.
+    const pos = interpolate(route.origin, route.dest, c.flownKm / c.distKm);
     return {
       id: `${s.icao24}-${utcDay(c.depTime)}`,
       icao24: s.icao24,
