@@ -1,13 +1,21 @@
-import { Suspense } from "react";
+import { Suspense, useMemo } from "react";
 import { useSnapshot } from "./data/snapshot";
 import { Scene } from "./globe/Scene";
+import { useStore } from "./store";
+import { DetailPanel } from "./ui/DetailPanel";
 import { Freshness } from "./ui/Freshness";
 import { Legend } from "./ui/Legend";
+import { Tooltip } from "./ui/Tooltip";
 import { TopBar } from "./ui/TopBar";
 
 export function App() {
   const snapshot = useSnapshot();
-  const flights = snapshot.data?.flights ?? [];
+  const extra = useStore((s) => s.extraFlights);
+  const flights = useMemo(() => {
+    const base = snapshot.data?.flights ?? [];
+    const ids = new Set(base.map((f) => f.id));
+    return [...base, ...extra.filter((f) => !ids.has(f.id))];
+  }, [snapshot.data, extra]);
 
   return (
     <div className="relative h-full w-full bg-space">
@@ -23,6 +31,9 @@ export function App() {
           <Freshness snapshot={snapshot.data} isError={snapshot.isError} isFetching={snapshot.isFetching} />
         </div>
       </div>
+
+      <DetailPanel flights={flights} />
+      <Tooltip flights={flights} />
     </div>
   );
 }

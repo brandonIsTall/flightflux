@@ -1,25 +1,50 @@
 import { MagnifyingGlass } from "@phosphor-icons/react";
 import { useState } from "react";
 import type { Flight } from "../../../shared/types";
+import { searchFlight, SearchError } from "../data/detail";
+import { USING_FIXTURE } from "../data/snapshot";
 import { useStore } from "../store";
 
 export function TopBar({ flights }: { flights: Flight[] }) {
   const units = useStore((s) => s.units);
   const setUnits = useStore((s) => s.setUnits);
   const select = useStore((s) => s.select);
+  const addFlight = useStore((s) => s.addFlight);
   const [q, setQ] = useState("");
-  const [miss, setMiss] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const key = q.toUpperCase().replace(/\s+/g, "");
-    if (!key) return;
-    const hit = flights.find((f) => f.callsign === key || f.flightNo === key);
-    if (hit) {
-      select(hit.id);
-      setMiss(null);
-    } else {
-      setMiss(key);
+    if (!key || busy) return;
+    const local = flights.find((f) => f.callsign === key || f.flightNo === key);
+    if (local) {
+      select(local.id);
+      setMessage(null);
+      return;
+    }
+    if (USING_FIXTURE) {
+      setMessage(`No flight on the globe matches ${key}.`);
+      return;
+    }
+    setBusy(true);
+    try {
+      const f = await searchFlight(key);
+      addFlight(f);
+      select(f.id);
+      setMessage(null);
+    } catch (err) {
+      const kind = err instanceof SearchError ? err.kind : "down";
+      setMessage(
+        kind === "none"
+          ? `No airborne flight matches ${key}. Check the number, or it may have landed.`
+          : kind === "rate"
+            ? "Too many searches. Try again in a minute."
+            : "Search is unavailable right now.",
+      );
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -34,23 +59,24 @@ export function TopBar({ flights }: { flights: Flight[] }) {
           size={16}
           weight="light"
           aria-hidden
-          className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-ink-2"
+          className={`pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-ink-2 ${busy ? "animate-pulse" : ""}`}
         />
         <input
           value={q}
           onChange={(e) => {
             setQ(e.target.value);
-            setMiss(null);
+            setMessage(null);
           }}
           placeholder="Search flight, e.g. BA117"
           aria-label="Search flight by number"
+          aria-busy={busy}
           autoComplete="off"
           spellCheck={false}
-          className="pill num h-9 w-full pl-9 pr-4 text-[13px] text-ink-1 placeholder:font-sans placeholder:text-ink-3"
+          className="pill num h-9 w-full pr-4 pl-9 text-[13px] text-ink-1 placeholder:font-sans placeholder:text-ink-3"
         />
-        {miss && (
+        {message && (
           <p role="status" className="absolute top-full mt-2 pl-3.5 text-[12px] text-ink-2">
-            No flight on the globe matches <span className="num text-ink-1">{miss}</span>.
+            {message}
           </p>
         )}
       </form>
