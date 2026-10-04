@@ -7,9 +7,11 @@ import { useEffect, useRef } from "react";
 import type { Group } from "three";
 import type { Flight } from "../../../shared/types";
 import { useStore } from "../store";
+import { CameraRig } from "./CameraRig";
 import { Globe } from "./Globe";
 import { Planes } from "./Planes";
 import { Routes } from "./Routes";
+import { spin } from "./spin";
 
 /** Degrees per second of auto-spin: never still, still readable. */
 const SPIN_DEG_S = 2;
@@ -23,15 +25,18 @@ function Spinner({ children }: { children: React.ReactNode }) {
   const speed = useRef(0);
   const paused = useStore((s) => s.spinPaused);
   const hovering = useStore((s) => s.hoveredId !== null);
+  // Off orbit, the camera rides a plane inside this group: the world must hold still.
+  const seated = useStore((s) => s.cameraMode !== "orbit");
   const still = reducedMotion();
 
   useFrame((_, dt) => {
     if (!group.current) return;
-    const target = paused || hovering || still ? 0 : (SPIN_DEG_S * Math.PI) / 180;
+    const target = paused || hovering || seated || still ? 0 : (SPIN_DEG_S * Math.PI) / 180;
     // Ease out over ~0.6 s, back in over ~2 s.
     const k = target === 0 ? 1 - Math.exp(-dt / 0.2) : 1 - Math.exp(-dt / 0.7);
     speed.current += (target - speed.current) * k;
     group.current.rotation.y += speed.current * dt;
+    spin.y = group.current.rotation.y;
   });
 
   return <group ref={group}>{children}</group>;
@@ -58,6 +63,7 @@ function FitCamera() {
 
 function Controls() {
   const setSpinPaused = useStore((s) => s.setSpinPaused);
+  const inOrbit = useStore((s) => s.cameraMode === "orbit");
   const timer = useRef<number | null>(null);
 
   const onStart = () => {
@@ -72,6 +78,7 @@ function Controls() {
 
   return (
     <OrbitControls
+      enabled={inOrbit}
       enablePan={false}
       enableDamping
       dampingFactor={0.08}
@@ -95,7 +102,7 @@ export function Scene({ flights }: { flights: Flight[] }) {
       flat
       gl={{ antialias: true, alpha: false, powerPreference: "high-performance" }}
       onCreated={({ gl }) => gl.setClearColor("#0B0E13")}
-      onPointerMissed={() => useStore.getState().select(null)}
+      onPointerMissed={() => useStore.getState().cameraMode === "orbit" && useStore.getState().select(null)}
     >
       <Spinner>
         <Globe />
@@ -104,6 +111,7 @@ export function Scene({ flights }: { flights: Flight[] }) {
       </Spinner>
       <Controls />
       <FitCamera />
+      <CameraRig flights={flights} />
       {effects && (
         <EffectComposer multisampling={0}>
           {/* Threshold keeps the dark globe and chrome out; only the data glows. */}

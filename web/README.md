@@ -24,8 +24,9 @@ Append `?noeffects` to the URL to skip bloom and vignette (useful on weak GPUs o
 | `src/lib/geo.ts` | Great circles and lat/lon → globe coordinates |
 | `src/lib/earthTexture.ts` | Draws the stylized land texture from Natural Earth polygons in the app's tokens |
 | `src/data/snapshot.ts` | Loads the snapshot and projects flights along their routes to now |
-| `src/globe/` | Scene (camera, auto-spin, bloom), Globe, Routes (gradient lines), Planes (instanced markers) |
-| `src/ui/` | Top bar with search and unit toggle, legend, freshness indicator, tooltip, detail panel, route chart |
+| `src/globe/` | Scene (camera, auto-spin, bloom), Globe (shader: texture, terminator, horizon rim), Routes (gradient lines), Planes (instanced markers), CameraRig (orbit ↔ cockpit flight) |
+| `src/lib/sun.ts` | Subsolar point for the day/night terminator |
+| `src/ui/` | Top bar with search and unit toggle, legend, freshness indicator, tooltip, detail panel, route chart, cockpit HUD |
 | `src/lib/format.ts`, `src/lib/gradient.ts` | Unit-aware formatting; a flight's gradient as CSS/SVG stops |
 | `src/styles.css` | Design tokens, fonts, glass and pill primitives |
 
@@ -41,6 +42,10 @@ Append `?noeffects` to the URL to skip bloom and vignette (useful on weak GPUs o
   Clicking opens the detail panel: the two temperatures, the along-route chart, flight facts and
   the aircraft photo (from `/api/flight/:id`, so only with the live API). Esc or "Back to globe"
   closes it.
+- Clicking a route also flies the camera (2.4 s, along a great arc) down to a seat on the plane.
+  The seat moves with the flight; drag to look around (springs back). The HUD shows heading, speed
+  and altitude tapes, and a gradient strip with the outside temperature and time to go. Esc or
+  "Back to globe" flies back. The globe shades day and night from the real sun position.
 - Search looks on the globe first (callsign or flight number), then asks `/api/search`, which can
   find any airborne flight. Found flights are drawn alongside the curated set.
 - `prefers-reduced-motion`: no spin, no dash flow. `prefers-reduced-transparency`: solid surfaces.

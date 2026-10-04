@@ -9,6 +9,7 @@ import { progressAt, tempAtProgress } from "../data/snapshot";
 import { tempToRgb } from "../lib/color";
 import { arcLift, centralAngle, interpolate, toVec3 } from "../lib/geo";
 import { useStore } from "../store";
+import { spin } from "./spin";
 
 const MAX = 512;
 const SIZE = 0.012;
@@ -19,17 +20,21 @@ const ahead = new Vector3();
 const up = new Vector3();
 const m = new Matrix4();
 const q = new Quaternion();
+const UP = new Vector3(0, 1, 0);
 
 export function Planes({ flights }: { flights: Flight[] }) {
   const mesh = useRef<InstancedMesh>(null);
   const angles = useMemo(() => flights.map((f) => centralAngle(f.origin, f.dest)), [flights]);
 
-  useFrame(() => {
+  useFrame(({ camera }) => {
     const im = mesh.current;
     if (!im) return;
     const nowS = Date.now() / 1000;
-    const { hoveredId, selectedId } = useStore.getState();
+    const { hoveredId, selectedId, cameraMode } = useStore.getState();
     const active = hoveredId ?? selectedId;
+    // The camera sits on the selected plane once seated; don't draw its chevron in the lens.
+    const seated = cameraMode === "cockpit" || cameraMode === "to-cockpit";
+    const hideSelected = seated;
     const n = Math.min(MAX, flights.length);
     for (let i = 0; i < n; i++) {
       const f = flights[i]!;
@@ -44,7 +49,11 @@ export function Planes({ flights }: { flights: Flight[] }) {
       tmpObj.quaternion.copy(q);
       // The cone geometry points +Y; rotate it to point down the look direction (-Z of lookAt).
       tmpObj.rotateX(-Math.PI / 2);
-      const s = active === f.id ? 1.6 : active === null ? 1 : 0.8;
+      // From the seat, other planes are tiny neighbours; anything within a few seat-heights of
+      // the lens would fill the screen, so it isn't drawn at all.
+      const tooClose = seated && camera.position.distanceTo(tmpObj.position.clone().applyAxisAngle(UP, spin.y)) < 0.25;
+      const s =
+        (hideSelected && f.id === selectedId) || tooClose ? 0 : seated ? 0.2 : active === f.id ? 1.6 : active === null ? 1 : 0.8;
       tmpObj.scale.setScalar(s);
       tmpObj.updateMatrix();
       im.setMatrixAt(i, tmpObj.matrix);

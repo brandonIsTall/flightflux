@@ -3,6 +3,9 @@ import type { Flight } from "../../shared/types";
 
 export type Units = "C" | "F";
 
+/** orbit: the globe view. to-cockpit / to-orbit: the camera flight. cockpit: riding the plane. */
+export type CameraMode = "orbit" | "to-cockpit" | "cockpit" | "to-orbit";
+
 function defaultUnits(): Units {
   try {
     const saved = localStorage.getItem("ff:units");
@@ -21,7 +24,10 @@ interface State {
   hoveredId: string | null;
   setHovered: (id: string | null) => void;
   selectedId: string | null;
+  /** Selecting a flight opens its panel and flies the camera to it; null flies back. */
   select: (id: string | null) => void;
+  cameraMode: CameraMode;
+  setCameraMode: (m: CameraMode) => void;
   /** Globe auto-spin is paused while the user interacts and for 30 s after. */
   spinPaused: boolean;
   setSpinPaused: (v: boolean) => void;
@@ -30,7 +36,7 @@ interface State {
   addFlight: (f: Flight) => void;
 }
 
-export const useStore = create<State>((set) => ({
+export const useStore = create<State>((set, get) => ({
   units: defaultUnits(),
   setUnits: (units) => {
     try {
@@ -43,7 +49,13 @@ export const useStore = create<State>((set) => ({
   hoveredId: null,
   setHovered: (hoveredId) => set({ hoveredId }),
   selectedId: null,
-  select: (selectedId) => set({ selectedId }),
+  select: (selectedId) => {
+    const { cameraMode } = get();
+    if (selectedId) set({ selectedId, hoveredId: null, cameraMode: "to-cockpit" });
+    else set({ selectedId: null, cameraMode: cameraMode === "orbit" ? "orbit" : "to-orbit" });
+  },
+  cameraMode: "orbit",
+  setCameraMode: (cameraMode) => set({ cameraMode }),
   spinPaused: false,
   setSpinPaused: (spinPaused) => set({ spinPaused }),
   extraFlights: [],
