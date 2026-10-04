@@ -25,6 +25,7 @@ Decisions already made (from the planning Q&A):
 | API budget | Free tiers only |
 | Gradient | Two-stop blend: departure temp (at departure time) → arrival forecast (at ETA) |
 | Cockpit view | Stylized first-person camera + glass-cockpit display (no 3D cockpit model) |
+| Theme | Dark only (no light theme) |
 
 ---
 
@@ -190,7 +191,7 @@ Run this every poll in the Durable Object:
 | Globe base | **globe.gl / three-globe** as a starting point (arcs layer accepts color arrays and interpolators; supports tiled imagery) | Fastest route to a good-looking globe; can be swapped for a custom R3F globe later |
 | Lines | Custom `Line2`/`MeshLine` with a per-vertex color attribute + dash-offset uniform | GPU-animated flow, one draw call per batch |
 | Post-processing | `@react-three/postprocessing` (Bloom with luminance threshold, Vignette) | Glow on data only, never on UI (§6.5) |
-| Styling | **Tailwind v4** (Vite plugin) + CSS-variable tokens for both themes | Tokens in §6.3 |
+| Styling | **Tailwind v4** (Vite plugin) + CSS-variable tokens (dark only) | Tokens in §6.3 |
 | Fonts / icons | **Geist + Geist Mono**, self-hosted and subset; **Phosphor** icons, Light weight | §6.5 |
 | Animation | **Motion** (`motion/react`) for the DOM overlay; **GSAP** for camera timelines inside the R3F tree only; `useFrame` for per-frame motion | Kept in separate component trees so they never fight over frames (§6.7) |
 | State | **Zustand** | Simple global store for selection, camera mode, units |
@@ -257,17 +258,17 @@ The `design-taste-frontend` skill targets landing pages. Flight Flux is mostly a
 
 ### 6.3 Surfaces and neutrals
 
-| Token | Dark (default) | Light ("Atlas") | Use |
-|---|---|---|---|
-| `--space` | `#0B0E13` | `#E6E9ED` | Page and WebGL clear color. Never pure black or white. |
-| `--surface-1` | `rgb(20 24 31 / 0.72)` + blur | `rgb(250 251 252 / 0.78)` + blur | Tooltip, panel, HUD backplates |
-| `--hairline` | `rgb(255 255 255 / 0.08)` | `rgb(15 20 28 / 0.10)` | 1px dividers, panel inner border |
-| `--ink-1` | `#E8EBEF` | `#12161C` | Primary text and numerals |
-| `--ink-2` | `#9AA3AE` | `#4E5763` | Secondary text, units, labels |
-| `--ink-3` | `#646D78` | `#7A838E` | Tertiary text, axis ticks (non-essential only) |
-| `--ocean` / `--land` | `#0F141B` / `#1A212B` | `#D5DAE0` / `#F2F4F6` | Globe base in its stylized "night" and "atlas" modes |
+| Token | Value | Use |
+|---|---|---|
+| `--space` | `#0B0E13` | Page and WebGL clear color. Never pure black. |
+| `--surface-1` | `rgb(20 24 31 / 0.72)` + blur | Tooltip, panel, HUD backplates |
+| `--hairline` | `rgb(255 255 255 / 0.08)` | 1px dividers, panel inner border |
+| `--ink-1` | `#E8EBEF` | Primary text and numerals |
+| `--ink-2` | `#9AA3AE` | Secondary text, units, labels |
+| `--ink-3` | `#646D78` | Tertiary text, axis ticks (non-essential only) |
+| `--ocean` / `--land` | `#0F141B` / `#1A212B` | Globe base in its stylized night look |
 
-**Theme:** dark is the default, because the bloom, city lights and atmosphere rim only work against dark space. The light **Atlas** theme is a fully designed second mode, not an automatic inversion: silver-grey ocean, pale land, no bloom, and its own validated temperature steps (§6.4). It follows `prefers-color-scheme` only after the first visit; the first visit is always dark, so the boot sequence lands as designed.
+**Theme: dark only** (decided). The bloom, city lights and atmosphere rim only work against dark space, so the app ignores `prefers-color-scheme` and declares `color-scheme: dark`. A light theme was considered and dropped to save build time.
 
 ### 6.4 Temperature scale (validated)
 
@@ -275,13 +276,12 @@ A **diverging** scale: a cool blue arm and a warm red-orange arm meeting at a **
 
 | °C | ≤ −25 | −10 | 3 | **15** | 26 | 35 | ≥ 44 |
 |---|---|---|---|---|---|---|---|
-| Dark theme | `#3B6FD9` | `#6E9BEA` | `#A9C3EE` | **`#C9C8C2`** | `#F0B48C` | `#EC7A50` | `#D9412B` |
-| Atlas theme | `#2A56B8` | `#3D66BE` | `#5B79A8` | **`#7F7E78`** | `#9C6E48` | `#BF5537` | `#B8321F` |
+| Hex | `#3B6FD9` | `#6E9BEA` | `#A9C3EE` | **`#C9C8C2`** | `#F0B48C` | `#EC7A50` | `#D9412B` |
 
 **Validation** (dataviz skill validator plus a WCAG contrast check):
 - Cold and hot ends are distinct for colorblind viewers: worst-case ΔE 26 in the protan simulation, 33 with normal vision, against a target of 8 or more.
-- Every stop is at least **4:1** against the dark globe and at least **3.3:1** against the Atlas surface, so even the gray midpoint stays visible as a line.
-- In both themes, each arm changes lightness steadily toward the gray midpoint, so magnitude reads in grayscale too.
+- Every stop is at least **4:1** against the dark globe, so even the gray midpoint stays visible as a line.
+- Each arm changes lightness steadily toward the gray midpoint, so magnitude reads in grayscale too.
 - The validator's chroma-floor check flags the gray midpoint. That is expected: a diverging scale needs a neutral middle.
 
 **Color is never the only signal.** Every tooltip, panel and HUD shows the numbers. The legend has numeric ticks. The flight list view (§6.6) sorts by temperature change.
@@ -388,11 +388,11 @@ Before each UI phase is accepted, check:
 - No em-dashes or emoji in UI strings
 - Pills for controls and 14 px for surfaces, nothing else
 - All numerals in Geist Mono tabular
-- WCAG AA text contrast in both themes, checked over bright and dark globe regions
+- WCAG AA text contrast, checked over bright and dark globe regions
 - Every animation listed in §6.7 with its reason
 - Reduced-motion and reduced-transparency paths tested
 - Mobile layout checked at 375 px
-- Both themes screenshotted and reviewed side by side
+- Key screens screenshotted over both day-side and night-side globe regions
 
 ---
 
@@ -470,11 +470,11 @@ flowchart LR
 |---|---|---|
 | **P0** Data spike | Scripts hitting OpenSky (OAuth2), adsbdb, adsb.lol routeset, Open-Meteo | Real credit cost of `/tracks` known; route hit-rate for long-haul callsigns ≥ 80% |
 | **P1** Edge poller | Cloudflare Worker + cron + Durable Object; `/snapshot`, `/flight/:id`, `/search` | Snapshot of ≥ 120 curated flights with temps, refreshed every 90 s, within quotas for 48 h |
-| **P2** Globe + design system | Tokens for both themes, fonts, glass surfaces, validated temperature scale; R3F globe, atmosphere, gradient arcs, dead-reckoned markers, auto-spin with pause/resume | 60 fps on a mid-range laptop with 150 flights; §6.10 pre-flight passes |
+| **P2** Globe + design system | Dark-theme tokens, fonts, glass surfaces, validated temperature scale; R3F globe, atmosphere, gradient arcs, dead-reckoned markers, auto-spin with pause/resume | 60 fps on a mid-range laptop with 150 flights; §6.10 pre-flight passes |
 | **P3** Interaction | Hover tooltip, click panel, temperature chart, search box | Hit-testing feels effortless; search finds a flight by "BA117" or "BAW117" |
 | **P4** Cockpit | Camera fly-in/out, first-person camera, HUD, day/night | Transition never clips through the globe; Esc always returns |
 | **P5** Boot + cache | Thermal Boot tied to real progress; SW + IndexedDB persistence | First visit < 6 s on 4G; repeat visit shows flights in < 1 s |
-| **P6** Polish | Mobile bottom sheet and touch gestures, Atlas light theme, reduced-motion/transparency, keyboard nav and flight list, Data sources sheet, empty/error states | Lighthouse perf ≥ 80 on mobile; §6.10 pre-flight passes in both themes; all data licenses credited |
+| **P6** Polish | Mobile bottom sheet and touch gestures, reduced-motion/transparency, keyboard nav and flight list, Data sources sheet, empty/error states | Lighthouse perf ≥ 80 on mobile; §6.10 pre-flight passes; all data licenses credited |
 
 ---
 
@@ -495,11 +495,10 @@ flowchart LR
 ## 11. Open questions for you
 
 1. **Auto-spin resume:** the plan resumes spinning after 10 s idle. Do you want that, or should the globe stay paused until the user clicks a "resume spin" control?
-2. **Theme:** dark by default, with the light Atlas theme as a fully designed second mode (§6.3). Is a light mode worth building for you, or should the app be dark-only to save effort?
-3. **Units:** default to °F or °C from the browser locale, with a toggle. OK?
-4. **Mobile priority:** first-class (touch gestures, bottom-sheet detail panel) from P2, or desktop-first with mobile in P6?
-5. **Hosting:** Cloudflare (Workers + Pages, free) is the recommendation. Do you have an existing preference or account?
-6. **OpenSky account:** you'll need to register (free) and create OAuth2 API client credentials. I can't do that step for you.
+2. **Units:** default to °F or °C from the browser locale, with a toggle. OK?
+3. **Mobile priority:** first-class (touch gestures, bottom-sheet detail panel) from P2, or desktop-first with mobile in P6?
+4. **Hosting:** Cloudflare (Workers + Pages, free) is the recommendation. Do you have an existing preference or account?
+5. **OpenSky account:** you'll need to register (free) and create OAuth2 API client credentials. I can't do that step for you.
 
 ---
 
