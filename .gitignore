@@ -1,0 +1,11 @@
+# Secrets: never commit. Local Worker secrets live in .dev.vars; production uses `wrangler secret put`.
+.dev.vars
+*.credentials.json
+credentials.json
+.env
+.env.*
+!.env.example
+
+node_modules/
+dist/
+.wrangler/

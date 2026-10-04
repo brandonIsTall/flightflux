@@ -498,9 +498,11 @@ flowchart LR
 
 ## 11. Before building
 
-All planning questions are answered (see the decisions table at the top). One step needs you:
+All planning questions are answered (see the decisions table at the top), and the OpenSky API client has been created.
 
-- **OpenSky account:** register (free) at opensky-network.org and create OAuth2 API client credentials. They go into the Cloudflare Worker as secrets in P1. I can't do this step for you.
+- **OpenSky credentials:** stored as Worker secrets `OPENSKY_CLIENT_ID` and `OPENSKY_CLIENT_SECRET` (`wrangler secret put`), and in a git-ignored `.dev.vars` for local dev (template: `.dev.vars.example`). They are never committed and never sent to the browser.
+- **Token flow:** `POST https://auth.opensky-network.org/auth/realms/opensky-network/protocol/openid-connect/token` with `grant_type=client_credentials`, `client_id`, `client_secret` (form-encoded). Send the returned `access_token` as `Authorization: Bearer …` to `https://opensky-network.org/api/…`. The Worker caches the token and refreshes it about 1 minute before its ~30 min expiry, or on any 401.
+- **First P0 check:** request a token and one `/states/all` call, then confirm the `X-Rate-Limit-Remaining` header shows the 4,000-credit registered quota.
 
 ---
 

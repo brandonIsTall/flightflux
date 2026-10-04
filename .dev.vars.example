@@ -1,0 +1,5 @@
+# Copy to .dev.vars for local `wrangler dev`. In production run:
+#   npx wrangler secret put OPENSKY_CLIENT_ID
+#   npx wrangler secret put OPENSKY_CLIENT_SECRET
+OPENSKY_CLIENT_ID=
+OPENSKY_CLIENT_SECRET=
