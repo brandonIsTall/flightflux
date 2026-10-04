@@ -76,6 +76,7 @@ const Route = memo(function Route({ f, nowS, focus }: { f: Flight; nowS: number;
   const width = focus === "focused" ? 2.6 : 1.6;
   const handlers = {
     onPointerOver: (e: { stopPropagation: () => void }) => {
+      if (useStore.getState().cameraMode !== "orbit") return;
       e.stopPropagation();
       setHovered(f.id);
       document.body.style.cursor = "pointer";
@@ -85,6 +86,7 @@ const Route = memo(function Route({ f, nowS, focus }: { f: Flight; nowS: number;
       document.body.style.cursor = "";
     },
     onClick: (e: { stopPropagation: () => void }) => {
+      if (useStore.getState().cameraMode !== "orbit") return;
       e.stopPropagation();
       select(f.id);
     },
