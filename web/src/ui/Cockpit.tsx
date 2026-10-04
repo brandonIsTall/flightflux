@@ -133,7 +133,7 @@ function Tape({ side, label, value, unit, step }: { side: "left" | "right"; labe
 
 function BottomStrip({ flight: f, p, oat, remainingS, units }: { flight: Flight; p: number; oat: number; remainingS: number; units: Units }) {
   return (
-    <div className="absolute inset-x-4 bottom-12 sm:inset-x-6 sm:bottom-14 sm:[.has-panel_&]:right-[440px]">
+    <div className="absolute inset-x-4 bottom-12 [.has-panel_&]:bottom-[calc(52dvh+28px)] sm:inset-x-6 sm:bottom-14 sm:[.has-panel_&]:right-[440px] sm:[.has-panel_&]:bottom-14">
       <div className="num mb-2 flex items-end justify-between text-[12px] text-ink-2">
         <span>
           <span className="text-ink-1">{f.origin.iata ?? f.origin.icao}</span> {formatTemp(f.depTempC, units)}

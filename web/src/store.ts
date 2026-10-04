@@ -34,6 +34,9 @@ interface State {
   /** Flights found by search that aren't in the curated snapshot; drawn alongside it. */
   extraFlights: Flight[];
   addFlight: (f: Flight) => void;
+  /** Which overlay sheet is open. */
+  sheet: "none" | "list" | "sources";
+  setSheet: (s: "none" | "list" | "sources") => void;
 }
 
 export const useStore = create<State>((set, get) => ({
@@ -58,6 +61,8 @@ export const useStore = create<State>((set, get) => ({
   setCameraMode: (cameraMode) => set({ cameraMode }),
   spinPaused: false,
   setSpinPaused: (spinPaused) => set({ spinPaused }),
+  sheet: "none",
+  setSheet: (sheet) => set({ sheet }),
   extraFlights: [],
   addFlight: (f) => set((s) => ({ extraFlights: [...s.extraFlights.filter((x) => x.id !== f.id), f].slice(-20) })),
 }));

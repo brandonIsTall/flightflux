@@ -13,7 +13,28 @@ async function fetchSnapshot(): Promise<Snapshot> {
   const res = await fetch(SNAPSHOT_URL);
   if (res.status === 503) throw new Error("warming up");
   if (!res.ok) throw new Error(`snapshot ${res.status}`);
-  return (await res.json()) as Snapshot;
+  const snap = (await res.json()) as Snapshot;
+  return USING_FIXTURE ? shiftToNow(snap) : snap;
+}
+
+/**
+ * The bundled sample was captured once; without this every plane in it would have landed hours
+ * ago. Shifting all its times forward keeps it perpetually mid-flight for development and demos.
+ */
+export function shiftToNow(snap: Snapshot, nowS = Math.floor(Date.now() / 1000)): Snapshot {
+  const d = nowS - snap.generatedAt;
+  return {
+    ...snap,
+    generatedAt: nowS,
+    flights: snap.flights.map((f) => ({ ...f, depTime: f.depTime + d, eta: f.eta + d, pos: { ...f.pos, t: f.pos.t + d, fixT: f.pos.fixT + d } })),
+  };
+}
+
+/** Past its ETA by this much, a flight has landed and leaves the globe. */
+export const LANDED_AFTER_S = 20 * 60;
+
+export function hasLanded(f: Flight, nowS: number): boolean {
+  return nowS > f.eta + LANDED_AFTER_S;
 }
 
 export function useSnapshot() {
