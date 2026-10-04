@@ -62,6 +62,11 @@ dead-reckoned forward, before the network answers.
   The seat moves with the flight; drag to look around (springs back). The HUD shows heading, speed
   and altitude tapes, and a gradient strip with the outside temperature and time to go. Esc or
   "Back to globe" flies back. The globe shades day and night from the real sun position.
+- The list button (top right) opens every flight on the globe sorted by temperature change, with
+  arrow-key navigation, a filter box that also searches the live API on Enter, and the Data
+  sources sheet. On phones it is also where search lives.
+- Flights more than 20 min past their arrival leave the globe. The bundled sample is time-shifted
+  to now on load so it stays mid-flight for development.
 - Search looks on the globe first (callsign or flight number), then asks `/api/search`, which can
   find any airborne flight. Found flights are drawn alongside the curated set.
 - `prefers-reduced-motion`: no spin, no dash flow. `prefers-reduced-transparency`: solid surfaces.

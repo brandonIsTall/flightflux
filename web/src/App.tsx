@@ -1,12 +1,14 @@
 import { Suspense, useEffect, useMemo } from "react";
 import { motion } from "motion/react";
 import { ready, useBoot } from "./boot";
-import { useSnapshot } from "./data/snapshot";
+import { hasLanded, useSnapshot } from "./data/snapshot";
 import { Scene } from "./globe/Scene";
 import { useStore } from "./store";
 import { BootOverlay } from "./ui/BootOverlay";
 import { Cockpit } from "./ui/Cockpit";
+import { DataSources } from "./ui/DataSources";
 import { DetailPanel } from "./ui/DetailPanel";
+import { FlightList } from "./ui/FlightList";
 import { Freshness } from "./ui/Freshness";
 import { Legend } from "./ui/Legend";
 import { Tooltip } from "./ui/Tooltip";
@@ -17,11 +19,15 @@ export function App() {
   const extra = useStore((s) => s.extraFlights);
   const inOrbit = useStore((s) => s.cameraMode === "orbit");
   const hasPanel = useStore((s) => s.selectedId !== null);
+  const selectedId = useStore((s) => s.selectedId);
   const flights = useMemo(() => {
     const base = snapshot.data?.flights ?? [];
     const ids = new Set(base.map((f) => f.id));
-    return [...base, ...extra.filter((f) => !ids.has(f.id))];
-  }, [snapshot.data, extra]);
+    const nowS = Date.now() / 1000;
+    // Flights past their arrival leave the globe (unless you're riding one), so a stale cache
+    // never shows planes parked at their destinations.
+    return [...base, ...extra.filter((f) => !ids.has(f.id))].filter((f) => f.id === selectedId || !hasLanded(f, nowS));
+  }, [snapshot.data, extra, selectedId]);
   const booted = useBoot((s) => s.phase === "done");
 
   // Tell the boot what the network has delivered.
@@ -57,6 +63,8 @@ export function App() {
       <BootOverlay />
       <Cockpit flights={flights} />
       <DetailPanel flights={flights} />
+      <FlightList flights={flights} />
+      <DataSources />
       {inOrbit && <Tooltip flights={flights} />}
     </div>
   );

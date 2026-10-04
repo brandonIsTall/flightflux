@@ -27,11 +27,13 @@ export function DetailPanel({ flights }: { flights: Flight[] }) {
         <motion.aside
           key={flight.id}
           aria-label={`Flight ${flight.flightNo ?? flight.callsign}`}
-          className="glass pointer-events-auto absolute inset-x-3 bottom-3 z-10 max-h-[70dvh] overflow-y-auto sm:inset-x-auto sm:top-20 sm:right-6 sm:bottom-auto sm:max-h-[calc(100dvh-104px)] sm:w-[400px]"
+          className="glass pointer-events-auto absolute inset-x-3 bottom-3 z-10 max-h-[52dvh] overflow-y-auto sm:inset-x-auto sm:top-20 sm:right-6 sm:bottom-auto sm:max-h-[calc(100dvh-104px)] sm:w-[400px]"
           initial={{ opacity: 0, x: 24 }}
           animate={{ opacity: 1, x: 0, transition: { type: "spring", stiffness: 100, damping: 20 } }}
           exit={{ opacity: 0, x: 24, transition: { duration: 0.2, ease: [0.16, 1, 0.3, 1] } }}
         >
+          {/* Bottom sheet affordance on phones. */}
+          <div aria-hidden className="mx-auto mt-2 h-1 w-9 rounded-full bg-ink-3/60 sm:hidden" />
           <PanelBody flight={flight} onClose={() => select(null)} />
         </motion.aside>
       )}
@@ -127,7 +129,7 @@ function Fact({ label, value, note }: { label: string; value: string; note?: str
   return (
     <div className="min-w-0">
       <dt className="text-[12px] text-ink-3">{label}</dt>
-      <dd className="num mt-0.5 flex items-center gap-1.5 text-ink-1">
+      <dd className="num mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-ink-1">
         <span className="truncate">{value}</span>
         {note && (
           <span className="flex items-center gap-1 font-sans text-[11px] text-ink-2">

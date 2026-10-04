@@ -1,4 +1,4 @@
-import { MagnifyingGlass } from "@phosphor-icons/react";
+import { List, MagnifyingGlass } from "@phosphor-icons/react";
 import { useState } from "react";
 import type { Flight } from "../../../shared/types";
 import { searchFlight, SearchError } from "../data/detail";
@@ -10,6 +10,8 @@ export function TopBar({ flights }: { flights: Flight[] }) {
   const setUnits = useStore((s) => s.setUnits);
   const select = useStore((s) => s.select);
   const addFlight = useStore((s) => s.addFlight);
+  const setSheet = useStore((s) => s.setSheet);
+  const sheet = useStore((s) => s.sheet);
   const [q, setQ] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -81,6 +83,15 @@ export function TopBar({ flights }: { flights: Flight[] }) {
         )}
       </form>
 
+      <div className="flex shrink-0 items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setSheet("list")}
+          aria-label="Search flights"
+          className="pill focus-ring flex h-9 w-9 items-center justify-center text-ink-2 hover:text-ink-1 sm:hidden"
+        >
+          <MagnifyingGlass size={18} weight="light" aria-hidden />
+        </button>
       <div role="radiogroup" aria-label="Temperature unit" className="pill flex h-9 shrink-0 p-0.5">
         {(["C", "F"] as const).map((u) => (
           <button
@@ -96,6 +107,16 @@ export function TopBar({ flights }: { flights: Flight[] }) {
             °{u}
           </button>
         ))}
+      </div>
+        <button
+          type="button"
+          onClick={() => setSheet(sheet === "list" ? "none" : "list")}
+          aria-label="All flights"
+          aria-expanded={sheet === "list"}
+          className="pill focus-ring flex h-9 w-9 items-center justify-center text-ink-2 hover:text-ink-1"
+        >
+          <List size={18} weight="light" aria-hidden />
+        </button>
       </div>
     </header>
   );

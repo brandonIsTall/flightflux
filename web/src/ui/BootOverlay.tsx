@@ -91,7 +91,7 @@ export function BootOverlay() {
           </div>
           {notice && <p className="num absolute bottom-5 left-4 text-[11px] text-ink-3 sm:left-6">{notice}</p>}
           {skippable && phase === "booting" && (
-            <p className="absolute right-4 bottom-5 text-[11px] text-ink-3 sm:right-6">Click or press any key to skip</p>
+            <p className="absolute right-4 bottom-5 text-[11px] text-ink-3 sm:right-6">Tap or press any key to skip</p>
           )}
         </motion.div>
       )}
