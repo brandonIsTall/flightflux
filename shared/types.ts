@@ -20,11 +20,17 @@ export interface Position {
   gsMs: number;
   trackDeg: number;
   vRateMs: number;
-  /** Unix seconds of the position fix. */
+  /**
+   * Unix seconds this position is for. Usually projected along the route from the last fix, so
+   * clients should keep advancing it at gsMs along the great circle origin -> dest.
+   */
   t: number;
+  /** Unix seconds of the last real transponder fix. */
+  fixT: number;
 }
 
-export type DepTimeSource = "observed" | "track" | "estimated";
+/** observed: caught climbing out of the origin. estimated: back-calculated (median error ~6 min). */
+export type DepTimeSource = "observed" | "estimated";
 
 export interface Flight {
   /** icao24 + departure day, stable for the life of one flight. */
@@ -48,15 +54,14 @@ export interface Flight {
 export interface Snapshot {
   v: 1;
   generatedAt: number;
-  /** OpenSky `time` of the state vectors the positions came from. */
-  statesTime: number;
   flights: Flight[];
   meta: {
-    airborne: number;
-    candidates: number;
+    /** Cruise-phase airline flights currently known from discovery sweeps. */
+    known: number;
+    /** Known flights with a long-haul route (the pool curation picks from). */
     routed: number;
     creditsRemaining: number | null;
-    pollMs: number;
+    stepMs: number;
   };
 }
 

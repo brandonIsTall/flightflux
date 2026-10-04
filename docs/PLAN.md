@@ -45,7 +45,7 @@ flowchart LR
   end
 
   subgraph Edge["Cloudflare (free tier)"]
-    CRON["Cron Trigger<br/>every ~90 s"]
+    CRON["Alarm every 30 s<br/>(cron restarts it)"]
     DO["Durable Object<br/>'SkyState'<br/>latest snapshot + caches"]
     API["Worker API<br/>/snapshot  /flight/:id  /search"]
   end
@@ -79,12 +79,12 @@ flowchart LR
 
 ### 2.1 Live aircraft positions: **OpenSky Network** (primary)
 
-- `GET /api/states/all` returns every aircraft OpenSky currently sees: icao24, callsign, lat/lon, baro/geo altitude, ground speed, true track, vertical rate, and on-ground flag.
+- `GET /api/states/all` returns state vectors: icao24, callsign, lat/lon, baro/geo altitude, ground speed, true track, vertical rate, and on-ground flag. **As built, it is always filtered** (§2.5): by a list of aircraft (`icao24=…`) or by a region box (`lamin/lomin/lamax/lomax`).
 - **Auth:** OAuth2 client-credentials flow (basic auth was removed on 2026-03-18). Tokens expire after ~30 min, so the Worker refreshes them.
-- **Quota:** 400 credits/day anonymous, **4,000/day registered**, 8,000/day for receiver feeders. A global query costs **4 credits**.
-  - 4,000 ÷ 4 = 1,000 global pulls/day ≈ **one every 86 s**. Poll every **90 s** to leave headroom for search and track calls.
+- **Quota:** 400 credits/day anonymous, **4,000/day registered**, 8,000/day for receiver feeders. Measured costs: a box of ≤ 400 sq deg is **3 credits**; a larger box, an icao24 list, or the unfiltered worldwide query is **4**.
+  - The unfiltered worldwide response (~800 KB) takes ~11 ms to parse, more than a free-plan Worker's 10 ms CPU, so it is never used.
 - **Time resolution:** 5 s for registered users. Between polls, the client **dead-reckons** each plane from its speed and heading, so motion stays smooth at 60 fps.
-- **Departure time:** `GET /tracks/all?icao24=…&time=0` returns the live track including `startTime`. The endpoint is marked *experimental*, so plan for a fallback (§3.2). Don't use `/flights/aircraft` for this: it is filled by a nightly batch job and only covers the previous day or earlier.
+- **Departure time:** `GET /tracks/all?icao24=…&time=0` returns the live track including `startTime`, but costs ~4 credits. Measured against 18 real tracks, the distance-based estimate (§3.2) had a **median error of 6 min** (worst 29 min), well under the time it takes temperature to change meaningfully, so **the build does not use tracks**.
 
 **Backup / failover position sources** (all free and non-commercial, readsb-compatible JSON):
 
@@ -118,15 +118,23 @@ ADS-B carries a callsign, not a route, so the route has to come from a separate 
 
 ### 2.5 Daily API budget
 
+**As built: track, extrapolate, discover.** Long-haul flights move predictably along their route, so the poller doesn't need fresh worldwide positions:
+
+1. **Track.** One icao24-filtered call refreshes every flight on the globe (~150) every **5 min**. The response is ~6 KB and parses in ~0.1 ms.
+2. **Extrapolate.** Between fixes, the server and the client both advance each plane along its great-circle route at its last ground speed. Over oceans, where there are no receivers, this was going to happen anyway.
+3. **Discover.** New flights are found by sweeping the world in **29 region boxes**, one box per 30 s run, a full sweep every ~75 min. Boxes were sized from real traffic so each returns ≤ ~1,000 aircraft at peak (≤ 1.6 ms to parse), and any box that returns more than 900 is split in two for the next sweep. A fresh deploy sweeps one box per run, so the globe fills in ~12-15 min.
+
 ```mermaid
 pie showData
   title OpenSky credits/day (of 4,000), as built
-  "Global state polls (720 × 4)" : 2880
-  "Live tracks, max 250 × 4" : 1000
-  "Headroom" : 120
+  "Tracked refresh (288 × 4)" : 1152
+  "Discovery sweeps (~19 × ~108)" : 2074
+  "Headroom" : 774
 ```
 
-**Measured in P0/P1:** a live-track call costs about **4 credits**, the same as a worldwide poll. So the poller fetches positions every **120 s**, not 90 s. Tracks are only spent while more than 1,500 credits remain, and departure times mostly come for free: the poller records every take-off it sees (ground → airborne between two polls), and tracks are only needed for flights already airborne when it starts. Dead-reckoning hides the longer interval visually.
+Below 800 remaining credits, everything slows down 3× rather than running dry.
+
+**Measured CPU per run** (live data, Node/V8): parse ≤ 1.6 ms, snapshot rebuild median 1.8 ms (p95 2.6 ms) with 3,200 known aircraft. A run is ~4-5 ms against the 10 ms limit, and runs that learn nothing new skip the rebuild.
 
 ---
 
@@ -155,7 +163,7 @@ type Flight = {
 
 | Value | Primary method | Fallback |
 |---|---|---|
-| **Departure time** | OpenSky live track `startTime` (once per flight, then cached) | `now − distanceFlown / (0.85 × groundSpeed) − 15 min` (climb and taxi allowance) |
+| **Departure time** | Observed: an airliner caught below 1,500 m and climbing near the origin, backed out by altitude ÷ climb rate | Estimate: `fixTime − distanceFlown / (0.88 × groundSpeed) − 5 min` (median error 6 min against real tracks) |
 | **ETA** | `now + remainingGreatCircle / groundSpeed + 15 min` (descent and approach) | None needed (always computable) |
 
 Recompute the ETA on every poll. If the ETA moves to a different hour, the arrival temperature updates automatically from the cached hourly series.
@@ -453,7 +461,7 @@ gantt
 | Departure times | Durable Object, keyed by flight id | Until landing | One track call per flight |
 | `/snapshot` response | Cloudflare edge cache, `s-maxage=30` | Shared across users | Worker CPU stays tiny |
 
-**Durable Object, not KV:** the Workers KV free tier allows about 1,000 writes/day, and a 90 s poller needs 960. A single Durable Object holds the snapshot and caches in memory with SQLite persistence, without that limit.
+**Durable Object, not KV:** the Workers KV free tier allows about 1,000 writes/day. A single SQLite-backed Durable Object holds routes and weather in SQLite (loaded lazily, so a cold start doesn't burn CPU) and persists only its scheduler state and the shown flights' last fixes (~40 KB) every 5 min, staying well under the free tier's 100k rows written/day.
 
 ---
 
@@ -473,7 +481,7 @@ flowchart LR
 | Phase | Deliverable | Exit criteria |
 |---|---|---|
 | **P0** Data spike | Scripts hitting OpenSky (OAuth2), adsbdb, adsb.lol routeset, Open-Meteo | Real credit cost of `/tracks` known; route hit-rate for long-haul callsigns ≥ 80% |
-| **P1** Edge poller | Cloudflare Worker + cron + Durable Object; `/snapshot`, `/flight/:id`, `/search` | Snapshot of ≥ 120 curated flights with temps, refreshed every 90 s, within quotas for 48 h |
+| **P1** Edge poller | Cloudflare Worker + Durable Object (30 s alarm loop, cron safety net); `/snapshot`, `/flight/:id`, `/search` | **Built.** Live run: 150 flights after one sweep, ≤ 44 requests and ~4-5 ms CPU per run, ~3,200 credits/day. Not yet deployed (needs your Cloudflare account) |
 | **P2** Globe + design system | Dark-theme tokens, fonts, glass surfaces, validated temperature scale; R3F globe, atmosphere, gradient arcs, dead-reckoned markers, auto-spin with pause/resume | 60 fps on a mid-range laptop with 150 flights; §6.10 pre-flight passes |
 | **P3** Interaction | Hover tooltip, click panel, temperature chart, search box | Hit-testing feels effortless; search finds a flight by "BA117" or "BAW117" |
 | **P4** Cockpit | Camera fly-in/out, first-person camera, HUD, day/night | Transition never clips through the globe; Esc always returns |
@@ -490,10 +498,10 @@ flowchart LR
 | **Oceanic coverage gaps:** ground-based ADS-B can't see mid-Atlantic/Pacific | Long-haul planes "freeze" or vanish mid-ocean | Dead-reckon along the great circle toward the destination and show an "estimated position" dashed marker until coverage resumes |
 | **Stale or wrong routes** (callsign reuse) | Wrong arcs | Cross-track plausibility guard (§2.2); adsb.lol plausibility flag; drop rather than guess |
 | **Community APIs have no SLA** | Outages | Failover chain OpenSky → adsb.lol → adsb.fi; serve last good snapshot with a stale badge |
-| **OpenSky `/tracks` is experimental** | No observed departure time | Estimation fallback (§3.2), flagged in the UI |
+| **Departure times are estimates for most flights** | Departure temperature could be off by an hour's change | Measured median error 6 min (worst 29), flagged as "estimated" in the UI; observed climb-outs replace estimates when caught |
 | **Quota exhaustion** from search traffic | Snapshot gaps | Search reads from the in-memory global snapshot, which needs no extra OpenSky call; per-IP rate limit on `/search` |
-| **Workers free plan: 10 ms CPU per run.** Parsing OpenSky's ~800 KB worldwide response takes ~11 ms in V8, and a poll run needs ~15-20 ms in total | Poll runs get cut off in production | Decision pending: Workers Paid ($5/mo, 30 s CPU) or another way to host the parse step. Runs that don't poll (route/weather/track fill-in, ~3-5 ms) fit the free limit |
-| **Free-plan request limit: ~50 outbound requests per run** | Can't resolve thousands of routes in one go | Built: work runs in 30 s ticks with ≤ 44 requests each. Positions every 4th tick, route/weather/track fill-in between. Cold start shows ~60 flights after 4 min and fills toward 150 over the first hour |
+| **Workers free plan: 10 ms CPU per run.** The unfiltered worldwide response takes ~11 ms just to parse | Poll runs cut off in production | **Solved by design** (§2.5): only filtered calls, ≤ 1.6 ms to parse; rebuild ~2 ms; boxes auto-split if traffic grows |
+| **Free-plan request limit: ~50 outbound requests per run** | Can't resolve thousands of routes at once | Work runs in 30 s ticks with ≤ 44 requests and at most one OpenSky call each. Route lookups fill in over the first hour; curation shows the best 150 among what's resolved |
 | **GPU load on low-end phones** | Jank | Adaptive quality: drop bloom, halve line segments, cap at 75 flights when frame time > 20 ms |
 
 ---

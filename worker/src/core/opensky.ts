@@ -1,4 +1,4 @@
-// OpenSky Network REST client: OAuth2 client-credentials token + state vectors + live tracks.
+// OpenSky Network REST client: OAuth2 client-credentials token + state vectors.
 
 import { globalFetch } from "./http";
 export const OPENSKY_TOKEN_URL =
@@ -21,19 +21,13 @@ export interface StateVector {
   geoAltM: number | null;
 }
 
+/** [lamin, lomin, lamax, lomax] in degrees. */
+export type Bbox = [number, number, number, number];
+
 export interface StatesResult {
   time: number;
   states: StateVector[];
   creditsRemaining: number | null;
-}
-
-export interface LiveTrack {
-  icao24: string;
-  callsign: string | null;
-  startTime: number;
-  endTime: number;
-  /** [time, lat, lon, baroAltM, trueTrack, onGround] */
-  path: [number, number | null, number | null, number | null, number | null, boolean][];
 }
 
 type Raw = (string | number | boolean | null | number[])[];
@@ -107,8 +101,17 @@ export class OpenSkyClient {
     throw new OpenSkyError("unreachable", 0);
   }
 
-  async states(): Promise<StatesResult> {
-    const res = await this.get("/states/all");
+  /**
+   * State vectors, filtered by a bounding box or a list of aircraft. Measured costs: a box of
+   * <= 400 sq deg is 3 credits, anything larger or an icao24 list is 4. Always filter: the
+   * unfiltered worldwide response (~800 KB) takes longer to parse than the free plan's 10 ms.
+   */
+  async states(filter: { bbox: Bbox } | { icao24: string[] }): Promise<StatesResult> {
+    const q =
+      "bbox" in filter
+        ? `lamin=${filter.bbox[0]}&lomin=${filter.bbox[1]}&lamax=${filter.bbox[2]}&lomax=${filter.bbox[3]}`
+        : filter.icao24.map((i) => `icao24=${encodeURIComponent(i)}`).join("&");
+    const res = await this.get(`/states/all?${q}`);
     if (!res.ok) throw new OpenSkyError(`states failed: ${res.status}`, res.status);
     const remaining = res.headers.get("x-rate-limit-remaining");
     const j = (await res.json()) as { time: number; states: Raw[] | null };
@@ -117,14 +120,5 @@ export class OpenSkyClient {
       states: (j.states ?? []).map(parseState),
       creditsRemaining: remaining === null ? null : Number(remaining),
     };
-  }
-
-  /** Live track for an airborne aircraft. Costs ~4 credits; returns null when OpenSky has none. */
-  async liveTrack(icao24: string): Promise<LiveTrack | null> {
-    const res = await this.get(`/tracks/all?icao24=${encodeURIComponent(icao24)}&time=0`);
-    if (res.status === 404) return null;
-    if (!res.ok) throw new OpenSkyError(`track failed: ${res.status}`, res.status);
-    const j = (await res.json()) as LiveTrack | null;
-    return j && typeof j.startTime === "number" ? j : null;
   }
 }

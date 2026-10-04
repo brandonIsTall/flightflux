@@ -30,9 +30,14 @@ export function checkPlausible(distKm: number, crossKm: number, alongKm: number)
   return { ok: true };
 }
 
+/** The fields curation needs, so it can run on lightweight candidates before Flights are built. */
+export type Curatable = Pick<Flight, "icao24" | "callsign" | "distKm" | "depTempC" | "arrTempC"> & {
+  pos: { lon: number };
+};
+
 export const hysteresisKey = (f: Pick<Flight, "icao24" | "callsign">) => `${f.icao24}:${f.callsign}`;
 
-export function score(f: Flight): number {
+export function score(f: Curatable): number {
   // Temperature swing dominates; distance breaks ties toward longer, more visible arcs.
   return Math.abs(f.arrTempC - f.depTempC) + f.distKm / 2000;
 }
@@ -41,10 +46,10 @@ export function score(f: Flight): number {
  * Keep every still-valid flight from the previous set (so lines don't flicker), then fill by score
  * with a per-longitude-band cap for geographic spread.
  */
-export function curate(eligible: Flight[], previous: Set<string>, max = CURATED_MAX): Flight[] {
-  const band = (f: Flight) => Math.floor((f.pos.lon + 180) / LON_BAND_DEG);
+export function curate<T extends Curatable>(eligible: T[], previous: Set<string>, max = CURATED_MAX): T[] {
+  const band = (f: T) => Math.floor((f.pos.lon + 180) / LON_BAND_DEG);
   const perBand = new Map<number, number>();
-  const take = (f: Flight) => perBand.set(band(f), (perBand.get(band(f)) ?? 0) + 1);
+  const take = (f: T) => perBand.set(band(f), (perBand.get(band(f)) ?? 0) + 1);
 
   const kept = eligible.filter((f) => previous.has(hysteresisKey(f))).slice(0, max);
   kept.forEach(take);

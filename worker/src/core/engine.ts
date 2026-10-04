@@ -1,34 +1,67 @@
 // The poller's brain. Runs in the Durable Object (and in the Node harness for live testing).
 //
-// Work is split into small ticks so each invocation stays under the Workers free-plan limit of
-// ~50 outbound requests:
-//   pollStates()  1 OpenSky call (+ token refresh): positions for every aircraft.
-//   enrich()      fills caches a batch at a time: weather, departure tracks, routes.
-//   rebuild()     no network: joins positions with caches into the curated snapshot.
+// Each Durable Object run must stay under the Workers free plan's 10 ms CPU and ~50 outbound
+// requests, so work is split into small steps, at most one OpenSky call per run:
+//   refreshTracked()  positions for the flights on the globe, one small icao24-filtered call.
+//   pollTile()        discovery: one region box of the world per call, swept over ~75 min.
+//   enrich()          fills caches a batch at a time: Open-Meteo weather, adsbdb routes.
+//   rebuild()         no network: projects each flight along its route to "now" and curates.
+//
+// Long-haul flights move predictably, so between fixes each plane is advanced along its
+// great-circle route at its last ground speed (the client does the same every frame).
 
-import { globalFetch } from "./http";
 import type { Airport, Flight, FlightDetail, Snapshot } from "../../../shared/types";
-import { AdsbdbClient, type Aircraft } from "./adsbdb";
-import { curate, checkPlausible, hysteresisKey, isAirlineCallsign } from "./curate";
-import { distanceKm, trackOffsets } from "./geo";
-import { OpenSkyClient, type StateVector, type StatesResult } from "./opensky";
+import { AdsbdbClient, type Aircraft, type Route } from "./adsbdb";
+import { curate, checkPlausible, hysteresisKey, isAirlineCallsign, MIN_ROUTE_KM } from "./curate";
+import { distanceKm, interpolate, trackOffsets } from "./geo";
+import { globalFetch } from "./http";
+import { OpenSkyClient, type Bbox, type StateVector } from "./opensky";
 import { ROUTE_TTL_S, type Store } from "./store";
+import { SPLIT_AT, splitTile } from "./tiles";
 import { estimateDeparture, estimateEta, utcDay } from "./timing";
-import { fetchTempSeries, tempAt, WEATHER_TTL_S, type LatLonKey } from "./weather";
+import { fetchTempSeries, tempAt, WEATHER_TTL_S, type LatLonKey, type TempSeries } from "./weather";
 
 /** Cruise filter: ignore aircraft that are climbing out, descending in, or slow. */
 export const MIN_CANDIDATE_ALT_M = 6000;
 export const MIN_CANDIDATE_GS_MS = 150;
-/** An observed or tracked departure must start this close to the route's origin to be trusted. */
+/** A departure observed in the climb must start this close to the route's origin to be trusted. */
 export const DEP_MATCH_KM = 60;
-/** Keep this many OpenSky credits in reserve for position polls; tracks only spend above it. */
-export const TRACK_CREDIT_RESERVE = 1500;
-export const TRACKS_PER_DAY = 250;
-export const TRACKS_PER_TICK = 4;
+/** Forget an untracked aircraft not seen for this long (a little over one sweep). */
+export const KNOWN_TTL_S = 100 * 60;
+/** Searched flights stay tracked this long even if they aren't curated. */
+export const PIN_TTL_S = 3 * 3600;
 export const ROUTE_CONCURRENCY = 8;
+/** OpenSky caps the URL; 150 icao24 params is ~2.1 KB. */
+export const MAX_TRACKED = 160;
+
+/** Last fix for an aircraft. Only cruise-phase airline flights are kept. */
+export interface Known {
+  s: StateVector;
+  /** Unix seconds of the fix (timePosition, else the response time). */
+  t: number;
+}
+
+/** A projected, temperature-tagged aircraft: enough to curate on, cheap to build. */
+interface Candidate {
+  k: Known;
+  route: Route;
+  ow: TempSeries;
+  dw: TempSeries;
+  distKm: number;
+  flownKm: number;
+  eta: number;
+  depTime: number;
+  depObserved: boolean;
+  depTempC: number;
+  arrTempC: number;
+  ageS: number;
+  icao24: string;
+  callsign: string;
+  pos: { lon: number };
+}
 
 export interface EnrichBudget {
-  /** Outbound requests this tick may make. */
+  /** Outbound requests this run may make. */
   requests: number;
 }
 
@@ -41,28 +74,30 @@ export interface EngineDeps {
   log?: (msg: string) => void;
 }
 
-export interface TickStats {
+export interface StepStats {
   routeLookups: number;
   routeHits: number;
   weatherAirports: number;
-  tracks: number;
   errors: string[];
 }
 
 export class Engine {
-  private states: StatesResult | null = null;
-  private onGroundPrev = new Set<string>();
+  private known = new Map<string, Known>();
   private curatedKeys = new Set<string>();
   private snapshot: Snapshot | null = null;
   private routeQueue = new Map<string, number>(); // callsign -> priority
   private weatherQueue = new Map<string, LatLonKey>(); // icao -> coords
-  private trackQueue = new Set<string>(); // icao24
-  private trackTried = new Set<string>();
-  private tracksToday = { day: "", count: 0 };
   private aircraftCache = new Map<string, Aircraft | null>();
-  /** Flights found via search, so detail() can serve them even when they're not curated. */
+  /** icao24 -> pinned-until (unix s), for searched flights. */
+  private pinned = new Map<string, number>();
   private searched = new Map<string, Flight>();
+  /**
+   * Callsigns whose cached route can never be curated (unknown, or shorter than MIN_ROUTE_KM).
+   * Most traffic is short-haul, so skipping these keeps rebuild() well under the CPU limit.
+   */
+  private neverCurated = new Set<string>();
   private adsbdbBackoffUntil = 0;
+  private creditsRemaining: number | null = null;
 
   private readonly fetchFn: typeof fetch;
   private readonly now: () => number;
@@ -80,51 +115,92 @@ export class Engine {
     return this.snapshot;
   }
 
-  hasStates(): boolean {
-    return this.states !== null;
+  knownCount(): number {
+    return this.known.size;
   }
 
-  /** Fetch global positions and record any take-offs seen since the last poll. */
-  async pollStates(): Promise<StatesResult> {
-    const res = await this.deps.opensky.states();
-    this.recordDepartures(res);
-    this.states = res;
+  /** Last fixes for the tracked flights, persisted so an evicted object wakes with a full globe. */
+  exportTracked(): Known[] {
+    return this.trackedIds().flatMap((id) => this.known.get(id) ?? []);
+  }
+
+  /** Restore persisted fixes, keep them curated, and rebuild from the cached routes and weather. */
+  importTracked(list: Known[]) {
+    for (const k of list) if (!this.known.has(k.s.icao24)) this.known.set(k.s.icao24, k);
+    for (const k of list) this.curatedKeys.add(hysteresisKey(k.s));
+    this.rebuild();
+  }
+
+  /** icao24s whose positions refreshTracked() updates: the curated set plus pinned searches. */
+  trackedIds(): string[] {
+    const nowS = this.nowS();
+    for (const [k, until] of this.pinned) if (until < nowS) this.pinned.delete(k);
+    const ids = new Set([...(this.snapshot?.flights.map((f) => f.icao24) ?? []), ...this.pinned.keys()]);
+    return [...ids].slice(0, MAX_TRACKED);
+  }
+
+  /** Fresh positions for the flights on the globe. Returns how many came back. */
+  async refreshTracked(): Promise<number> {
+    const ids = this.trackedIds();
+    if (ids.length === 0) return 0;
+    const res = await this.deps.opensky.states({ icao24: ids });
+    this.creditsRemaining = res.creditsRemaining;
+    for (const s of res.states) this.merge(s, res.time);
+    return res.states.length;
+  }
+
+  /**
+   * Discovery: fetch one region box. Returns the boxes to use in its place next sweep: itself, or
+   * two halves when it came back too full to parse comfortably within the CPU limit.
+   */
+  async pollTile(tile: Bbox): Promise<{ aircraft: number; next: Bbox[] }> {
+    const res = await this.deps.opensky.states({ bbox: tile });
+    this.creditsRemaining = res.creditsRemaining;
+    for (const s of res.states) this.merge(s, res.time);
+    this.expireKnown();
     this.deps.store.prune(this.nowS());
-    return res;
+    const next = res.states.length > SPLIT_AT ? splitTile(tile) : [tile];
+    if (next.length > 1) this.log(`tile ${tile.join(",")} had ${res.states.length} aircraft; splitting`);
+    return { aircraft: res.states.length, next };
   }
 
-  private recordDepartures(res: StatesResult) {
-    const onGround = new Set<string>();
-    for (const s of res.states) {
-      if (s.onGround) {
-        onGround.add(s.icao24);
-        continue;
-      }
-      if (s.lat == null || s.lon == null || this.deps.store.getDep(s.icao24)) continue;
-      const alt = s.baroAltM ?? s.geoAltM;
-      // Was on the ground last poll and airborne now: it took off within one poll interval.
-      if (this.onGroundPrev.has(s.icao24)) {
-        const t = this.states ? Math.round((this.states.time + res.time) / 2) : res.time;
-        this.deps.store.putDep(s.icao24, { t, lat: s.lat, lon: s.lon, source: "observed", at: res.time });
-        continue;
-      }
-      // First seen low and climbing: back out the climb time.
-      if (alt != null && alt < 1500 && (s.vRateMs ?? 0) > 2) {
-        const t = res.time - Math.round(alt / (s.vRateMs ?? 1));
-        this.deps.store.putDep(s.icao24, { t, lat: s.lat, lon: s.lon, source: "observed", at: res.time });
-      }
-    }
-    this.onGroundPrev = onGround;
+  private merge(s: StateVector, responseTime: number) {
+    if (s.onGround || s.lat == null || s.lon == null) return;
+    this.recordClimbDeparture(s, responseTime);
+    if (!this.isCandidate(s)) return;
+    this.known.set(s.icao24, { s, t: s.timePosition ?? responseTime });
+  }
+
+  /** An airliner caught low and climbing just took off: back out the climb time. */
+  private recordClimbDeparture(s: StateVector, t: number) {
+    const alt = s.baroAltM ?? s.geoAltM;
+    const vr = s.vRateMs ?? 0;
+    if (alt == null || alt >= 1500 || vr <= 2 || !isAirlineCallsign(s.callsign)) return;
+    if (this.deps.store.getDep(s.icao24)) return;
+    this.deps.store.putDep(s.icao24, {
+      t: t - Math.round(alt / vr),
+      lat: s.lat!,
+      lon: s.lon!,
+      source: "observed",
+      at: t,
+    });
+  }
+
+  private expireKnown() {
+    const nowS = this.nowS();
+    const tracked = new Set(this.trackedIds());
+    for (const [k, v] of this.known) if (nowS - v.t > KNOWN_TTL_S && !tracked.has(k)) this.known.delete(k);
   }
 
   /** Spend up to `budget.requests` outbound requests filling caches. */
-  async enrich(budget: EnrichBudget): Promise<TickStats> {
-    const stats: TickStats = { routeLookups: 0, routeHits: 0, weatherAirports: 0, tracks: 0, errors: [] };
+  async enrich(budget: EnrichBudget): Promise<StepStats> {
+    const stats: StepStats = { routeLookups: 0, routeHits: 0, weatherAirports: 0, errors: [] };
     let left = budget.requests;
 
     // 1. Weather: one request per 50 airports, so it's the cheapest way to unlock flights.
     if (this.weatherQueue.size > 0 && left > 0) {
       const locs = [...this.weatherQueue.values()].slice(0, 50 * Math.min(2, left));
+      left -= Math.ceil(locs.length / 50);
       try {
         const series = await fetchTempSeries(locs, this.fetchFn, this.now);
         for (const [icao, s] of series) {
@@ -135,46 +211,9 @@ export class Engine {
       } catch (e) {
         stats.errors.push(`weather: ${(e as Error).message}`);
       }
-      left -= Math.ceil(locs.length / 50);
     }
 
-    // 2. Departure tracks for curated flights still on estimated departure times.
-    const day = utcDay(this.nowS());
-    if (this.tracksToday.day !== day) this.tracksToday = { day, count: 0 };
-    const credits = this.states?.creditsRemaining ?? null;
-    const canTrack = () =>
-      left > 0 &&
-      stats.tracks < TRACKS_PER_TICK &&
-      this.tracksToday.count < TRACKS_PER_DAY &&
-      (credits == null || credits - stats.tracks * 4 > TRACK_CREDIT_RESERVE);
-    for (const icao24 of [...this.trackQueue]) {
-      if (!canTrack()) break;
-      this.trackQueue.delete(icao24);
-      this.trackTried.add(icao24);
-      left--;
-      stats.tracks++;
-      this.tracksToday.count++;
-      try {
-        const tr = await this.deps.opensky.liveTrack(icao24);
-        const first = tr?.path[0];
-        if (tr && first && first[1] != null && first[2] != null) {
-          const lowStart = first[3] == null || first[3] < 3000;
-          if (lowStart) {
-            this.deps.store.putDep(icao24, {
-              t: first[0],
-              lat: first[1],
-              lon: first[2],
-              source: "track",
-              at: this.nowS(),
-            });
-          }
-        }
-      } catch (e) {
-        stats.errors.push(`track ${icao24}: ${(e as Error).message}`);
-      }
-    }
-
-    // 3. Routes, fastest aircraft first (long-haul jets cruise fastest), in parallel batches.
+    // 2. Routes, fastest aircraft first (long-haul jets cruise fastest), in parallel batches.
     if (left > 0 && this.now() >= this.adsbdbBackoffUntil) {
       const batch = [...this.routeQueue.entries()]
         .sort((a, b) => b[1] - a[1])
@@ -190,6 +229,7 @@ export class Engine {
           if (r.status === "fulfilled") {
             this.deps.store.putRoute(cs, { route: r.value, at: this.nowS() });
             this.routeQueue.delete(cs);
+            this.neverCurated.delete(cs);
             if (r.value) stats.routeHits++;
           } else {
             const status = (r.reason as { status?: number }).status;
@@ -207,87 +247,72 @@ export class Engine {
     return stats;
   }
 
-  /** Join positions with cached routes, weather and departures. No network. */
-  rebuild(pollMs = 0): Snapshot | null {
-    if (!this.states) return null;
+  /** Join known aircraft with cached routes, weather and departures. No network. */
+  rebuild(stepMs = 0): Snapshot {
     const { store } = this.deps;
     const nowS = this.nowS();
-    const eligible: Flight[] = [];
-    let airborne = 0;
-    let candidates = 0;
+    const eligible: Candidate[] = [];
     let routed = 0;
     this.routeQueue.clear();
     this.weatherQueue.clear();
 
-    for (const s of this.states.states) {
-      if (s.onGround) continue;
-      airborne++;
-      if (!this.isCandidate(s)) continue;
-      candidates++;
-      const entry = store.getRoute(s.callsign);
+    for (const k of this.known.values()) {
+      const cs = k.s.callsign;
+      if (this.neverCurated.has(cs)) continue;
+      const entry = store.getRoute(cs);
       if (!entry || nowS - entry.at > ROUTE_TTL_S) {
-        this.routeQueue.set(s.callsign, s.velocityMs ?? 0);
+        this.routeQueue.set(cs, k.s.velocityMs ?? 0);
         continue;
       }
-      if (!entry.route) continue;
+      if (!entry.route || distanceKm(entry.route.origin, entry.route.dest) < MIN_ROUTE_KM) {
+        this.neverCurated.add(cs);
+        continue;
+      }
       routed++;
-      const f = this.buildFlight(s, entry.route, true);
-      if (f) eligible.push(f);
+      const c = this.evaluate(k, entry.route, true);
+      if (c) eligible.push(c);
     }
 
-    const flights = curate(eligible, this.curatedKeys);
-    this.curatedKeys = new Set(flights.map(hysteresisKey));
-    for (const f of flights) {
-      if (f.flags.depTimeSource === "estimated" && !this.trackTried.has(f.icao24)) this.trackQueue.add(f.icao24);
-    }
-    for (const k of this.trackQueue) if (!flights.some((f) => f.icao24 === k)) this.trackQueue.delete(k);
-
+    if (this.neverCurated.size > 50_000) this.neverCurated.clear(); // routes expire after 24 h
+    // Score cheap candidates; only the ~150 winners become full Flight objects. Building one per
+    // eligible aircraft every run cost more in garbage collection than everything else combined.
+    const chosen = curate(eligible, this.curatedKeys);
+    this.curatedKeys = new Set(chosen.map(hysteresisKey));
     this.snapshot = {
       v: 1,
       generatedAt: nowS,
-      statesTime: this.states.time,
-      flights,
-      meta: { airborne, candidates, routed, creditsRemaining: this.states.creditsRemaining, pollMs },
+      flights: chosen.map((c) => this.materialize(c)),
+      meta: { known: this.known.size, routed, creditsRemaining: this.creditsRemaining, stepMs },
     };
     return this.snapshot;
   }
 
   private isCandidate(s: StateVector): boolean {
     const alt = s.baroAltM ?? s.geoAltM ?? 0;
-    return (
-      s.lat != null &&
-      s.lon != null &&
-      alt >= MIN_CANDIDATE_ALT_M &&
-      (s.velocityMs ?? 0) >= MIN_CANDIDATE_GS_MS &&
-      isAirlineCallsign(s.callsign)
-    );
+    return alt >= MIN_CANDIDATE_ALT_M && (s.velocityMs ?? 0) >= MIN_CANDIDATE_GS_MS && isAirlineCallsign(s.callsign);
   }
 
   /**
-   * Build a Flight from a state vector and route, or null when the route is implausible or weather
-   * isn't cached yet (in which case the airports are queued). `requirePlausible` is false for
-   * search, where a user-picked short-haul flight should still show.
+   * Project a known aircraft along its route to now and look up its temperatures. null when the
+   * route is implausible or weather isn't cached yet (then its airports are queued). Curated rules
+   * are relaxed for search, where a user-picked short-haul flight should still show.
    */
-  private buildFlight(
-    s: StateVector,
-    route: { origin: Airport; dest: Airport; callsignIata: string | null; airline: Flight["airline"] },
-    curatedRules: boolean,
-  ): Flight | null {
-    const pos = { lat: s.lat!, lon: s.lon! };
+  private evaluate(k: Known, route: Route, curatedRules: boolean): Candidate | null {
+    const { s } = k;
+    const nowS = this.nowS();
     const distKm = distanceKm(route.origin, route.dest);
-    const { crossKm, alongKm } = trackOffsets(route.origin, route.dest, pos);
-    if (curatedRules && !checkPlausible(distKm, crossKm, alongKm).ok) return null;
-    if (!curatedRules && Math.abs(crossKm) > 600) return null;
-
-    const t = this.states?.time ?? this.nowS();
+    const { crossKm, alongKm } = trackOffsets(route.origin, route.dest, { lat: s.lat!, lon: s.lon! });
     const gs = s.velocityMs ?? 0;
-    const flownKm = Math.min(distKm, Math.max(0, alongKm));
-    const eta = estimateEta(t, distKm - flownKm, gs);
+    const ageS = Math.max(0, nowS - k.t);
+    const projAlong = alongKm + (gs * ageS) / 1000;
+    if (curatedRules && !checkPlausible(distKm, crossKm, projAlong).ok) return null;
+    if (!curatedRules && (Math.abs(crossKm) > 600 || projAlong > distKm)) return null;
 
+    const flownKm = Math.min(distKm, Math.max(0, projAlong));
+    const eta = estimateEta(nowS, distKm - flownKm, gs);
     const dep = this.deps.store.getDep(s.icao24);
-    const depValid = dep && distanceKm(dep, route.origin) <= DEP_MATCH_KM && dep.t < t;
-    const depTime = depValid ? dep.t : estimateDeparture(t, flownKm, gs);
-    const depTimeSource = depValid ? dep.source : "estimated";
+    const depObserved = !!dep && dep.t < k.t && distanceKm(dep, route.origin) <= DEP_MATCH_KM;
+    const depTime = depObserved ? dep.t : estimateDeparture(k.t, Math.max(0, alongKm), gs);
 
     const ow = this.weatherFor(route.origin);
     const dw = this.weatherFor(route.dest);
@@ -295,9 +320,21 @@ export class Engine {
     const depTempC = tempAt(ow, depTime);
     const arrTempC = tempAt(dw, eta);
     if (depTempC == null || arrTempC == null) return null;
-
     return {
-      id: `${s.icao24}-${utcDay(depTime)}`,
+      k, route, ow, dw, distKm, flownKm, eta, depTime, depObserved, depTempC, arrTempC, ageS,
+      icao24: s.icao24,
+      callsign: s.callsign,
+      pos: { lon: s.lon! },
+    };
+  }
+
+  private materialize(c: Candidate): Flight {
+    const { k, route, ow, dw } = c;
+    const { s } = k;
+    // A fresh fix is shown as-is; an older one is advanced along the route.
+    const pos = c.ageS < 60 ? { lat: s.lat!, lon: s.lon! } : interpolate(route.origin, route.dest, c.flownKm / c.distKm);
+    return {
+      id: `${s.icao24}-${utcDay(c.depTime)}`,
       icao24: s.icao24,
       callsign: s.callsign,
       flightNo: route.callsignIata,
@@ -305,21 +342,22 @@ export class Engine {
       origin: { ...route.origin, tz: ow.tz, utcOffsetS: ow.utcOffsetS },
       dest: { ...route.dest, tz: dw.tz, utcOffsetS: dw.utcOffsetS },
       pos: {
-        lat: pos.lat,
-        lon: pos.lon,
+        lat: Math.round(pos.lat * 1e4) / 1e4,
+        lon: Math.round(pos.lon * 1e4) / 1e4,
         altM: Math.round(s.baroAltM ?? s.geoAltM ?? 0),
-        gsMs: Math.round(gs * 10) / 10,
+        gsMs: Math.round((s.velocityMs ?? 0) * 10) / 10,
         trackDeg: Math.round((s.trackDeg ?? 0) * 10) / 10,
         vRateMs: Math.round((s.vRateMs ?? 0) * 10) / 10,
-        t: s.timePosition ?? t,
+        t: this.nowS(),
+        fixT: k.t,
       },
-      distKm: Math.round(distKm),
-      flownKm: Math.round(flownKm),
-      depTime,
-      eta,
-      depTempC,
-      arrTempC,
-      flags: { depTimeSource },
+      distKm: Math.round(c.distKm),
+      flownKm: Math.round(c.flownKm),
+      depTime: c.depTime,
+      eta: c.eta,
+      depTempC: c.depTempC,
+      arrTempC: c.arrTempC,
+      flags: { depTimeSource: c.depObserved ? "observed" : "estimated" },
     };
   }
 
@@ -333,12 +371,12 @@ export class Engine {
   }
 
   /**
-   * Find any airborne flight by flight number ("BA117") or callsign ("BAW117").
-   * Spends at most 1 adsbdb call and 1 Open-Meteo call.
+   * Find a known airborne flight by flight number ("BA117") or callsign ("BAW117") and pin it so
+   * its position keeps refreshing. Spends at most 1 adsbdb call and 1 Open-Meteo call.
    */
   async search(query: string): Promise<Flight | null> {
     const q = query.toUpperCase().replace(/\s+/g, "");
-    if (!/^[A-Z0-9]{3,8}$/.test(q) || !this.states) return null;
+    if (!/^[A-Z0-9]{3,8}$/.test(q)) return null;
     const { store } = this.deps;
 
     let entry = store.getRoute(q);
@@ -347,8 +385,8 @@ export class Engine {
       store.putRoute(q, entry);
     }
     const icao = entry.route?.callsignIcao ?? q;
-    const s = this.states.states.find((x) => x.callsign === icao && !x.onGround && x.lat != null);
-    if (!s || !entry.route) return null;
+    const k = [...this.known.values()].find((x) => x.s.callsign === icao);
+    if (!k || !entry.route) return null;
     if (icao !== q) store.putRoute(icao, entry);
 
     const route = entry.route;
@@ -359,10 +397,12 @@ export class Engine {
         this.fetchFn,
         this.now,
       );
-      for (const [k, v] of series) store.putWeather(k, v);
+      for (const [key, v] of series) store.putWeather(key, v);
     }
-    const f = this.buildFlight(s, route, false);
+    const c = this.evaluate(k, route, false);
+    const f = c ? this.materialize(c) : null;
     if (f) {
+      this.pinned.set(f.icao24, this.nowS() + PIN_TTL_S);
       if (this.searched.size > 200) this.searched.clear();
       this.searched.set(f.id, f);
     }
@@ -387,6 +427,6 @@ export class Engine {
   }
 
   queueSizes() {
-    return { routes: this.routeQueue.size, weather: this.weatherQueue.size, tracks: this.trackQueue.size };
+    return { routes: this.routeQueue.size, weather: this.weatherQueue.size };
   }
 }

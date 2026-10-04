@@ -15,21 +15,30 @@ Types live in `shared/types.ts`.
 
 ## How it runs
 
-One Durable Object (`SkyState`, name `global`) runs an alarm every 30 s. Each run stays under the
-free plan's ~50 outbound requests:
+One Durable Object (`SkyState`, name `global`) runs an alarm every 30 s. Each run stays within the
+Workers free plan (10 ms CPU, ~50 outbound requests) and makes at most one OpenSky call:
 
-- at most every 120 s (timestamp persisted): one OpenSky worldwide poll, which also records take-offs
-- every run: fill caches (Open-Meteo weather, OpenSky departure tracks, adsbdb routes), then
-  rebuild the snapshot from cache with no network
+- **track** (every 5 min): one icao24-filtered call refreshes the ~150 flights on the globe
+- **discover** (one region box per run, full sweep ~75 min): finds new long-haul flights; boxes
+  that come back with more than 900 aircraft split in two (`src/core/tiles.ts`)
+- **enrich** (every run): fills caches a batch at a time (Open-Meteo weather, adsbdb routes)
+- **rebuild** (when something changed): projects every known flight along its route to now,
+  curates the best 150 and builds the snapshot. No network, ~2 ms
 
-A cron trigger every 5 minutes restarts the alarm loop if it ever stops.
+Between fixes, positions are extrapolated along each flight's great circle at its last ground
+speed (`pos.t` is the projected time, `pos.fixT` the last real fix). Scheduler timestamps are
+persisted, so an evicted object can never call OpenSky faster than planned. A cron trigger every
+5 minutes restarts the alarm loop if it ever stops.
+
+OpenSky budget: ~1,150 credits/day tracking + ~2,100 discovery, of 4,000. Below 800 remaining,
+everything slows 3x.
 
 ## Develop
 
 ```sh
 cp .dev.vars.example .dev.vars     # add OpenSky API client credentials
 npm test                           # unit + engine tests with fake upstreams
-npm run live -- 8                  # real engine against live APIs from Node, 8 ticks
+npm run live -- 30                 # real engine against live APIs from Node: a warm-up sweep + one tracked refresh
 npm run dev                        # wrangler dev (workerd)
 ```
 

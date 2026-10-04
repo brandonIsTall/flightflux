@@ -1,10 +1,10 @@
 // One Durable Object instance ("global") owns the poller and serves every API request.
 
 import { DurableObject } from "cloudflare:workers";
-import type { Snapshot } from "../../shared/types";
 import { AdsbdbClient } from "./core/adsbdb";
-import { Engine } from "./core/engine";
-import { OpenSkyClient } from "./core/opensky";
+import { Engine, type Known } from "./core/engine";
+import { OpenSkyClient, type Bbox } from "./core/opensky";
+import { INITIAL_TILES } from "./core/tiles";
 import { SqlStore } from "./sql-store";
 
 export interface Env {
@@ -14,22 +14,31 @@ export interface Env {
 }
 
 export const TICK_MS = 30_000;
-/**
- * Positions are fetched at most this often: 720 polls x 4 credits = 2,880 of the 4,000 daily
- * OpenSky credits, leaving room for departure tracks. Persisted, so an evicted and recreated
- * object can never poll faster than this.
- */
-export const POLL_INTERVAL_MS = 120_000;
+/** Positions for the flights on the globe: 288 calls x 4 credits = ~1,150 credits/day. */
+export const TRACK_INTERVAL_MS = 5 * 60_000;
+/** One discovery sweep of every region box: ~108 credits each, ~19 a day = ~2,100 credits/day. */
+export const SWEEP_MS = 75 * 60_000;
+/** Below this many OpenSky credits, slow everything down 3x rather than run dry. */
+const LOW_CREDITS = 800;
+const PERSIST_MS = 5 * 60_000;
 /** Workers free plan allows 50 subrequests per invocation; leave headroom. */
 const REQUESTS_PER_TICK = 44;
 const SEARCHES_PER_MIN = 10;
 
+/** Scheduler state, persisted so a recreated object can never call OpenSky faster than planned. */
+interface Sched {
+  lastTrackAt: number;
+  lastTileAt: number;
+  lastPersistAt: number;
+  tileIdx: number;
+  sweeps: number;
+  tiles: Bbox[];
+}
+
 export class SkyState extends DurableObject<Env> {
   private engine: Engine;
-  private tick = 0;
-  private lastPollAt = 0;
+  private sched: Sched = { lastTrackAt: 0, lastTileAt: 0, lastPersistAt: 0, tileIdx: 0, sweeps: 0, tiles: INITIAL_TILES };
   private searchHits = new Map<string, { minute: number; count: number }>();
-  private restored: Snapshot | null = null;
 
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
@@ -40,43 +49,71 @@ export class SkyState extends DurableObject<Env> {
       log: (m) => console.log(m),
     });
     ctx.blockConcurrencyWhile(async () => {
-      this.restored = (await ctx.storage.get<Snapshot>("snapshot")) ?? null;
-      this.lastPollAt = (await ctx.storage.get<number>("lastPollAt")) ?? 0;
+      const stored = await ctx.storage.get(["sched", "tracked"]);
+      const sched = stored.get("sched") as Sched | undefined;
+      if (sched) this.sched = sched;
+      this.engine.importTracked((stored.get("tracked") as Known[] | undefined) ?? []);
     });
   }
 
-  /** Start the alarm loop if it isn't running. Called by the cron trigger and on first request. */
+  /** Start the alarm loop if it isn't running. Called by the cron trigger and on requests. */
   async ensureRunning(): Promise<void> {
     if ((await this.ctx.storage.getAlarm()) == null) await this.ctx.storage.setAlarm(Date.now());
   }
 
   async alarm(): Promise<void> {
-    // Schedule the next tick first so an exception can't stop the loop.
+    // Schedule the next run first so an exception can't stop the loop.
     await this.ctx.storage.setAlarm(Date.now() + TICK_MS);
-    const started = Date.now();
+    const now = Date.now();
+    const s = this.sched;
+    const slow = (this.engine.getSnapshot()?.meta.creditsRemaining ?? Infinity) < LOW_CREDITS ? 3 : 1;
+    // First sweep runs one box per tick so a fresh deploy fills the globe in ~15 min.
+    const tileEvery = s.sweeps === 0 ? TICK_MS - 2_000 : (SWEEP_MS / s.tiles.length) * slow;
+    let step = "enrich";
     let budget = REQUESTS_PER_TICK;
     try {
-      const polled = started - this.lastPollAt >= POLL_INTERVAL_MS - 5_000;
-      if (polled) {
-        // Record the attempt before calling out, so a failing poll can't be retried every tick.
-        this.lastPollAt = started;
-        await this.ctx.storage.put("lastPollAt", started);
-        await this.engine.pollStates();
-        budget -= 2; // states + possible token refresh
+      // At most one OpenSky call per run, recorded before the call so failures can't retry hot.
+      if (this.engine.trackedIds().length > 0 && now - s.lastTrackAt >= TRACK_INTERVAL_MS * slow) {
+        s.lastTrackAt = now;
+        await this.ctx.storage.put("sched", s);
+        step = "track";
+        step = `track ${await this.engine.refreshTracked()}`;
+        budget -= 2;
+      } else if (now - s.lastTileAt >= tileEvery) {
+        const idx = s.tileIdx % s.tiles.length;
+        const tile = s.tiles[idx]!;
+        s.lastTileAt = now;
+        s.tileIdx = idx + 1;
+        if (s.tileIdx >= s.tiles.length) {
+          s.tileIdx = 0;
+          s.sweeps++;
+        }
+        await this.ctx.storage.put("sched", s);
+        step = `tile ${idx}`;
+        const { aircraft, next } = await this.engine.pollTile(tile);
+        if (next.length > 1) {
+          s.tiles = [...s.tiles.slice(0, idx), ...next, ...s.tiles.slice(idx + 1)];
+          if (s.tileIdx > idx) s.tileIdx += next.length - 1;
+          await this.ctx.storage.put("sched", s);
+        }
+        step = `tile ${idx}/${s.tiles.length} (${aircraft})`;
+        budget -= 2;
       }
-      if (!this.engine.hasStates()) return; // recreated mid-interval: wait for the next poll
-      this.engine.rebuild();
       const stats = await this.engine.enrich({ requests: budget });
-      const snap = this.engine.rebuild(Date.now() - started);
-      // Persist once per poll interval; this copy only serves requests after an eviction.
-      if (snap && polled) await this.ctx.storage.put("snapshot", snap);
+      // Rebuilding costs ~2 ms of the 10 ms CPU budget; skip it when nothing new arrived.
+      const changed = step !== "enrich" || stats.routeHits > 0 || stats.weatherAirports > 0;
+      const snap = changed ? this.engine.rebuild(Date.now() - now) : this.engine.getSnapshot();
+      if (now - s.lastPersistAt >= PERSIST_MS) {
+        s.lastPersistAt = now;
+        // Last fixes for the shown flights (~40 KB), not the 118 KB snapshot: on wake the engine
+        // rebuilds from these plus the routes and weather already in SQLite.
+        await this.ctx.storage.put({ sched: s, tracked: this.engine.exportTracked() });
+      }
       console.log(
-        JSON.stringify({ tick: this.tick, flights: snap?.flights.length, ...stats, queues: this.engine.queueSizes() }),
+        JSON.stringify({ step, rebuilt: changed, flights: snap?.flights.length, known: snap?.meta.known, ...stats, queues: this.engine.queueSizes() }),
       );
     } catch (e) {
-      console.error(`tick ${this.tick} failed: ${(e as Error).message}`);
-    } finally {
-      this.tick++;
+      console.error(`${step} failed: ${(e as Error).message}`);
     }
   }
 
@@ -86,8 +123,8 @@ export class SkyState extends DurableObject<Env> {
     const path = url.pathname;
 
     if (path === "/api/snapshot") {
-      const snap = this.engine.getSnapshot() ?? this.restored;
-      if (!snap) return json({ error: "warming up" }, 503, { "Retry-After": "30" });
+      const snap = this.engine.getSnapshot();
+      if (!snap || snap.flights.length === 0) return json({ error: "warming up" }, 503, { "Retry-After": "60" });
       return json(snap, 200, { "Cache-Control": "public, max-age=15, s-maxage=30" });
     }
 

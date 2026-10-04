@@ -12,7 +12,7 @@ function flight(i: number, lon: number, swing: number): Flight {
     airline: null,
     origin: ap,
     dest: ap,
-    pos: { lat: 0, lon, altM: 11000, gsMs: 250, trackDeg: 90, vRateMs: 0, t: 0 },
+    pos: { lat: 0, lon, altM: 11000, gsMs: 250, trackDeg: 90, vRateMs: 0, t: 0, fixT: 0 },
     distKm: 6000,
     flownKm: 1000,
     depTime: 0,
