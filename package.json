@@ -1,7 +1,7 @@
 {
   "name": "flightflux",
   "private": true,
-  "workspaces": ["worker"],
+  "workspaces": ["worker", "web"],
   "scripts": {
     "test": "npm test --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present"

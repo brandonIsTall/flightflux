@@ -1,0 +1,7812 @@
+{
+ "v": 1,
+ "generatedAt": 1791083554,
+ "flights": [
+  {
+   "id": "e07585-20261004",
+   "icao24": "e07585",
+   "callsign": "ARG1365",
+   "flightNo": "AR1365",
+   "airline": {
+    "name": "Aerolineas Argentinas",
+    "icao": "ARG",
+    "iata": "AR"
+   },
+   "origin": {
+    "icao": "SPJC",
+    "iata": "LIM",
+    "name": "Jorge Chávez International Airport",
+    "city": "Lima",
+    "country": "Peru",
+    "lat": -12.0219,
+    "lon": -77.114305,
+    "tz": "America/Lima",
+    "utcOffsetS": -18000
+   },
+   "dest": {
+    "icao": "SAEZ",
+    "iata": "EZE",
+    "name": "Ministro Pistarini International Airport",
+    "city": "Buenos Aires (Ezeiza)",
+    "country": "Argentina",
+    "lat": -34.8222,
+    "lon": -58.5358,
+    "tz": "America/Argentina/Buenos_Aires",
+    "utcOffsetS": -10800
+   },
+   "pos": {
+    "lat": -14.7919,
+    "lon": -75.2202,
+    "altM": 10546,
+    "gsMs": 255.9,
+    "trackDeg": 140.7,
+    "vRateMs": 4.6,
+    "t": 1791083554,
+    "fixT": 1791083549
+   },
+   "distKm": 3153,
+   "flownKm": 370,
+   "depTime": 1791081612,
+   "eta": 1791095329,
+   "depTempC": 21.9,
+   "arrTempC": 9.2,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "e0b149-20261004",
+   "icao24": "e0b149",
+   "callsign": "ARG1361",
+   "flightNo": "AR1361",
+   "airline": {
+    "name": "Aerolineas Argentinas",
+    "icao": "ARG",
+    "iata": "AR"
+   },
+   "origin": {
+    "icao": "SKBO",
+    "iata": "BOG",
+    "name": "El Dorado International Airport",
+    "city": "Bogota",
+    "country": "Colombia",
+    "lat": 4.70159,
+    "lon": -74.1469,
+    "tz": "America/Bogota",
+    "utcOffsetS": -18000
+   },
+   "dest": {
+    "icao": "SABE",
+    "iata": "AEP",
+    "name": "Jorge Newbery Airpark",
+    "city": "Buenos Aires",
+    "country": "Argentina",
+    "lat": -34.5592,
+    "lon": -58.4156,
+    "tz": "America/Argentina/Buenos_Aires",
+    "utcOffsetS": -10800
+   },
+   "pos": {
+    "lat": -6.1723,
+    "lon": -70.2966,
+    "altM": 10668,
+    "gsMs": 246,
+    "trackDeg": 160.2,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 4667,
+   "flownKm": 1282,
+   "depTime": 1791077331,
+   "eta": 1791098208,
+   "depTempC": 13.3,
+   "arrTempC": 10.9,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "e8048a-20261003",
+   "icao24": "e8048a",
+   "callsign": "LAN777",
+   "flightNo": "LA777",
+   "airline": {
+    "name": "LAN Airlines",
+    "icao": "LAN",
+    "iata": "LA"
+   },
+   "origin": {
+    "icao": "SBGL",
+    "iata": "GIG",
+    "name": "Rio Galeão – Tom Jobim International Airport",
+    "city": "Rio De Janeiro",
+    "country": "Brazil",
+    "lat": -22.809999,
+    "lon": -43.250557,
+    "tz": "America/Sao_Paulo",
+    "utcOffsetS": -10800
+   },
+   "dest": {
+    "icao": "SCEL",
+    "iata": "SCL",
+    "name": "Comodoro Arturo Merino Benítez International Airport",
+    "city": "Santiago",
+    "country": "Chile",
+    "lat": -33.393001556396484,
+    "lon": -70.78579711914062,
+    "tz": "America/Santiago",
+    "utcOffsetS": -10800
+   },
+   "pos": {
+    "lat": -31.7749,
+    "lon": -64.9084,
+    "altM": 10980,
+    "gsMs": 213.1,
+    "trackDeg": 283.4,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083414
+   },
+   "distKm": 2934,
+   "flownKm": 2355,
+   "depTime": 1791070717,
+   "eta": 1791087172,
+   "depTempC": 20.3,
+   "arrTempC": 10.3,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "e8046a-20261003",
+   "icao24": "e8046a",
+   "callsign": "LPE2461",
+   "flightNo": "LP2461",
+   "airline": {
+    "name": "LAN Peru",
+    "icao": "LPE",
+    "iata": "LP"
+   },
+   "origin": {
+    "icao": "MDPC",
+    "iata": "PUJ",
+    "name": "Punta Cana International Airport",
+    "city": "Punta Cana",
+    "country": "Dominican Republic",
+    "lat": 18.567399978599997,
+    "lon": -68.36340332030001,
+    "tz": "America/Santo_Domingo",
+    "utcOffsetS": -14400
+   },
+   "dest": {
+    "icao": "SPJC",
+    "iata": "LIM",
+    "name": "Jorge Chávez International Airport",
+    "city": "Lima",
+    "country": "Peru",
+    "lat": -12.0219,
+    "lon": -77.114305,
+    "tz": "America/Lima",
+    "utcOffsetS": -18000
+   },
+   "pos": {
+    "lat": -10.1508,
+    "lon": -76.5734,
+    "altM": 10980,
+    "gsMs": 227.8,
+    "trackDeg": 189.2,
+    "vRateMs": 0.3,
+    "t": 1791083554,
+    "fixT": 1791083549
+   },
+   "distKm": 3534,
+   "flownKm": 3318,
+   "depTime": 1791066701,
+   "eta": 1791085404,
+   "depTempC": 27.1,
+   "arrTempC": 21.6,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "a3c3e6-20261003",
+   "icao24": "a3c3e6",
+   "callsign": "UAL854",
+   "flightNo": "UA854",
+   "airline": {
+    "name": "United Airlines",
+    "icao": "UAL",
+    "iata": "UA"
+   },
+   "origin": {
+    "icao": "KIAH",
+    "iata": "IAH",
+    "name": "George Bush Intercontinental Houston Airport",
+    "city": "Houston",
+    "country": "United States",
+    "lat": 29.984399795532227,
+    "lon": -95.34140014648438,
+    "tz": "America/Chicago",
+    "utcOffsetS": -18000
+   },
+   "dest": {
+    "icao": "SPJC",
+    "iata": "LIM",
+    "name": "Jorge Chávez International Airport",
+    "city": "Lima",
+    "country": "Peru",
+    "lat": -12.0219,
+    "lon": -77.114305,
+    "tz": "America/Lima",
+    "utcOffsetS": -18000
+   },
+   "pos": {
+    "lat": -7.3133,
+    "lon": -79.0579,
+    "altM": 11278,
+    "gsMs": 247.5,
+    "trackDeg": 150.1,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 5062,
+   "flownKm": 4497,
+   "depTime": 1791062608,
+   "eta": 1791086738,
+   "depTempC": 29.9,
+   "arrTempC": 21.5,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "a75a10-20261004",
+   "icao24": "a75a10",
+   "callsign": "FDX3875",
+   "flightNo": "FX3875",
+   "airline": {
+    "name": "FedEx Express",
+    "icao": "FDX",
+    "iata": "FX"
+   },
+   "origin": {
+    "icao": "KOAK",
+    "iata": "OAK",
+    "name": "Metropolitan Oakland International Airport",
+    "city": "Oakland",
+    "country": "United States",
+    "lat": 37.721298,
+    "lon": -122.221001,
+    "tz": "America/Los_Angeles",
+    "utcOffsetS": -25200
+   },
+   "dest": {
+    "icao": "PHNL",
+    "iata": "HNL",
+    "name": "Daniel K Inouye International Airport",
+    "city": "Honolulu",
+    "country": "United States",
+    "lat": 21.32062,
+    "lon": -157.924228,
+    "tz": "Pacific/Honolulu",
+    "utcOffsetS": -36000
+   },
+   "pos": {
+    "lat": 37.3788,
+    "lon": -123.5298,
+    "altM": 8420,
+    "gsMs": 253.3,
+    "trackDeg": 268,
+    "vRateMs": 14,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 3873,
+   "flownKm": 122,
+   "depTime": 1791082709,
+   "eta": 1791099268,
+   "depTempC": 23.1,
+   "arrTempC": 24.1,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "780a97-20261003",
+   "icao24": "780a97",
+   "callsign": "CPA880",
+   "flightNo": "CX880",
+   "airline": {
+    "name": "Cathay Pacific",
+    "icao": "CPA",
+    "iata": "CX"
+   },
+   "origin": {
+    "icao": "VHHH",
+    "iata": "HKG",
+    "name": "Hong Kong International Airport",
+    "city": "Hong Kong",
+    "country": "Hong Kong",
+    "lat": 22.308901,
+    "lon": 113.915001,
+    "tz": "Asia/Hong_Kong",
+    "utcOffsetS": 28800
+   },
+   "dest": {
+    "icao": "KLAX",
+    "iata": "LAX",
+    "name": "Los Angeles International Airport",
+    "city": "Los Angeles",
+    "country": "United States",
+    "lat": 33.942501,
+    "lon": -118.407997,
+    "tz": "America/Los_Angeles",
+    "utcOffsetS": -25200
+   },
+   "pos": {
+    "lat": 38.8372,
+    "lon": -126.0474,
+    "altM": 11278,
+    "gsMs": 235.5,
+    "trackDeg": 131.1,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 11664,
+   "flownKm": 10791,
+   "depTime": 1791031193,
+   "eta": 1791088162,
+   "depTempC": 28,
+   "arrTempC": 24.6,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "406a35-20261004",
+   "icao24": "406a35",
+   "callsign": "BAW6B",
+   "flightNo": "BA6B",
+   "airline": {
+    "name": "British Airways",
+    "icao": "BAW",
+    "iata": "BA"
+   },
+   "origin": {
+    "icao": "KSFO",
+    "iata": "SFO",
+    "name": "San Francisco International Airport",
+    "city": "San Francisco",
+    "country": "United States",
+    "lat": 37.61899948120117,
+    "lon": -122.375,
+    "tz": "America/Los_Angeles",
+    "utcOffsetS": -25200
+   },
+   "dest": {
+    "icao": "EGLL",
+    "iata": "LHR",
+    "name": "London Heathrow Airport",
+    "city": "London",
+    "country": "United Kingdom",
+    "lat": 51.4706,
+    "lon": -0.461941,
+    "tz": "Europe/London",
+    "utcOffsetS": 3600
+   },
+   "pos": {
+    "lat": 38.6115,
+    "lon": -121.5543,
+    "altM": 7559,
+    "gsMs": 253.2,
+    "trackDeg": 53.2,
+    "vRateMs": 7.8,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 8616,
+   "flownKm": 132,
+   "depTime": 1791082664,
+   "eta": 1791117961,
+   "depTempC": 25,
+   "arrTempC": 19.7,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "a31a54-20261004",
+   "icao24": "a31a54",
+   "callsign": "UAL926",
+   "flightNo": "UA926",
+   "airline": {
+    "name": "United Airlines",
+    "icao": "UAL",
+    "iata": "UA"
+   },
+   "origin": {
+    "icao": "KSFO",
+    "iata": "SFO",
+    "name": "San Francisco International Airport",
+    "city": "San Francisco",
+    "country": "United States",
+    "lat": 37.61899948120117,
+    "lon": -122.375,
+    "tz": "America/Los_Angeles",
+    "utcOffsetS": -25200
+   },
+   "dest": {
+    "icao": "EDDF",
+    "iata": "FRA",
+    "name": "Frankfurt am Main Airport",
+    "city": "Frankfurt am Main",
+    "country": "Germany",
+    "lat": 50.033333,
+    "lon": 8.570556,
+    "tz": "Europe/Berlin",
+    "utcOffsetS": 7200
+   },
+   "pos": {
+    "lat": 39.1176,
+    "lon": -121.2868,
+    "altM": 8435,
+    "gsMs": 268.4,
+    "trackDeg": 53.4,
+    "vRateMs": 3.9,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 9149,
+   "flownKm": 192,
+   "depTime": 1791082443,
+   "eta": 1791117821,
+   "depTempC": 25,
+   "arrTempC": 20.4,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "76cdb7-20261003",
+   "icao24": "76cdb7",
+   "callsign": "SIA38",
+   "flightNo": "SQ38",
+   "airline": {
+    "name": "Singapore Airlines",
+    "icao": "SIA",
+    "iata": "SQ"
+   },
+   "origin": {
+    "icao": "WSSS",
+    "iata": "SIN",
+    "name": "Singapore Changi Airport",
+    "city": "Singapore",
+    "country": "Singapore",
+    "lat": 1.35019,
+    "lon": 103.994003,
+    "tz": "Asia/Singapore",
+    "utcOffsetS": 28800
+   },
+   "dest": {
+    "icao": "KLAX",
+    "iata": "LAX",
+    "name": "Los Angeles International Airport",
+    "city": "Los Angeles",
+    "country": "United States",
+    "lat": 33.942501,
+    "lon": -118.407997,
+    "tz": "America/Los_Angeles",
+    "utcOffsetS": -25200
+   },
+   "pos": {
+    "lat": 35.6618,
+    "lon": -121.8012,
+    "altM": 12497,
+    "gsMs": 260.1,
+    "trackDeg": 118.3,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 14102,
+   "flownKm": 13738,
+   "depTime": 1791023236,
+   "eta": 1791085854,
+   "depTempC": 30,
+   "arrTempC": 25,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "a5a4c1-20261004",
+   "icao24": "a5a4c1",
+   "callsign": "AAL684P",
+   "flightNo": "AA684P",
+   "airline": {
+    "name": "American Airlines",
+    "icao": "AAL",
+    "iata": "AA"
+   },
+   "origin": {
+    "icao": "PHLI",
+    "iata": "LIH",
+    "name": "Lihue Airport",
+    "city": "Lihue",
+    "country": "United States",
+    "lat": 21.97599983215332,
+    "lon": -159.33900451660156,
+    "tz": "Pacific/Honolulu",
+    "utcOffsetS": -36000
+   },
+   "dest": {
+    "icao": "KPHX",
+    "iata": "PHX",
+    "name": "Phoenix Sky Harbor International Airport",
+    "city": "Phoenix",
+    "country": "United States",
+    "lat": 33.435302,
+    "lon": -112.005905,
+    "tz": "America/Phoenix",
+    "utcOffsetS": -25200
+   },
+   "pos": {
+    "lat": 22.9693,
+    "lon": -157.0932,
+    "altM": 8854,
+    "gsMs": 263.4,
+    "trackDeg": 71,
+    "vRateMs": 4.6,
+    "t": 1791083554,
+    "fixT": 1791083343
+   },
+   "distKm": 4788,
+   "flownKm": 256,
+   "depTime": 1791082179,
+   "eta": 1791101659,
+   "depTempC": 26.5,
+   "arrTempC": 26.6,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "4b191d-20261004",
+   "icao24": "4b191d",
+   "callsign": "SWR39",
+   "flightNo": "LX39",
+   "airline": {
+    "name": "Swiss International Air Lines",
+    "icao": "SWR",
+    "iata": "LX"
+   },
+   "origin": {
+    "icao": "KSFO",
+    "iata": "SFO",
+    "name": "San Francisco International Airport",
+    "city": "San Francisco",
+    "country": "United States",
+    "lat": 37.61899948120117,
+    "lon": -122.375,
+    "tz": "America/Los_Angeles",
+    "utcOffsetS": -25200
+   },
+   "dest": {
+    "icao": "LSZH",
+    "iata": "ZRH",
+    "name": "Zürich Airport",
+    "city": "Zurich",
+    "country": "Switzerland",
+    "lat": 47.458056,
+    "lon": 8.548056,
+    "tz": "Europe/Zurich",
+    "utcOffsetS": 7200
+   },
+   "pos": {
+    "lat": 39.5975,
+    "lon": -120.8314,
+    "altM": 10058,
+    "gsMs": 266.6,
+    "trackDeg": 53.4,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 9376,
+   "flownKm": 258,
+   "depTime": 1791082156,
+   "eta": 1791118659,
+   "depTempC": 25.1,
+   "arrTempC": 23.4,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "a84343-20261003",
+   "icao24": "a84343",
+   "callsign": "UPS110",
+   "flightNo": "5X110",
+   "airline": {
+    "name": "United Parcel Service",
+    "icao": "UPS",
+    "iata": "5X"
+   },
+   "origin": {
+    "icao": "KSDF",
+    "iata": "SDF",
+    "name": "Louisville Muhammad Ali International Airport",
+    "city": "Louisville",
+    "country": "United States",
+    "lat": 38.1744,
+    "lon": -85.736,
+    "tz": "America/Kentucky/Louisville",
+    "utcOffsetS": -14400
+   },
+   "dest": {
+    "icao": "RJAA",
+    "iata": "NRT",
+    "name": "Narita International Airport",
+    "city": "Tokyo",
+    "country": "Japan",
+    "lat": 35.764702,
+    "lon": 140.386002,
+    "tz": "Asia/Tokyo",
+    "utcOffsetS": 32400
+   },
+   "pos": {
+    "lat": 62.0163,
+    "lon": -139.7165,
+    "altM": 10973,
+    "gsMs": 238.2,
+    "trackDeg": 287.7,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 10524,
+   "flownKm": 4481,
+   "depTime": 1791061877,
+   "eta": 1791109825,
+   "depTempC": 24.5,
+   "arrTempC": 18.8,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "a748bc-20261003",
+   "icao24": "a748bc",
+   "callsign": "DAL281",
+   "flightNo": "DL281",
+   "airline": {
+    "name": "Delta Air Lines",
+    "icao": "DAL",
+    "iata": "DL"
+   },
+   "origin": {
+    "icao": "KSEA",
+    "iata": "SEA",
+    "name": "Seattle Tacoma International Airport",
+    "city": "Seattle",
+    "country": "United States",
+    "lat": 47.449001,
+    "lon": -122.308998,
+    "tz": "America/Los_Angeles",
+    "utcOffsetS": -25200
+   },
+   "dest": {
+    "icao": "ZSPD",
+    "iata": "PVG",
+    "name": "Shanghai Pudong International Airport",
+    "city": "Shanghai (Pudong)",
+    "country": "China",
+    "lat": 31.1434,
+    "lon": 121.805,
+    "tz": "Asia/Shanghai",
+    "utcOffsetS": 28800
+   },
+   "pos": {
+    "lat": 58.324,
+    "lon": -169.0268,
+    "altM": 11582,
+    "gsMs": 250,
+    "trackDeg": 270.6,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083503
+   },
+   "distKm": 9188,
+   "flownKm": 3280,
+   "depTime": 1791068355,
+   "eta": 1791108083,
+   "depTempC": 18.7,
+   "arrTempC": 21.9,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "c038a7-20261003",
+   "icao24": "c038a7",
+   "callsign": "ACA549",
+   "flightNo": "AC549",
+   "airline": {
+    "name": "Air Canada",
+    "icao": "ACA",
+    "iata": "AC"
+   },
+   "origin": {
+    "icao": "KEWR",
+    "iata": "EWR",
+    "name": "Newark Liberty International Airport",
+    "city": "New York",
+    "country": "United States",
+    "lat": 40.692501,
+    "lon": -74.168701,
+    "tz": "America/New_York",
+    "utcOffsetS": -14400
+   },
+   "dest": {
+    "icao": "CYVR",
+    "iata": "YVR",
+    "name": "Vancouver International Airport",
+    "city": "Vancouver",
+    "country": "Canada",
+    "lat": 49.193901062,
+    "lon": -123.183998108,
+    "tz": "America/Vancouver",
+    "utcOffsetS": -25200
+   },
+   "pos": {
+    "lat": 49.3258,
+    "lon": -120.1509,
+    "altM": 10828,
+    "gsMs": 230.4,
+    "trackDeg": 264.8,
+    "vRateMs": -15.3,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 3899,
+   "flownKm": 3679,
+   "depTime": 1791065112,
+   "eta": 1791085411,
+   "depTempC": 20.1,
+   "arrTempC": 13.4,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "780a96-20261003",
+   "icao24": "780a96",
+   "callsign": "CPA888",
+   "flightNo": "CX888",
+   "airline": {
+    "name": "Cathay Pacific",
+    "icao": "CPA",
+    "iata": "CX"
+   },
+   "origin": {
+    "icao": "VHHH",
+    "iata": "HKG",
+    "name": "Hong Kong International Airport",
+    "city": "Hong Kong",
+    "country": "Hong Kong",
+    "lat": 22.308901,
+    "lon": 113.915001,
+    "tz": "Asia/Hong_Kong",
+    "utcOffsetS": 28800
+   },
+   "dest": {
+    "icao": "CYVR",
+    "iata": "YVR",
+    "name": "Vancouver International Airport",
+    "city": "Vancouver",
+    "country": "Canada",
+    "lat": 49.193901062,
+    "lon": -123.183998108,
+    "tz": "America/Vancouver",
+    "utcOffsetS": -25200
+   },
+   "pos": {
+    "lat": 49.7962,
+    "lon": -124.3484,
+    "altM": 7902,
+    "gsMs": 233.1,
+    "trackDeg": 88.4,
+    "vRateMs": -8.8,
+    "t": 1791083554,
+    "fixT": 1791083549
+   },
+   "distKm": 10269,
+   "flownKm": 10162,
+   "depTime": 1791033724,
+   "eta": 1791084915,
+   "depTempC": 27.9,
+   "arrTempC": 13.4,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "4bb0e6-20261004",
+   "icao24": "4bb0e6",
+   "callsign": "THY8JK",
+   "flightNo": "TK8JK",
+   "airline": {
+    "name": "Turkish Airlines",
+    "icao": "THY",
+    "iata": "TK"
+   },
+   "origin": {
+    "icao": "KSEA",
+    "iata": "SEA",
+    "name": "Seattle Tacoma International Airport",
+    "city": "Seattle",
+    "country": "United States",
+    "lat": 47.449001,
+    "lon": -122.308998,
+    "tz": "America/Los_Angeles",
+    "utcOffsetS": -25200
+   },
+   "dest": {
+    "icao": "LTFM",
+    "iata": "IST",
+    "name": "İstanbul Airport",
+    "city": "Arnavutköy, Istanbul",
+    "country": "Turkey",
+    "lat": 41.261297,
+    "lon": 28.741951,
+    "tz": "Europe/Istanbul",
+    "utcOffsetS": 10800
+   },
+   "pos": {
+    "lat": 49.9377,
+    "lon": -120.7916,
+    "altM": 9967,
+    "gsMs": 255.5,
+    "trackDeg": 13.5,
+    "vRateMs": 3.3,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 9746,
+   "flownKm": 298,
+   "depTime": 1791081928,
+   "eta": 1791121426,
+   "depTempC": 15.4,
+   "arrTempC": 18.3,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "a22642-20261004",
+   "icao24": "a22642",
+   "callsign": "ASA81",
+   "flightNo": "AS81",
+   "airline": {
+    "name": "Alaska Airlines",
+    "icao": "ASA",
+    "iata": "AS"
+   },
+   "origin": {
+    "icao": "PANC",
+    "iata": "ANC",
+    "name": "Ted Stevens Anchorage International Airport",
+    "city": "Anchorage",
+    "country": "United States",
+    "lat": 61.1744,
+    "lon": -149.996002,
+    "tz": "America/Anchorage",
+    "utcOffsetS": -28800
+   },
+   "dest": {
+    "icao": "KORD",
+    "iata": "ORD",
+    "name": "Chicago O'Hare International Airport",
+    "city": "Chicago",
+    "country": "United States",
+    "lat": 41.9786,
+    "lon": -87.9048,
+    "tz": "America/Chicago",
+    "utcOffsetS": -18000
+   },
+   "pos": {
+    "lat": 61.1851,
+    "lon": -148.6641,
+    "altM": 6226,
+    "gsMs": 204.6,
+    "trackDeg": 15.6,
+    "vRateMs": -11,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 4568,
+   "flownKm": 71,
+   "depTime": 1791082858,
+   "eta": 1791106436,
+   "depTempC": 4.8,
+   "arrTempC": 13.1,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "a7563a-20261004",
+   "icao24": "a7563a",
+   "callsign": "DAL69",
+   "flightNo": "DL69",
+   "airline": {
+    "name": "Delta Air Lines",
+    "icao": "DAL",
+    "iata": "DL"
+   },
+   "origin": {
+    "icao": "KSEA",
+    "iata": "SEA",
+    "name": "Seattle Tacoma International Airport",
+    "city": "Seattle",
+    "country": "United States",
+    "lat": 47.449001,
+    "lon": -122.308998,
+    "tz": "America/Los_Angeles",
+    "utcOffsetS": -25200
+   },
+   "dest": {
+    "icao": "RCTP",
+    "iata": "TPE",
+    "name": "Taiwan Taoyuan International Airport",
+    "city": "Taipei",
+    "country": "Taiwan",
+    "lat": 25.0777,
+    "lon": 121.233002,
+    "tz": "Asia/Taipei",
+    "utcOffsetS": 28800
+   },
+   "pos": {
+    "lat": 55.7838,
+    "lon": -151.5291,
+    "altM": 11278,
+    "gsMs": 237.5,
+    "trackDeg": 285.5,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 9757,
+   "flownKm": 2198,
+   "depTime": 1791072736,
+   "eta": 1791116277,
+   "depTempC": 18.5,
+   "arrTempC": 25.9,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "ac7a61-20261004",
+   "icao24": "ac7a61",
+   "callsign": "KYE9520",
+   "flightNo": "9520",
+   "airline": {
+    "name": "SkyLease Cargo",
+    "icao": "KYE",
+    "iata": null
+   },
+   "origin": {
+    "icao": "PANC",
+    "iata": "ANC",
+    "name": "Ted Stevens Anchorage International Airport",
+    "city": "Anchorage",
+    "country": "United States",
+    "lat": 61.1744,
+    "lon": -149.996002,
+    "tz": "America/Anchorage",
+    "utcOffsetS": -28800
+   },
+   "dest": {
+    "icao": "KMIA",
+    "iata": "MIA",
+    "name": "Miami International Airport",
+    "city": "Miami",
+    "country": "United States",
+    "lat": 25.79319953918457,
+    "lon": -80.29060363769531,
+    "tz": "America/New_York",
+    "utcOffsetS": -14400
+   },
+   "pos": {
+    "lat": 59.6807,
+    "lon": -134.5741,
+    "altM": 10058,
+    "gsMs": 271.7,
+    "trackDeg": 108.8,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 6435,
+   "flownKm": 860,
+   "depTime": 1791079656,
+   "eta": 1791104975,
+   "depTempC": 5.4,
+   "arrTempC": 25.9,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "86831e-20261003",
+   "icao24": "86831e",
+   "callsign": "JAL9",
+   "flightNo": "JL9",
+   "airline": {
+    "name": "Japan Airlines",
+    "icao": "JAL",
+    "iata": "JL"
+   },
+   "origin": {
+    "icao": "KORD",
+    "iata": "ORD",
+    "name": "Chicago O'Hare International Airport",
+    "city": "Chicago",
+    "country": "United States",
+    "lat": 41.9786,
+    "lon": -87.9048,
+    "tz": "America/Chicago",
+    "utcOffsetS": -18000
+   },
+   "dest": {
+    "icao": "RJAA",
+    "iata": "NRT",
+    "name": "Narita International Airport",
+    "city": "Tokyo",
+    "country": "Japan",
+    "lat": 35.764702,
+    "lon": 140.386002,
+    "tz": "Asia/Tokyo",
+    "utcOffsetS": 32400
+   },
+   "pos": {
+    "lat": 62.7139,
+    "lon": -163.0127,
+    "altM": 10363,
+    "gsMs": 244,
+    "trackDeg": 265.7,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083357
+   },
+   "distKm": 10074,
+   "flownKm": 5226,
+   "depTime": 1791058946,
+   "eta": 1791104319,
+   "depTempC": 20,
+   "arrTempC": 19.2,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "a84ab1-20261003",
+   "icao24": "a84ab1",
+   "callsign": "UPS61",
+   "flightNo": "5X61",
+   "airline": {
+    "name": "United Parcel Service",
+    "icao": "UPS",
+    "iata": "5X"
+   },
+   "origin": {
+    "icao": "RCTP",
+    "iata": "TPE",
+    "name": "Taiwan Taoyuan International Airport",
+    "city": "Taipei",
+    "country": "Taiwan",
+    "lat": 25.0777,
+    "lon": 121.233002,
+    "tz": "Asia/Taipei",
+    "utcOffsetS": 28800
+   },
+   "dest": {
+    "icao": "PANC",
+    "iata": "ANC",
+    "name": "Ted Stevens Anchorage International Airport",
+    "city": "Anchorage",
+    "country": "United States",
+    "lat": 61.1744,
+    "lon": -149.996002,
+    "tz": "America/Anchorage",
+    "utcOffsetS": -28800
+   },
+   "pos": {
+    "lat": 61.7045,
+    "lon": -157.5022,
+    "altM": 10066,
+    "gsMs": 253.1,
+    "trackDeg": 75.4,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 7519,
+   "flownKm": 7116,
+   "depTime": 1791051298,
+   "eta": 1791086047,
+   "depTempC": 25,
+   "arrTempC": 4.3,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "a29212-20261004",
+   "icao24": "a29212",
+   "callsign": "FDX5986",
+   "flightNo": "FX5986",
+   "airline": {
+    "name": "FedEx Express",
+    "icao": "FDX",
+    "iata": "FX"
+   },
+   "origin": {
+    "icao": "PANC",
+    "iata": "ANC",
+    "name": "Ted Stevens Anchorage International Airport",
+    "city": "Anchorage",
+    "country": "United States",
+    "lat": 61.1744,
+    "lon": -149.996002,
+    "tz": "America/Anchorage",
+    "utcOffsetS": -28800
+   },
+   "dest": {
+    "icao": "KMEM",
+    "iata": "MEM",
+    "name": "Memphis International Airport",
+    "city": "Memphis",
+    "country": "United States",
+    "lat": 35.04240036010742,
+    "lon": -89.97669982910156,
+    "tz": "America/Chicago",
+    "utcOffsetS": -18000
+   },
+   "pos": {
+    "lat": 59.7604,
+    "lon": -136.8735,
+    "altM": 10058,
+    "gsMs": 237.4,
+    "trackDeg": 104.4,
+    "vRateMs": 0.3,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 5065,
+   "flownKm": 735,
+   "depTime": 1791079737,
+   "eta": 1791102690,
+   "depTempC": 5.4,
+   "arrTempC": 19.9,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "aa2b79-20261004",
+   "icao24": "aa2b79",
+   "callsign": "UAL2025",
+   "flightNo": "UA2025",
+   "airline": {
+    "name": "United Airlines",
+    "icao": "UAL",
+    "iata": "UA"
+   },
+   "origin": {
+    "icao": "KIAH",
+    "iata": "IAH",
+    "name": "George Bush Intercontinental Houston Airport",
+    "city": "Houston",
+    "country": "United States",
+    "lat": 29.984399795532227,
+    "lon": -95.34140014648438,
+    "tz": "America/Chicago",
+    "utcOffsetS": -18000
+   },
+   "dest": {
+    "icao": "KSFO",
+    "iata": "SFO",
+    "name": "San Francisco International Airport",
+    "city": "San Francisco",
+    "country": "United States",
+    "lat": 37.61899948120117,
+    "lon": -122.375,
+    "tz": "America/Los_Angeles",
+    "utcOffsetS": -25200
+   },
+   "pos": {
+    "lat": 34.4849,
+    "lon": -108.023,
+    "altM": 11887,
+    "gsMs": 252.7,
+    "trackDeg": 102.2,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083549
+   },
+   "distKm": 2627,
+   "flownKm": 1292,
+   "depTime": 1791077443,
+   "eta": 1791089738,
+   "depTempC": 27,
+   "arrTempC": 24.2,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "a3401a-20261003",
+   "icao24": "a3401a",
+   "callsign": "JBU355",
+   "flightNo": "B6355",
+   "airline": {
+    "name": "JetBlue Airways",
+    "icao": "JBU",
+    "iata": "B6"
+   },
+   "origin": {
+    "icao": "KJFK",
+    "iata": "JFK",
+    "name": "John F Kennedy International Airport",
+    "city": "New York",
+    "country": "United States",
+    "lat": 40.639801,
+    "lon": -73.7789,
+    "tz": "America/New_York",
+    "utcOffsetS": -14400
+   },
+   "dest": {
+    "icao": "KONT",
+    "iata": "ONT",
+    "name": "Ontario International Airport",
+    "city": "Ontario",
+    "country": "United States",
+    "lat": 34.055999755859375,
+    "lon": -117.60099792480467,
+    "tz": "America/Los_Angeles",
+    "utcOffsetS": -25200
+   },
+   "pos": {
+    "lat": 34.663,
+    "lon": -115.905,
+    "altM": 8100,
+    "gsMs": 221.1,
+    "trackDeg": 254.9,
+    "vRateMs": -6.5,
+    "t": 1791083554,
+    "fixT": 1791083549
+   },
+   "distKm": 3901,
+   "flownKm": 3731,
+   "depTime": 1791064079,
+   "eta": 1791085221,
+   "depTempC": 19.9,
+   "arrTempC": 29.4,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "0d1005-20261004",
+   "icao24": "0d1005",
+   "callsign": "VOI770",
+   "flightNo": "Y4770",
+   "airline": {
+    "name": "Volaris",
+    "icao": "VOI",
+    "iata": "Y4"
+   },
+   "origin": {
+    "icao": "MMMX",
+    "iata": "MEX",
+    "name": "Licenciado Benito Juarez International Airport",
+    "city": "Mexico City",
+    "country": "Mexico",
+    "lat": 19.4363,
+    "lon": -99.072098,
+    "tz": "America/Mexico_City",
+    "utcOffsetS": -21600
+   },
+   "dest": {
+    "icao": "KOAK",
+    "iata": "OAK",
+    "name": "Metropolitan Oakland International Airport",
+    "city": "Oakland",
+    "country": "United States",
+    "lat": 37.721298,
+    "lon": -122.221001,
+    "tz": "America/Los_Angeles",
+    "utcOffsetS": -25200
+   },
+   "pos": {
+    "lat": 30.4012,
+    "lon": -111.2969,
+    "altM": 10980,
+    "gsMs": 226,
+    "trackDeg": 308.3,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083542
+   },
+   "distKm": 3024,
+   "flownKm": 1731,
+   "depTime": 1791074550,
+   "eta": 1791090173,
+   "depTempC": 16,
+   "arrTempC": 19.8,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "0d0b8b-20261003",
+   "icao24": "0d0b8b",
+   "callsign": "AMX664",
+   "flightNo": "AM664",
+   "airline": {
+    "name": "Aeroméxico",
+    "icao": "AMX",
+    "iata": "AM"
+   },
+   "origin": {
+    "icao": "MMMX",
+    "iata": "MEX",
+    "name": "Licenciado Benito Juarez International Airport",
+    "city": "Mexico City",
+    "country": "Mexico",
+    "lat": 19.4363,
+    "lon": -99.072098,
+    "tz": "America/Mexico_City",
+    "utcOffsetS": -21600
+   },
+   "dest": {
+    "icao": "KSFO",
+    "iata": "SFO",
+    "name": "San Francisco International Airport",
+    "city": "San Francisco",
+    "country": "United States",
+    "lat": 37.61899948120117,
+    "lon": -122.375,
+    "tz": "America/Los_Angeles",
+    "utcOffsetS": -25200
+   },
+   "pos": {
+    "lat": 34.1864,
+    "lon": -116.7658,
+    "altM": 11582,
+    "gsMs": 224.8,
+    "trackDeg": 314.4,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 3028,
+   "flownKm": 2395,
+   "depTime": 1791071147,
+   "eta": 1791087269,
+   "depTempC": 17.2,
+   "arrTempC": 24.6,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "0d0d36-20261004",
+   "icao24": "0d0d36",
+   "callsign": "VOI3143",
+   "flightNo": "Y43143",
+   "airline": {
+    "name": "Volaris",
+    "icao": "VOI",
+    "iata": "Y4"
+   },
+   "origin": {
+    "icao": "MMOX",
+    "iata": "OAX",
+    "name": "Xoxocotlán International Airport",
+    "city": "Oaxaca",
+    "country": "Mexico",
+    "lat": 16.9999008179,
+    "lon": -96.726600647,
+    "tz": "America/Mexico_City",
+    "utcOffsetS": -21600
+   },
+   "dest": {
+    "icao": "MMTJ",
+    "iata": "TIJ",
+    "name": "General Abelardo L. Rodríguez International Airport",
+    "city": "Tijuana",
+    "country": "Mexico",
+    "lat": 32.541099548339844,
+    "lon": -116.97000122070312,
+    "tz": "America/Tijuana",
+    "utcOffsetS": -25200
+   },
+   "pos": {
+    "lat": 28.9544,
+    "lon": -111.4239,
+    "altM": 11590,
+    "gsMs": 228.5,
+    "trackDeg": 311.6,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083549
+   },
+   "distKm": 2667,
+   "flownKm": 2004,
+   "depTime": 1791073287,
+   "eta": 1791087356,
+   "depTempC": 18.9,
+   "arrTempC": 28,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "0d0d41-20261004",
+   "icao24": "0d0d41",
+   "callsign": "VOI1814",
+   "flightNo": "Y41814",
+   "airline": {
+    "name": "Volaris",
+    "icao": "VOI",
+    "iata": "Y4"
+   },
+   "origin": {
+    "icao": "MMGL",
+    "iata": "GDL",
+    "name": "Don Miguel Hidalgo Y Costilla International Airport",
+    "city": "Guadalajara",
+    "country": "Mexico",
+    "lat": 20.521799087524418,
+    "lon": -103.31099700927734,
+    "tz": "America/Mexico_City",
+    "utcOffsetS": -21600
+   },
+   "dest": {
+    "icao": "KSMF",
+    "iata": "SMF",
+    "name": "Sacramento International Airport",
+    "city": "Sacramento",
+    "country": "United States",
+    "lat": 38.69540023803711,
+    "lon": -121.59100341796876,
+    "tz": "America/Los_Angeles",
+    "utcOffsetS": -25200
+   },
+   "pos": {
+    "lat": 31.2493,
+    "lon": -112.9456,
+    "altM": 11575,
+    "gsMs": 224.9,
+    "trackDeg": 318.8,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 2674,
+   "flownKm": 1532,
+   "depTime": 1791075515,
+   "eta": 1791089530,
+   "depTempC": 19,
+   "arrTempC": 24.7,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "c01f1e-20261004",
+   "icao24": "c01f1e",
+   "callsign": "FLE2829",
+   "flightNo": "2829",
+   "airline": {
+    "name": "Flair Airlines",
+    "icao": "FLE",
+    "iata": null
+   },
+   "origin": {
+    "icao": "MMLO",
+    "iata": "BJX",
+    "name": "Del Bajío International Airport",
+    "city": "Silao",
+    "country": "Mexico",
+    "lat": 20.9935,
+    "lon": -101.481003,
+    "tz": "America/Mexico_City",
+    "utcOffsetS": -21600
+   },
+   "dest": {
+    "icao": "CYVR",
+    "iata": "YVR",
+    "name": "Vancouver International Airport",
+    "city": "Vancouver",
+    "country": "Canada",
+    "lat": 49.193901062,
+    "lon": -123.183998108,
+    "tz": "America/Vancouver",
+    "utcOffsetS": -25200
+   },
+   "pos": {
+    "lat": 33.5356,
+    "lon": -108.9631,
+    "altM": 11575,
+    "gsMs": 222.8,
+    "trackDeg": 321.9,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 3677,
+   "flownKm": 1577,
+   "depTime": 1791075210,
+   "eta": 1791093877,
+   "depTempC": 18.9,
+   "arrTempC": 12.6,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "0d0ec4-20261004",
+   "icao24": "0d0ec4",
+   "callsign": "VOI1772",
+   "flightNo": "Y41772",
+   "airline": {
+    "name": "Volaris",
+    "icao": "VOI",
+    "iata": "Y4"
+   },
+   "origin": {
+    "icao": "MMGL",
+    "iata": "GDL",
+    "name": "Don Miguel Hidalgo Y Costilla International Airport",
+    "city": "Guadalajara",
+    "country": "Mexico",
+    "lat": 20.521799087524418,
+    "lon": -103.31099700927734,
+    "tz": "America/Mexico_City",
+    "utcOffsetS": -21600
+   },
+   "dest": {
+    "icao": "KOAK",
+    "iata": "OAK",
+    "name": "Metropolitan Oakland International Airport",
+    "city": "Oakland",
+    "country": "United States",
+    "lat": 37.721298,
+    "lon": -122.221001,
+    "tz": "America/Los_Angeles",
+    "utcOffsetS": -25200
+   },
+   "pos": {
+    "lat": 33.3316,
+    "lon": -116.4013,
+    "altM": 10973,
+    "gsMs": 221.7,
+    "trackDeg": 309.8,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083549
+   },
+   "distKm": 2641,
+   "flownKm": 1923,
+   "depTime": 1791073397,
+   "eta": 1791087691,
+   "depTempC": 19.7,
+   "arrTempC": 20.7,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "0d0e7e-20261004",
+   "icao24": "0d0e7e",
+   "callsign": "VOI7790",
+   "flightNo": "Y47790",
+   "airline": {
+    "name": "Volaris",
+    "icao": "VOI",
+    "iata": "Y4"
+   },
+   "origin": {
+    "icao": "MMMM",
+    "iata": "MLM",
+    "name": "General Francisco J. Mujica International Airport",
+    "city": "Morelia",
+    "country": "Mexico",
+    "lat": 19.849899,
+    "lon": -101.025002,
+    "tz": "America/Mexico_City",
+    "utcOffsetS": -21600
+   },
+   "dest": {
+    "icao": "KOAK",
+    "iata": "OAK",
+    "name": "Metropolitan Oakland International Airport",
+    "city": "Oakland",
+    "country": "United States",
+    "lat": 37.721298,
+    "lon": -122.221001,
+    "tz": "America/Los_Angeles",
+    "utcOffsetS": -25200
+   },
+   "pos": {
+    "lat": 31.8891,
+    "lon": -113.952,
+    "altM": 11582,
+    "gsMs": 219.4,
+    "trackDeg": 309.1,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083549
+   },
+   "distKm": 2853,
+   "flownKm": 1858,
+   "depTime": 1791073631,
+   "eta": 1791088986,
+   "depTempC": 20.1,
+   "arrTempC": 20.3,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "ab975c-20261004",
+   "icao24": "ab975c",
+   "callsign": "AAL1504",
+   "flightNo": "AA1504",
+   "airline": {
+    "name": "American Airlines",
+    "icao": "AAL",
+    "iata": "AA"
+   },
+   "origin": {
+    "icao": "KLAX",
+    "iata": "LAX",
+    "name": "Los Angeles International Airport",
+    "city": "Los Angeles",
+    "country": "United States",
+    "lat": 33.942501,
+    "lon": -118.407997,
+    "tz": "America/Los_Angeles",
+    "utcOffsetS": -25200
+   },
+   "dest": {
+    "icao": "KORD",
+    "iata": "ORD",
+    "name": "Chicago O'Hare International Airport",
+    "city": "Chicago",
+    "country": "United States",
+    "lat": 41.9786,
+    "lon": -87.9048,
+    "tz": "America/Chicago",
+    "utcOffsetS": -18000
+   },
+   "pos": {
+    "lat": 34.2774,
+    "lon": -117.627,
+    "altM": 8466,
+    "gsMs": 247.5,
+    "trackDeg": 77.6,
+    "vRateMs": 5.9,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 2802,
+   "flownKm": 81,
+   "depTime": 1791082883,
+   "eta": 1791095447,
+   "depTempC": 26,
+   "arrTempC": 14,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "adab38-20261003",
+   "icao24": "adab38",
+   "callsign": "TAI530",
+   "flightNo": "TA530",
+   "airline": {
+    "name": "Avianca El Salvador",
+    "icao": "TAI",
+    "iata": "TA"
+   },
+   "origin": {
+    "icao": "MSLP",
+    "iata": "SAL",
+    "name": "Monseñor Óscar Arnulfo Romero International Airport",
+    "city": "San Salvador (San Luis Talpa)",
+    "country": "El Salvador",
+    "lat": 13.4409,
+    "lon": -89.055702,
+    "tz": "America/El_Salvador",
+    "utcOffsetS": -21600
+   },
+   "dest": {
+    "icao": "KONT",
+    "iata": "ONT",
+    "name": "Ontario International Airport",
+    "city": "Ontario",
+    "country": "United States",
+    "lat": 34.055999755859375,
+    "lon": -117.60099792480467,
+    "tz": "America/Los_Angeles",
+    "utcOffsetS": -25200
+   },
+   "pos": {
+    "lat": 30.5327,
+    "lon": -111.2612,
+    "altM": 10965,
+    "gsMs": 219.3,
+    "trackDeg": 302.7,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 3677,
+   "flownKm": 2964,
+   "depTime": 1791067898,
+   "eta": 1791087704,
+   "depTempC": 26.4,
+   "arrTempC": 28.9,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "4ac8a8-20261004",
+   "icao24": "4ac8a8",
+   "callsign": "SAS932",
+   "flightNo": "SK932",
+   "airline": {
+    "name": "Scandinavian Airlines System",
+    "icao": "SAS",
+    "iata": "SK"
+   },
+   "origin": {
+    "icao": "KLAX",
+    "iata": "LAX",
+    "name": "Los Angeles International Airport",
+    "city": "Los Angeles",
+    "country": "United States",
+    "lat": 33.942501,
+    "lon": -118.407997,
+    "tz": "America/Los_Angeles",
+    "utcOffsetS": -25200
+   },
+   "dest": {
+    "icao": "EKCH",
+    "iata": "CPH",
+    "name": "Copenhagen Kastrup Airport",
+    "city": "Copenhagen",
+    "country": "Denmark",
+    "lat": 55.617900848389,
+    "lon": 12.656000137329,
+    "tz": "Europe/Copenhagen",
+    "utcOffsetS": 7200
+   },
+   "pos": {
+    "lat": 38.5361,
+    "lon": -115.5876,
+    "altM": 11278,
+    "gsMs": 256.6,
+    "trackDeg": 32.6,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 9029,
+   "flownKm": 570,
+   "depTime": 1791080731,
+   "eta": 1791117421,
+   "depTempC": 26.9,
+   "arrTempC": 17.7,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "ab214d-20261004",
+   "icao24": "ab214d",
+   "callsign": "SCX396",
+   "flightNo": "SY396",
+   "airline": {
+    "name": "Sun Country Airlines",
+    "icao": "SCX",
+    "iata": "SY"
+   },
+   "origin": {
+    "icao": "KSFO",
+    "iata": "SFO",
+    "name": "San Francisco International Airport",
+    "city": "San Francisco",
+    "country": "United States",
+    "lat": 37.61899948120117,
+    "lon": -122.375,
+    "tz": "America/Los_Angeles",
+    "utcOffsetS": -25200
+   },
+   "dest": {
+    "icao": "KMSP",
+    "iata": "MSP",
+    "name": "Minneapolis–Saint Paul International Airport / Wold–Chamberlain Field",
+    "city": "Minneapolis",
+    "country": "United States",
+    "lat": 44.882,
+    "lon": -93.221802,
+    "tz": "America/Chicago",
+    "utcOffsetS": -18000
+   },
+   "pos": {
+    "lat": 42.8371,
+    "lon": -105.8652,
+    "altM": 11285,
+    "gsMs": 244.7,
+    "trackDeg": 73.5,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 2551,
+   "flownKm": 1514,
+   "depTime": 1791076224,
+   "eta": 1791088696,
+   "depTempC": 28.5,
+   "arrTempC": 13.1,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "4b15d6-20261004",
+   "icao24": "4b15d6",
+   "callsign": "EDW3A",
+   "flightNo": "WK3A",
+   "airline": {
+    "name": "Edelweiss Air",
+    "icao": "EDW",
+    "iata": "WK"
+   },
+   "origin": {
+    "icao": "KLAS",
+    "iata": "LAS",
+    "name": "McCarran International Airport",
+    "city": "Las Vegas",
+    "country": "United States",
+    "lat": 36.08010101,
+    "lon": -115.1520004,
+    "tz": "America/Los_Angeles",
+    "utcOffsetS": -25200
+   },
+   "dest": {
+    "icao": "LSZH",
+    "iata": "ZRH",
+    "name": "Zürich Airport",
+    "city": "Zurich",
+    "country": "Switzerland",
+    "lat": 47.458056,
+    "lon": 8.548056,
+    "tz": "Europe/Zurich",
+    "utcOffsetS": 7200
+   },
+   "pos": {
+    "lat": 39.2197,
+    "lon": -112.3319,
+    "altM": 11887,
+    "gsMs": 273.1,
+    "trackDeg": 67.4,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 9172,
+   "flownKm": 428,
+   "depTime": 1791081472,
+   "eta": 1791116478,
+   "depTempC": 29.9,
+   "arrTempC": 22.9,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "ac6266-20261004",
+   "icao24": "ac6266",
+   "callsign": "SWA4415",
+   "flightNo": "WN4415",
+   "airline": {
+    "name": "Southwest Airlines",
+    "icao": "SWA",
+    "iata": "WN"
+   },
+   "origin": {
+    "icao": "KPHX",
+    "iata": "PHX",
+    "name": "Phoenix Sky Harbor International Airport",
+    "city": "Phoenix",
+    "country": "United States",
+    "lat": 33.435302,
+    "lon": -112.005905,
+    "tz": "America/Phoenix",
+    "utcOffsetS": -25200
+   },
+   "dest": {
+    "icao": "KCLE",
+    "iata": "CLE",
+    "name": "Cleveland Hopkins International Airport",
+    "city": "Cleveland",
+    "country": "United States",
+    "lat": 41.4117012024,
+    "lon": -81.8498001099,
+    "tz": "America/New_York",
+    "utcOffsetS": -14400
+   },
+   "pos": {
+    "lat": 35.4847,
+    "lon": -106.8858,
+    "altM": 12497,
+    "gsMs": 256.2,
+    "trackDeg": 99.6,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 2790,
+   "flownKm": 522,
+   "depTime": 1791080940,
+   "eta": 1791093309,
+   "depTempC": 30.3,
+   "arrTempC": 9.6,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "a44940-20261004",
+   "icao24": "a44940",
+   "callsign": "UAL2332",
+   "flightNo": "UA2332",
+   "airline": {
+    "name": "United Airlines",
+    "icao": "UAL",
+    "iata": "UA"
+   },
+   "origin": {
+    "icao": "KSFO",
+    "iata": "SFO",
+    "name": "San Francisco International Airport",
+    "city": "San Francisco",
+    "country": "United States",
+    "lat": 37.61899948120117,
+    "lon": -122.375,
+    "tz": "America/Los_Angeles",
+    "utcOffsetS": -25200
+   },
+   "dest": {
+    "icao": "KMCO",
+    "iata": "MCO",
+    "name": "Orlando International Airport",
+    "city": "Orlando",
+    "country": "United States",
+    "lat": 28.429399490356445,
+    "lon": -81.30899810791016,
+    "tz": "America/New_York",
+    "utcOffsetS": -14400
+   },
+   "pos": {
+    "lat": 35.944,
+    "lon": -106.569,
+    "altM": 11887,
+    "gsMs": 257.3,
+    "trackDeg": 115.6,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 3929,
+   "flownKm": 1418,
+   "depTime": 1791076990,
+   "eta": 1791094215,
+   "depTempC": 27.7,
+   "arrTempC": 23.7,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "adbdc1-20261004",
+   "icao24": "adbdc1",
+   "callsign": "ASA497",
+   "flightNo": "AS497",
+   "airline": {
+    "name": "Alaska Airlines",
+    "icao": "ASA",
+    "iata": "AS"
+   },
+   "origin": {
+    "icao": "KATL",
+    "iata": "ATL",
+    "name": "Hartsfield Jackson Atlanta International Airport",
+    "city": "Atlanta",
+    "country": "United States",
+    "lat": 33.6367,
+    "lon": -84.428101,
+    "tz": "America/New_York",
+    "utcOffsetS": -14400
+   },
+   "dest": {
+    "icao": "KSEA",
+    "iata": "SEA",
+    "name": "Seattle Tacoma International Airport",
+    "city": "Seattle",
+    "country": "United States",
+    "lat": 47.449001,
+    "lon": -122.308998,
+    "tz": "America/Los_Angeles",
+    "utcOffsetS": -25200
+   },
+   "pos": {
+    "lat": 43.7976,
+    "lon": -106.2177,
+    "altM": 11887,
+    "gsMs": 259.6,
+    "trackDeg": 113.7,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083546
+   },
+   "distKm": 3505,
+   "flownKm": 2192,
+   "depTime": 1791073659,
+   "eta": 1791089511,
+   "depTempC": 26.4,
+   "arrTempC": 14.2,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "39d2b2-20261003",
+   "icao24": "39d2b2",
+   "callsign": "AFR026",
+   "flightNo": "AF26",
+   "airline": {
+    "name": "Air France",
+    "icao": "AFR",
+    "iata": "AF"
+   },
+   "origin": {
+    "icao": "LFPG",
+    "iata": "CDG",
+    "name": "Charles de Gaulle International Airport",
+    "city": "Paris",
+    "country": "France",
+    "lat": 49.012798,
+    "lon": 2.55,
+    "tz": "Europe/Paris",
+    "utcOffsetS": 7200
+   },
+   "dest": {
+    "icao": "KLAX",
+    "iata": "LAX",
+    "name": "Los Angeles International Airport",
+    "city": "Los Angeles",
+    "country": "United States",
+    "lat": 33.942501,
+    "lon": -118.407997,
+    "tz": "America/Los_Angeles",
+    "utcOffsetS": -25200
+   },
+   "pos": {
+    "lat": 41.9979,
+    "lon": -110.7275,
+    "altM": 12192,
+    "gsMs": 249,
+    "trackDeg": 205.7,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083546
+   },
+   "distKm": 9103,
+   "flownKm": 7983,
+   "depTime": 1791046817,
+   "eta": 1791088951,
+   "depTempC": 19.7,
+   "arrTempC": 24.4,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "39cf09-20261004",
+   "icao24": "39cf09",
+   "callsign": "AFR179",
+   "flightNo": "AF179",
+   "airline": {
+    "name": "Air France",
+    "icao": "AFR",
+    "iata": "AF"
+   },
+   "origin": {
+    "icao": "MMMX",
+    "iata": "MEX",
+    "name": "Licenciado Benito Juarez International Airport",
+    "city": "Mexico City",
+    "country": "Mexico",
+    "lat": 19.4363,
+    "lon": -99.072098,
+    "tz": "America/Mexico_City",
+    "utcOffsetS": -21600
+   },
+   "dest": {
+    "icao": "LFPG",
+    "iata": "CDG",
+    "name": "Charles de Gaulle International Airport",
+    "city": "Paris",
+    "country": "France",
+    "lat": 49.012798,
+    "lon": 2.55,
+    "tz": "Europe/Paris",
+    "utcOffsetS": 7200
+   },
+   "pos": {
+    "lat": 23.1805,
+    "lon": -95.5802,
+    "altM": 11278,
+    "gsMs": 249.2,
+    "trackDeg": 14,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083549
+   },
+   "distKm": 9199,
+   "flownKm": 551,
+   "depTime": 1791080740,
+   "eta": 1791119159,
+   "depTempC": 15.6,
+   "arrTempC": 22.9,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "0d0e9c-20261004",
+   "icao24": "0d0e9c",
+   "callsign": "VOI1702",
+   "flightNo": "Y41702",
+   "airline": {
+    "name": "Volaris",
+    "icao": "VOI",
+    "iata": "Y4"
+   },
+   "origin": {
+    "icao": "MMGL",
+    "iata": "GDL",
+    "name": "Don Miguel Hidalgo Y Costilla International Airport",
+    "city": "Guadalajara",
+    "country": "Mexico",
+    "lat": 20.521799087524418,
+    "lon": -103.31099700927734,
+    "tz": "America/Mexico_City",
+    "utcOffsetS": -21600
+   },
+   "dest": {
+    "icao": "KORD",
+    "iata": "ORD",
+    "name": "Chicago O'Hare International Airport",
+    "city": "Chicago",
+    "country": "United States",
+    "lat": 41.9786,
+    "lon": -87.9048,
+    "tz": "America/Chicago",
+    "utcOffsetS": -18000
+   },
+   "pos": {
+    "lat": 27.4861,
+    "lon": -99.1572,
+    "altM": 10668,
+    "gsMs": 243.8,
+    "trackDeg": 30.6,
+    "vRateMs": -0.3,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 2789,
+   "flownKm": 882,
+   "depTime": 1791079145,
+   "eta": 1791092280,
+   "depTempC": 18.6,
+   "arrTempC": 14.2,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "0d0ff4-20261003",
+   "icao24": "0d0ff4",
+   "callsign": "AMX403",
+   "flightNo": "AM403",
+   "airline": {
+    "name": "Aeroméxico",
+    "icao": "AMX",
+    "iata": "AM"
+   },
+   "origin": {
+    "icao": "KJFK",
+    "iata": "JFK",
+    "name": "John F Kennedy International Airport",
+    "city": "New York",
+    "country": "United States",
+    "lat": 40.639801,
+    "lon": -73.7789,
+    "tz": "America/New_York",
+    "utcOffsetS": -14400
+   },
+   "dest": {
+    "icao": "MMMX",
+    "iata": "MEX",
+    "name": "Licenciado Benito Juarez International Airport",
+    "city": "Mexico City",
+    "country": "Mexico",
+    "lat": 19.4363,
+    "lon": -99.072098,
+    "tz": "America/Mexico_City",
+    "utcOffsetS": -21600
+   },
+   "pos": {
+    "lat": 21.8718,
+    "lon": -96.8553,
+    "altM": 11582,
+    "gsMs": 247,
+    "trackDeg": 175.9,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083515
+   },
+   "distKm": 3365,
+   "flownKm": 3010,
+   "depTime": 1791069415,
+   "eta": 1791085894,
+   "depTempC": 17.4,
+   "arrTempC": 15.2,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "a9675d-20261003",
+   "icao24": "a9675d",
+   "callsign": "CKS865",
+   "flightNo": "K4865",
+   "airline": {
+    "name": "Kalitta Air",
+    "icao": "CKS",
+    "iata": "K4"
+   },
+   "origin": {
+    "icao": "PANC",
+    "iata": "ANC",
+    "name": "Ted Stevens Anchorage International Airport",
+    "city": "Anchorage",
+    "country": "United States",
+    "lat": 61.1744,
+    "lon": -149.996002,
+    "tz": "America/Anchorage",
+    "utcOffsetS": -28800
+   },
+   "dest": {
+    "icao": "KMIA",
+    "iata": "MIA",
+    "name": "Miami International Airport",
+    "city": "Miami",
+    "country": "United States",
+    "lat": 25.79319953918457,
+    "lon": -80.29060363769531,
+    "tz": "America/New_York",
+    "utcOffsetS": -14400
+   },
+   "pos": {
+    "lat": 40.0964,
+    "lon": -92.4188,
+    "altM": 10058,
+    "gsMs": 273.4,
+    "trackDeg": 142.6,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 6435,
+   "flownKm": 4488,
+   "depTime": 1791064602,
+   "eta": 1791091579,
+   "depTempC": 4.5,
+   "arrTempC": 26.4,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "a449e5-20261004",
+   "icao24": "a449e5",
+   "callsign": "DAL815",
+   "flightNo": "DL815",
+   "airline": {
+    "name": "Delta Air Lines",
+    "icao": "DAL",
+    "iata": "DL"
+   },
+   "origin": {
+    "icao": "KLAS",
+    "iata": "LAS",
+    "name": "McCarran International Airport",
+    "city": "Las Vegas",
+    "country": "United States",
+    "lat": 36.08010101,
+    "lon": -115.1520004,
+    "tz": "America/Los_Angeles",
+    "utcOffsetS": -25200
+   },
+   "dest": {
+    "icao": "KBOS",
+    "iata": "BOS",
+    "name": "Logan International Airport",
+    "city": "Boston",
+    "country": "United States",
+    "lat": 42.3643,
+    "lon": -71.005203,
+    "tz": "America/New_York",
+    "utcOffsetS": -14400
+   },
+   "pos": {
+    "lat": 41.1699,
+    "lon": -95.4216,
+    "altM": 10668,
+    "gsMs": 263.8,
+    "trackDeg": 119.6,
+    "vRateMs": -0.3,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 3823,
+   "flownKm": 1800,
+   "depTime": 1791075499,
+   "eta": 1791092121,
+   "depTempC": 33.6,
+   "arrTempC": 10.1,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "71be09-20261003",
+   "icao24": "71be09",
+   "callsign": "KAL8255",
+   "flightNo": "KE8255",
+   "airline": {
+    "name": "Korean Air",
+    "icao": "KAL",
+    "iata": "KE"
+   },
+   "origin": {
+    "icao": "PANC",
+    "iata": "ANC",
+    "name": "Ted Stevens Anchorage International Airport",
+    "city": "Anchorage",
+    "country": "United States",
+    "lat": 61.1744,
+    "lon": -149.996002,
+    "tz": "America/Anchorage",
+    "utcOffsetS": -28800
+   },
+   "dest": {
+    "icao": "KDFW",
+    "iata": "DFW",
+    "name": "Dallas Fort Worth International Airport",
+    "city": "Dallas-Fort Worth",
+    "country": "United States",
+    "lat": 32.896801,
+    "lon": -97.038002,
+    "tz": "America/Chicago",
+    "utcOffsetS": -18000
+   },
+   "pos": {
+    "lat": 37.8314,
+    "lon": -101.2536,
+    "altM": 10668,
+    "gsMs": 263.5,
+    "trackDeg": 146.5,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 4889,
+   "flownKm": 4221,
+   "depTime": 1791065054,
+   "eta": 1791086991,
+   "depTempC": 4.5,
+   "arrTempC": 22.2,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "aae1f1-20261004",
+   "icao24": "aae1f1",
+   "callsign": "AVA087",
+   "flightNo": "AV87",
+   "airline": {
+    "name": "Avianca - Aerovias Nacionales de Colombia, S.A.",
+    "icao": "AVA",
+    "iata": "AV"
+   },
+   "origin": {
+    "icao": "SKBO",
+    "iata": "BOG",
+    "name": "El Dorado International Airport",
+    "city": "Bogota",
+    "country": "Colombia",
+    "lat": 4.70159,
+    "lon": -74.1469,
+    "tz": "America/Bogota",
+    "utcOffsetS": -18000
+   },
+   "dest": {
+    "icao": "SAEZ",
+    "iata": "EZE",
+    "name": "Ministro Pistarini International Airport",
+    "city": "Buenos Aires (Ezeiza)",
+    "country": "Argentina",
+    "lat": -34.8222,
+    "lon": -58.5358,
+    "tz": "America/Argentina/Buenos_Aires",
+    "utcOffsetS": -10800
+   },
+   "pos": {
+    "lat": 3.4363,
+    "lon": -73.7052,
+    "altM": 9167,
+    "gsMs": 258,
+    "trackDeg": 189.3,
+    "vRateMs": 5.9,
+    "t": 1791083554,
+    "fixT": 1791083549
+   },
+   "distKm": 4689,
+   "flownKm": 149,
+   "depTime": 1791082599,
+   "eta": 1791102048,
+   "depTempC": 12.5,
+   "arrTempC": 8.7,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "e4a832-20261004",
+   "icao24": "e4a832",
+   "callsign": "AZU8707",
+   "flightNo": "AD8707",
+   "airline": {
+    "name": "Azul Brazilian Airlines",
+    "icao": "AZU",
+    "iata": "AD"
+   },
+   "origin": {
+    "icao": "KMCO",
+    "iata": "MCO",
+    "name": "Orlando International Airport",
+    "city": "Orlando",
+    "country": "United States",
+    "lat": 28.429399490356445,
+    "lon": -81.30899810791016,
+    "tz": "America/New_York",
+    "utcOffsetS": -14400
+   },
+   "dest": {
+    "icao": "SBKP",
+    "iata": "VCP",
+    "name": "Viracopos International Airport",
+    "city": "Campinas",
+    "country": "Brazil",
+    "lat": -23.0074005127,
+    "lon": -47.1344985962,
+    "tz": "America/Sao_Paulo",
+    "utcOffsetS": -10800
+   },
+   "pos": {
+    "lat": 10.7958,
+    "lon": -68.7512,
+    "altM": 11887,
+    "gsMs": 259.3,
+    "trackDeg": 145.8,
+    "vRateMs": 0.3,
+    "t": 1791083554,
+    "fixT": 1791083381
+   },
+   "distKm": 6792,
+   "flownKm": 2357,
+   "depTime": 1791072947,
+   "eta": 1791101559,
+   "depTempC": 25,
+   "arrTempC": 18.1,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "e8044f-20261003",
+   "icao24": "e8044f",
+   "callsign": "TAM8087",
+   "flightNo": "JJ8087",
+   "airline": {
+    "name": "TAM Brazilian Airlines",
+    "icao": "TAM",
+    "iata": "JJ"
+   },
+   "origin": {
+    "icao": "KLAX",
+    "iata": "LAX",
+    "name": "Los Angeles International Airport",
+    "city": "Los Angeles",
+    "country": "United States",
+    "lat": 33.942501,
+    "lon": -118.407997,
+    "tz": "America/Los_Angeles",
+    "utcOffsetS": -25200
+   },
+   "dest": {
+    "icao": "SBGR",
+    "iata": "GRU",
+    "name": "Guarulhos - Governador André Franco Montoro International Airport",
+    "city": "São Paulo",
+    "country": "Brazil",
+    "lat": -23.431944,
+    "lon": -46.467778,
+    "tz": "America/Sao_Paulo",
+    "utcOffsetS": -10800
+   },
+   "pos": {
+    "lat": 3.9266,
+    "lon": -77.633,
+    "altM": 11278,
+    "gsMs": 254,
+    "trackDeg": 131.6,
+    "vRateMs": -0.3,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 9919,
+   "flownKm": 5373,
+   "depTime": 1791059216,
+   "eta": 1791102353,
+   "depTempC": 37.8,
+   "arrTempC": 17,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "e80472-20261003",
+   "icao24": "e80472",
+   "callsign": "TAM8113",
+   "flightNo": "JJ8113",
+   "airline": {
+    "name": "TAM Brazilian Airlines",
+    "icao": "TAM",
+    "iata": "JJ"
+   },
+   "origin": {
+    "icao": "MMMX",
+    "iata": "MEX",
+    "name": "Licenciado Benito Juarez International Airport",
+    "city": "Mexico City",
+    "country": "Mexico",
+    "lat": 19.4363,
+    "lon": -99.072098,
+    "tz": "America/Mexico_City",
+    "utcOffsetS": -21600
+   },
+   "dest": {
+    "icao": "SBGR",
+    "iata": "GRU",
+    "name": "Guarulhos - Governador André Franco Montoro International Airport",
+    "city": "São Paulo",
+    "country": "Brazil",
+    "lat": -23.431944,
+    "lon": -46.467778,
+    "tz": "America/Sao_Paulo",
+    "utcOffsetS": -10800
+   },
+   "pos": {
+    "lat": 3.4454,
+    "lon": -79.5542,
+    "altM": 11880,
+    "gsMs": 250,
+    "trackDeg": 131.5,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083549
+   },
+   "distKm": 7433,
+   "flownKm": 2766,
+   "depTime": 1791070682,
+   "eta": 1791103122,
+   "depTempC": 17.5,
+   "arrTempC": 17.1,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "ad0d3c-20261004",
+   "icao24": "ad0d3c",
+   "callsign": "AVA167",
+   "flightNo": "AV167",
+   "airline": {
+    "name": "Avianca - Aerovias Nacionales de Colombia, S.A.",
+    "icao": "AVA",
+    "iata": "AV"
+   },
+   "origin": {
+    "icao": "SKBO",
+    "iata": "BOG",
+    "name": "El Dorado International Airport",
+    "city": "Bogota",
+    "country": "Colombia",
+    "lat": 4.70159,
+    "lon": -74.1469,
+    "tz": "America/Bogota",
+    "utcOffsetS": -18000
+   },
+   "dest": {
+    "icao": "SLVR",
+    "iata": "VVI",
+    "name": "Viru Viru International Airport",
+    "city": "Santa Cruz",
+    "country": "Bolivia",
+    "lat": -17.6448,
+    "lon": -63.135399,
+    "tz": "America/La_Paz",
+    "utcOffsetS": -14400
+   },
+   "pos": {
+    "lat": 3.8166,
+    "lon": -73.7208,
+    "altM": 7559,
+    "gsMs": 243.1,
+    "trackDeg": 147.6,
+    "vRateMs": 3.9,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 2763,
+   "flownKm": 109,
+   "depTime": 1791082744,
+   "eta": 1791095373,
+   "depTempC": 12.5,
+   "arrTempC": 24.4,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "348084-20261004",
+   "icao24": "348084",
+   "callsign": "AEA072",
+   "flightNo": "UX72",
+   "airline": {
+    "name": "Air Europa",
+    "icao": "AEA",
+    "iata": "UX"
+   },
+   "origin": {
+    "icao": "SVMI",
+    "iata": "CCS",
+    "name": "Simón Bolívar International Airport",
+    "city": "Caracas",
+    "country": "Venezuela",
+    "lat": 10.601194,
+    "lon": -66.991222,
+    "tz": "America/Caracas",
+    "utcOffsetS": -14400
+   },
+   "dest": {
+    "icao": "LEMD",
+    "iata": "MAD",
+    "name": "Adolfo Suárez Madrid–Barajas Airport",
+    "city": "Madrid",
+    "country": "Spain",
+    "lat": 40.471926,
+    "lon": -3.56264,
+    "tz": "Europe/Madrid",
+    "utcOffsetS": 7200
+   },
+   "pos": {
+    "lat": 15.1964,
+    "lon": -61.2959,
+    "altM": 11278,
+    "gsMs": 258.8,
+    "trackDeg": 51.4,
+    "vRateMs": -0.3,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 7006,
+   "flownKm": 801,
+   "depTime": 1791079736,
+   "eta": 1791108431,
+   "depTempC": 25.4,
+   "arrTempC": 18.6,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "a1b535-20261004",
+   "icao24": "a1b535",
+   "callsign": "UAL819",
+   "flightNo": "UA819",
+   "airline": {
+    "name": "United Airlines",
+    "icao": "UAL",
+    "iata": "UA"
+   },
+   "origin": {
+    "icao": "KIAH",
+    "iata": "IAH",
+    "name": "George Bush Intercontinental Houston Airport",
+    "city": "Houston",
+    "country": "United States",
+    "lat": 29.984399795532227,
+    "lon": -95.34140014648438,
+    "tz": "America/Chicago",
+    "utcOffsetS": -18000
+   },
+   "dest": {
+    "icao": "SAEZ",
+    "iata": "EZE",
+    "name": "Ministro Pistarini International Airport",
+    "city": "Buenos Aires (Ezeiza)",
+    "country": "Argentina",
+    "lat": -34.8222,
+    "lon": -58.5358,
+    "tz": "America/Argentina/Buenos_Aires",
+    "utcOffsetS": -10800
+   },
+   "pos": {
+    "lat": 20.3265,
+    "lon": -89.3003,
+    "altM": 10058,
+    "gsMs": 250,
+    "trackDeg": 157.5,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 8173,
+   "flownKm": 1233,
+   "depTime": 1791077648,
+   "eta": 1791112211,
+   "depTempC": 27,
+   "arrTempC": 11.7,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "0d0bba-20261004",
+   "icao24": "0d0bba",
+   "callsign": "AMX014",
+   "flightNo": "AM14",
+   "airline": {
+    "name": "Aeroméxico",
+    "icao": "AMX",
+    "iata": "AM"
+   },
+   "origin": {
+    "icao": "MMMX",
+    "iata": "MEX",
+    "name": "Licenciado Benito Juarez International Airport",
+    "city": "Mexico City",
+    "country": "Mexico",
+    "lat": 19.4363,
+    "lon": -99.072098,
+    "tz": "America/Mexico_City",
+    "utcOffsetS": -21600
+   },
+   "dest": {
+    "icao": "SBGR",
+    "iata": "GRU",
+    "name": "Guarulhos - Governador André Franco Montoro International Airport",
+    "city": "São Paulo",
+    "country": "Brazil",
+    "lat": -23.431944,
+    "lon": -46.467778,
+    "tz": "America/Sao_Paulo",
+    "utcOffsetS": -10800
+   },
+   "pos": {
+    "lat": 12.5235,
+    "lon": -90.1479,
+    "altM": 10660,
+    "gsMs": 252.8,
+    "trackDeg": 131.9,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 7433,
+   "flownKm": 1225,
+   "depTime": 1791077751,
+   "eta": 1791109011,
+   "depTempC": 15.7,
+   "arrTempC": 19,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "0c21b5-20261004",
+   "icao24": "0c21b5",
+   "callsign": "CMP291",
+   "flightNo": "CM291",
+   "airline": {
+    "name": "Copa Airlines",
+    "icao": "CMP",
+    "iata": "CM"
+   },
+   "origin": {
+    "icao": "MPTO",
+    "iata": "PTY",
+    "name": "Tocumen International Airport",
+    "city": "Tocumen",
+    "country": "Panama",
+    "lat": 9.0713596344,
+    "lon": -79.3834991455,
+    "tz": "America/Panama",
+    "utcOffsetS": -18000
+   },
+   "dest": {
+    "icao": "SGAS",
+    "iata": "ASU",
+    "name": "Silvio Pettirossi International Airport",
+    "city": "Asunción",
+    "country": "Paraguay",
+    "lat": -25.239999771118164,
+    "lon": -57.52000045776367,
+    "tz": "America/Asuncion",
+    "utcOffsetS": -10800
+   },
+   "pos": {
+    "lat": 6.2244,
+    "lon": -77.6434,
+    "altM": 10058,
+    "gsMs": 244.9,
+    "trackDeg": 148.8,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 4490,
+   "flownKm": 370,
+   "depTime": 1791081537,
+   "eta": 1791101277,
+   "depTempC": 26.7,
+   "arrTempC": 18.8,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "a12f6d-20261003",
+   "icao24": "a12f6d",
+   "callsign": "UAL1474",
+   "flightNo": "UA1474",
+   "airline": {
+    "name": "United Airlines",
+    "icao": "UAL",
+    "iata": "UA"
+   },
+   "origin": {
+    "icao": "KEWR",
+    "iata": "EWR",
+    "name": "Newark Liberty International Airport",
+    "city": "New York",
+    "country": "United States",
+    "lat": 40.692501,
+    "lon": -74.168701,
+    "tz": "America/New_York",
+    "utcOffsetS": -14400
+   },
+   "dest": {
+    "icao": "MHLM",
+    "iata": "SAP",
+    "name": "Ramón Villeda Morales International Airport",
+    "city": "San Pedro Sula",
+    "country": "Honduras",
+    "lat": 15.4526,
+    "lon": -87.923599,
+    "tz": "America/Tegucigalpa",
+    "utcOffsetS": -21600
+   },
+   "pos": {
+    "lat": 20.2779,
+    "lon": -85.7754,
+    "altM": 10668,
+    "gsMs": 244.8,
+    "trackDeg": 216.2,
+    "vRateMs": 0.3,
+    "t": 1791083554,
+    "fixT": 1791083543
+   },
+   "distKm": 3105,
+   "flownKm": 2522,
+   "depTime": 1791071547,
+   "eta": 1791086834,
+   "depTempC": 17.6,
+   "arrTempC": 25.4,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "e94c88-20261004",
+   "icao24": "e94c88",
+   "callsign": "BOV767",
+   "flightNo": "OB767",
+   "airline": {
+    "name": "Boliviana de Aviación",
+    "icao": "BOV",
+    "iata": "OB"
+   },
+   "origin": {
+    "icao": "KMIA",
+    "iata": "MIA",
+    "name": "Miami International Airport",
+    "city": "Miami",
+    "country": "United States",
+    "lat": 25.79319953918457,
+    "lon": -80.29060363769531,
+    "tz": "America/New_York",
+    "utcOffsetS": -14400
+   },
+   "dest": {
+    "icao": "SLVR",
+    "iata": "VVI",
+    "name": "Viru Viru International Airport",
+    "city": "Santa Cruz",
+    "country": "Bolivia",
+    "lat": -17.6448,
+    "lon": -63.135399,
+    "tz": "America/La_Paz",
+    "utcOffsetS": -14400
+   },
+   "pos": {
+    "lat": 12.3027,
+    "lon": -74.5862,
+    "altM": 11278,
+    "gsMs": 255.9,
+    "trackDeg": 164.4,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 5174,
+   "flownKm": 1615,
+   "depTime": 1791076083,
+   "eta": 1791098364,
+   "depTempC": 27.5,
+   "arrTempC": 24,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "4bb14b-20261004",
+   "icao24": "4bb14b",
+   "callsign": "THY99D",
+   "flightNo": "TK99D",
+   "airline": {
+    "name": "Turkish Airlines",
+    "icao": "THY",
+    "iata": "TK"
+   },
+   "origin": {
+    "icao": "KMIA",
+    "iata": "MIA",
+    "name": "Miami International Airport",
+    "city": "Miami",
+    "country": "United States",
+    "lat": 25.79319953918457,
+    "lon": -80.29060363769531,
+    "tz": "America/New_York",
+    "utcOffsetS": -14400
+   },
+   "dest": {
+    "icao": "LTFM",
+    "iata": "IST",
+    "name": "İstanbul Airport",
+    "city": "Arnavutköy, Istanbul",
+    "country": "Turkey",
+    "lat": 41.261297,
+    "lon": 28.741951,
+    "tz": "Europe/Istanbul",
+    "utcOffsetS": 10800
+   },
+   "pos": {
+    "lat": 27.7731,
+    "lon": -78.0001,
+    "altM": 9449,
+    "gsMs": 250.2,
+    "trackDeg": 17.8,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 9585,
+   "flownKm": 316,
+   "depTime": 1791081817,
+   "eta": 1791121496,
+   "depTempC": 26.9,
+   "arrTempC": 18.3,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "e80475-20261004",
+   "icao24": "e80475",
+   "callsign": "TAM8187",
+   "flightNo": "JJ8187",
+   "airline": {
+    "name": "TAM Brazilian Airlines",
+    "icao": "TAM",
+    "iata": "JJ"
+   },
+   "origin": {
+    "icao": "KMCO",
+    "iata": "MCO",
+    "name": "Orlando International Airport",
+    "city": "Orlando",
+    "country": "United States",
+    "lat": 28.429399490356445,
+    "lon": -81.30899810791016,
+    "tz": "America/New_York",
+    "utcOffsetS": -14400
+   },
+   "dest": {
+    "icao": "SBGR",
+    "iata": "GRU",
+    "name": "Guarulhos - Governador André Franco Montoro International Airport",
+    "city": "São Paulo",
+    "country": "Brazil",
+    "lat": -23.431944,
+    "lon": -46.467778,
+    "tz": "America/Sao_Paulo",
+    "utcOffsetS": -10800
+   },
+   "pos": {
+    "lat": 25.2774,
+    "lon": -78.7496,
+    "altM": 11270,
+    "gsMs": 261.3,
+    "trackDeg": 149.6,
+    "vRateMs": -0.3,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 6869,
+   "flownKm": 433,
+   "depTime": 1791081372,
+   "eta": 1791109091,
+   "depTempC": 24.8,
+   "arrTempC": 19,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "c05219-20261004",
+   "icao24": "c05219",
+   "callsign": "ROU1813",
+   "flightNo": "1813",
+   "airline": {
+    "name": "Transportes Aereos I.R. Crusoe",
+    "icao": "ROU",
+    "iata": null
+   },
+   "origin": {
+    "icao": "MMUN",
+    "iata": "CUN",
+    "name": "Cancún International Airport",
+    "city": "Cancún",
+    "country": "Mexico",
+    "lat": 21.036500930800003,
+    "lon": -86.8770980835,
+    "tz": "America/Cancun",
+    "utcOffsetS": -18000
+   },
+   "dest": {
+    "icao": "CYYZ",
+    "iata": "YYZ",
+    "name": "Lester B. Pearson International Airport",
+    "city": "Toronto",
+    "country": "Canada",
+    "lat": 43.6772003174,
+    "lon": -79.63059997559999,
+    "tz": "America/Toronto",
+    "utcOffsetS": -14400
+   },
+   "pos": {
+    "lat": 26.0204,
+    "lon": -85.5701,
+    "altM": 9449,
+    "gsMs": 247.2,
+    "trackDeg": 31.9,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083488
+   },
+   "distKm": 2605,
+   "flownKm": 570,
+   "depTime": 1791080643,
+   "eta": 1791092686,
+   "depTempC": 27.3,
+   "arrTempC": 7.6,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "a759f1-20261004",
+   "icao24": "a759f1",
+   "callsign": "DAL147",
+   "flightNo": "DL147",
+   "airline": {
+    "name": "Delta Air Lines",
+    "icao": "DAL",
+    "iata": "DL"
+   },
+   "origin": {
+    "icao": "KATL",
+    "iata": "ATL",
+    "name": "Hartsfield Jackson Atlanta International Airport",
+    "city": "Atlanta",
+    "country": "United States",
+    "lat": 33.6367,
+    "lon": -84.428101,
+    "tz": "America/New_York",
+    "utcOffsetS": -14400
+   },
+   "dest": {
+    "icao": "SCEL",
+    "iata": "SCL",
+    "name": "Comodoro Arturo Merino Benítez International Airport",
+    "city": "Santiago",
+    "country": "Chile",
+    "lat": -33.393001556396484,
+    "lon": -70.78579711914062,
+    "tz": "America/Santiago",
+    "utcOffsetS": -10800
+   },
+   "pos": {
+    "lat": 27.5916,
+    "lon": -82.9531,
+    "altM": 10965,
+    "gsMs": 267.2,
+    "trackDeg": 163.1,
+    "vRateMs": 3.9,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 7588,
+   "flownKm": 687,
+   "depTime": 1791080334,
+   "eta": 1791110282,
+   "depTempC": 24.9,
+   "arrTempC": 7.7,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "4cc586-20261004",
+   "icao24": "4cc586",
+   "callsign": "ICE686",
+   "flightNo": "FI686",
+   "airline": {
+    "name": "Icelandair",
+    "icao": "ICE",
+    "iata": "FI"
+   },
+   "origin": {
+    "icao": "KMCO",
+    "iata": "MCO",
+    "name": "Orlando International Airport",
+    "city": "Orlando",
+    "country": "United States",
+    "lat": 28.429399490356445,
+    "lon": -81.30899810791016,
+    "tz": "America/New_York",
+    "utcOffsetS": -14400
+   },
+   "dest": {
+    "icao": "BIKF",
+    "iata": "KEF",
+    "name": "Keflavik International Airport",
+    "city": "Reykjavík",
+    "country": "Iceland",
+    "lat": 63.985001,
+    "lon": -22.6056,
+    "tz": "Atlantic/Reykjavik",
+    "utcOffsetS": 0
+   },
+   "pos": {
+    "lat": 31.168,
+    "lon": -79.543,
+    "altM": 9815,
+    "gsMs": 247.6,
+    "trackDeg": 25.1,
+    "vRateMs": 1,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 5680,
+   "flownKm": 349,
+   "depTime": 1791081653,
+   "eta": 1791105982,
+   "depTempC": 24.8,
+   "arrTempC": 7.5,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "a68cfd-20261004",
+   "icao24": "a68cfd",
+   "callsign": "DAL200",
+   "flightNo": "DL200",
+   "airline": {
+    "name": "Delta Air Lines",
+    "icao": "DAL",
+    "iata": "DL"
+   },
+   "origin": {
+    "icao": "KATL",
+    "iata": "ATL",
+    "name": "Hartsfield Jackson Atlanta International Airport",
+    "city": "Atlanta",
+    "country": "United States",
+    "lat": 33.6367,
+    "lon": -84.428101,
+    "tz": "America/New_York",
+    "utcOffsetS": -14400
+   },
+   "dest": {
+    "icao": "FAOR",
+    "iata": "JNB",
+    "name": "OR Tambo International Airport",
+    "city": "Johannesburg",
+    "country": "South Africa",
+    "lat": -26.1392,
+    "lon": 28.246,
+    "tz": "Africa/Johannesburg",
+    "utcOffsetS": 7200
+   },
+   "pos": {
+    "lat": 32.5487,
+    "lon": -78.9899,
+    "altM": 10058,
+    "gsMs": 276.6,
+    "trackDeg": 110.7,
+    "vRateMs": -0.3,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 13583,
+   "flownKm": 521,
+   "depTime": 1791081115,
+   "eta": 1791131675,
+   "depTempC": 24.9,
+   "arrTempC": 16.1,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "a92650-20261004",
+   "icao24": "a92650",
+   "callsign": "LRC660",
+   "flightNo": "LR660",
+   "airline": {
+    "name": "LACSA",
+    "icao": "LRC",
+    "iata": "LR"
+   },
+   "origin": {
+    "icao": "MSLP",
+    "iata": "SAL",
+    "name": "Monseñor Óscar Arnulfo Romero International Airport",
+    "city": "San Salvador (San Luis Talpa)",
+    "country": "El Salvador",
+    "lat": 13.4409,
+    "lon": -89.055702,
+    "tz": "America/El_Salvador",
+    "utcOffsetS": -21600
+   },
+   "dest": {
+    "icao": "KJFK",
+    "iata": "JFK",
+    "name": "John F Kennedy International Airport",
+    "city": "New York",
+    "country": "United States",
+    "lat": 40.639801,
+    "lon": -73.7789,
+    "tz": "America/New_York",
+    "utcOffsetS": -14400
+   },
+   "pos": {
+    "lat": 31.4399,
+    "lon": -79.9914,
+    "altM": 10668,
+    "gsMs": 246.2,
+    "trackDeg": 40.7,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 3370,
+   "flownKm": 2205,
+   "depTime": 1791073078,
+   "eta": 1791089184,
+   "depTempC": 25.8,
+   "arrTempC": 14,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "c0797b-20261004",
+   "icao24": "c0797b",
+   "callsign": "ACA792",
+   "flightNo": "AC792",
+   "airline": {
+    "name": "Air Canada",
+    "icao": "ACA",
+    "iata": "AC"
+   },
+   "origin": {
+    "icao": "KLAX",
+    "iata": "LAX",
+    "name": "Los Angeles International Airport",
+    "city": "Los Angeles",
+    "country": "United States",
+    "lat": 33.942501,
+    "lon": -118.407997,
+    "tz": "America/Los_Angeles",
+    "utcOffsetS": -25200
+   },
+   "dest": {
+    "icao": "CYYZ",
+    "iata": "YYZ",
+    "name": "Lester B. Pearson International Airport",
+    "city": "Toronto",
+    "country": "Canada",
+    "lat": 43.6772003174,
+    "lon": -79.63059997559999,
+    "tz": "America/Toronto",
+    "utcOffsetS": -14400
+   },
+   "pos": {
+    "lat": 42.741,
+    "lon": -88.8874,
+    "altM": 10668,
+    "gsMs": 281.6,
+    "trackDeg": 78.8,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 3494,
+   "flownKm": 2737,
+   "depTime": 1791072210,
+   "eta": 1791087142,
+   "depTempC": 33,
+   "arrTempC": 8.2,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "ad8836-20261004",
+   "icao24": "ad8836",
+   "callsign": "JBU8790",
+   "flightNo": "B68790",
+   "airline": {
+    "name": "JetBlue Airways",
+    "icao": "JBU",
+    "iata": "B6"
+   },
+   "origin": {
+    "icao": "KLAS",
+    "iata": "LAS",
+    "name": "McCarran International Airport",
+    "city": "Las Vegas",
+    "country": "United States",
+    "lat": 36.08010101,
+    "lon": -115.1520004,
+    "tz": "America/Los_Angeles",
+    "utcOffsetS": -25200
+   },
+   "dest": {
+    "icao": "KBOS",
+    "iata": "BOS",
+    "name": "Logan International Airport",
+    "city": "Boston",
+    "country": "United States",
+    "lat": 42.3643,
+    "lon": -71.005203,
+    "tz": "America/New_York",
+    "utcOffsetS": -14400
+   },
+   "pos": {
+    "lat": 42.0295,
+    "lon": -88.6726,
+    "altM": 10668,
+    "gsMs": 269.6,
+    "trackDeg": 95,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 3823,
+   "flownKm": 2369,
+   "depTime": 1791073267,
+   "eta": 1791089845,
+   "depTempC": 34.4,
+   "arrTempC": 10.3,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "e80451-20261004",
+   "icao24": "e80451",
+   "callsign": "LAN714",
+   "flightNo": "LA714",
+   "airline": {
+    "name": "LAN Airlines",
+    "icao": "LAN",
+    "iata": "LA"
+   },
+   "origin": {
+    "icao": "SBGR",
+    "iata": "GRU",
+    "name": "Guarulhos - Governador André Franco Montoro International Airport",
+    "city": "São Paulo",
+    "country": "Brazil",
+    "lat": -23.431944,
+    "lon": -46.467778,
+    "tz": "America/Sao_Paulo",
+    "utcOffsetS": -10800
+   },
+   "dest": {
+    "icao": "LEMD",
+    "iata": "MAD",
+    "name": "Adolfo Suárez Madrid–Barajas Airport",
+    "city": "Madrid",
+    "country": "Spain",
+    "lat": 40.471926,
+    "lon": -3.56264,
+    "tz": "Europe/Madrid",
+    "utcOffsetS": 7200
+   },
+   "pos": {
+    "lat": -20.3549,
+    "lon": -44.3976,
+    "altM": 10744,
+    "gsMs": 267.4,
+    "trackDeg": 27,
+    "vRateMs": 4.2,
+    "t": 1791083554,
+    "fixT": 1791083542
+   },
+   "distKm": 8377,
+   "flownKm": 403,
+   "depTime": 1791081541,
+   "eta": 1791114279,
+   "depTempC": 16.9,
+   "arrTempC": 19.2,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "e80474-20261004",
+   "icao24": "e80474",
+   "callsign": "TAM8058",
+   "flightNo": "JJ8058",
+   "airline": {
+    "name": "TAM Brazilian Airlines",
+    "icao": "TAM",
+    "iata": "JJ"
+   },
+   "origin": {
+    "icao": "SBGR",
+    "iata": "GRU",
+    "name": "Guarulhos - Governador André Franco Montoro International Airport",
+    "city": "São Paulo",
+    "country": "Brazil",
+    "lat": -23.431944,
+    "lon": -46.467778,
+    "tz": "America/Sao_Paulo",
+    "utcOffsetS": -10800
+   },
+   "dest": {
+    "icao": "FAOR",
+    "iata": "JNB",
+    "name": "OR Tambo International Airport",
+    "city": "Johannesburg",
+    "country": "South Africa",
+    "lat": -26.1392,
+    "lon": 28.246,
+    "tz": "Africa/Johannesburg",
+    "utcOffsetS": 7200
+   },
+   "pos": {
+    "lat": -25.5806,
+    "lon": -39.3014,
+    "altM": 11270,
+    "gsMs": 272.8,
+    "trackDeg": 106.7,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083323
+   },
+   "distKm": 7439,
+   "flownKm": 763,
+   "depTime": 1791080106,
+   "eta": 1791108925,
+   "depTempC": 16.8,
+   "arrTempC": 18.9,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "4951ee-20261003",
+   "icao24": "4951ee",
+   "callsign": "TAP067",
+   "flightNo": "TP67",
+   "airline": {
+    "name": "TAP Portugal",
+    "icao": "TAP",
+    "iata": "TP"
+   },
+   "origin": {
+    "icao": "LPPR",
+    "iata": "OPO",
+    "name": "Francisco de Sá Carneiro Airport",
+    "city": "Porto",
+    "country": "Portugal",
+    "lat": 41.2481002808,
+    "lon": -8.68138980865,
+    "tz": "Europe/Lisbon",
+    "utcOffsetS": 3600
+   },
+   "dest": {
+    "icao": "SBGL",
+    "iata": "GIG",
+    "name": "Rio Galeão – Tom Jobim International Airport",
+    "city": "Rio De Janeiro",
+    "country": "Brazil",
+    "lat": -22.809999,
+    "lon": -43.250557,
+    "tz": "America/Sao_Paulo",
+    "utcOffsetS": -10800
+   },
+   "pos": {
+    "lat": -17.4168,
+    "lon": -40.4229,
+    "altM": 11285,
+    "gsMs": 262.1,
+    "trackDeg": 27.7,
+    "vRateMs": -0.3,
+    "t": 1791083554,
+    "fixT": 1791083353
+   },
+   "distKm": 7965,
+   "flownKm": 7297,
+   "depTime": 1791051645,
+   "eta": 1791087004,
+   "depTempC": 21,
+   "arrTempC": 19.3,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "ace5bd-20261003",
+   "icao24": "ace5bd",
+   "callsign": "AVA161",
+   "flightNo": "AV161",
+   "airline": {
+    "name": "Avianca - Aerovias Nacionales de Colombia, S.A.",
+    "icao": "AVA",
+    "iata": "AV"
+   },
+   "origin": {
+    "icao": "SKBO",
+    "iata": "BOG",
+    "name": "El Dorado International Airport",
+    "city": "Bogota",
+    "country": "Colombia",
+    "lat": 4.70159,
+    "lon": -74.1469,
+    "tz": "America/Bogota",
+    "utcOffsetS": -18000
+   },
+   "dest": {
+    "icao": "SBGR",
+    "iata": "GRU",
+    "name": "Guarulhos - Governador André Franco Montoro International Airport",
+    "city": "São Paulo",
+    "country": "Brazil",
+    "lat": -23.431944,
+    "lon": -46.467778,
+    "tz": "America/Sao_Paulo",
+    "utcOffsetS": -10800
+   },
+   "pos": {
+    "lat": -21.7154,
+    "lon": -48.4601,
+    "altM": 11285,
+    "gsMs": 266.8,
+    "trackDeg": 130.4,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 4336,
+   "flownKm": 4056,
+   "depTime": 1791065977,
+   "eta": 1791085503,
+   "depTempC": 15.9,
+   "arrTempC": 16.8,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "e49849-20261004",
+   "icao24": "e49849",
+   "callsign": "TAM8076",
+   "flightNo": "JJ8076",
+   "airline": {
+    "name": "TAM Brazilian Airlines",
+    "icao": "TAM",
+    "iata": "JJ"
+   },
+   "origin": {
+    "icao": "SBGR",
+    "iata": "GRU",
+    "name": "Guarulhos - Governador André Franco Montoro International Airport",
+    "city": "São Paulo",
+    "country": "Brazil",
+    "lat": -23.431944,
+    "lon": -46.467778,
+    "tz": "America/Sao_Paulo",
+    "utcOffsetS": -10800
+   },
+   "dest": {
+    "icao": "LEMD",
+    "iata": "MAD",
+    "name": "Adolfo Suárez Madrid–Barajas Airport",
+    "city": "Madrid",
+    "country": "Spain",
+    "lat": 40.471926,
+    "lon": -3.56264,
+    "tz": "Europe/Madrid",
+    "utcOffsetS": 7200
+   },
+   "pos": {
+    "lat": -6.2587,
+    "lon": -35.8675,
+    "altM": 11278,
+    "gsMs": 258.5,
+    "trackDeg": 24.6,
+    "vRateMs": -0.3,
+    "t": 1791083554,
+    "fixT": 1791083541
+   },
+   "distKm": 8377,
+   "flownKm": 2221,
+   "depTime": 1791073493,
+   "eta": 1791108267,
+   "depTempC": 17,
+   "arrTempC": 18.6,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "3965a8-20261003",
+   "icao24": "3965a8",
+   "callsign": "AFR719",
+   "flightNo": "AF719",
+   "airline": {
+    "name": "Air France",
+    "icao": "AFR",
+    "iata": "AF"
+   },
+   "origin": {
+    "icao": "GOBD",
+    "iata": "DSS",
+    "name": "Blaise Diagne International Airport",
+    "city": "Dakar",
+    "country": "Senegal",
+    "lat": 14.67,
+    "lon": -17.073333,
+    "tz": "Africa/Dakar",
+    "utcOffsetS": 0
+   },
+   "dest": {
+    "icao": "LFPG",
+    "iata": "CDG",
+    "name": "Charles de Gaulle International Airport",
+    "city": "Paris",
+    "country": "France",
+    "lat": 49.012798,
+    "lon": 2.55,
+    "tz": "Europe/Paris",
+    "utcOffsetS": 7200
+   },
+   "pos": {
+    "lat": 43.2336,
+    "lon": -2.2908,
+    "altM": 11582,
+    "gsMs": 253.1,
+    "trackDeg": 26.3,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 4217,
+   "flownKm": 3474,
+   "depTime": 1791067655,
+   "eta": 1791087389,
+   "depTempC": 26.3,
+   "arrTempC": 12.1,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "394a06-20261003",
+   "icao24": "394a06",
+   "callsign": "AFR453",
+   "flightNo": "AF453",
+   "airline": {
+    "name": "Air France",
+    "icao": "AFR",
+    "iata": "AF"
+   },
+   "origin": {
+    "icao": "SBGR",
+    "iata": "GRU",
+    "name": "Guarulhos - Governador André Franco Montoro International Airport",
+    "city": "São Paulo",
+    "country": "Brazil",
+    "lat": -23.431944,
+    "lon": -46.467778,
+    "tz": "America/Sao_Paulo",
+    "utcOffsetS": -10800
+   },
+   "dest": {
+    "icao": "LFPG",
+    "iata": "CDG",
+    "name": "Charles de Gaulle International Airport",
+    "city": "Paris",
+    "country": "France",
+    "lat": 49.012798,
+    "lon": 2.55,
+    "tz": "Europe/Paris",
+    "utcOffsetS": 7200
+   },
+   "pos": {
+    "lat": 44.0178,
+    "lon": -3.917,
+    "altM": 11582,
+    "gsMs": 255.4,
+    "trackDeg": 32.7,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 9405,
+   "flownKm": 8661,
+   "depTime": 1791044724,
+   "eta": 1791087364,
+   "depTempC": 23.4,
+   "arrTempC": 12.1,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "39cf04-20261003",
+   "icao24": "39cf04",
+   "callsign": "AFR465",
+   "flightNo": "AF465",
+   "airline": {
+    "name": "Air France",
+    "icao": "AFR",
+    "iata": "AF"
+   },
+   "origin": {
+    "icao": "SBSV",
+    "iata": "SSA",
+    "name": "Deputado Luiz Eduardo Magalhães International Airport",
+    "city": "Salvador",
+    "country": "Brazil",
+    "lat": -12.9086112976,
+    "lon": -38.3224983215,
+    "tz": "America/Bahia",
+    "utcOffsetS": -10800
+   },
+   "dest": {
+    "icao": "LFPG",
+    "iata": "CDG",
+    "name": "Charles de Gaulle International Airport",
+    "city": "Paris",
+    "country": "France",
+    "lat": 49.012798,
+    "lon": 2.55,
+    "tz": "Europe/Paris",
+    "utcOffsetS": 7200
+   },
+   "pos": {
+    "lat": 32.107,
+    "lon": -13.9156,
+    "altM": 12192,
+    "gsMs": 255.4,
+    "trackDeg": 27.9,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083445
+   },
+   "distKm": 7967,
+   "flownKm": 5640,
+   "depTime": 1791058180,
+   "eta": 1791093566,
+   "depTempC": 26.5,
+   "arrTempC": 12.3,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "407af5-20261003",
+   "icao24": "407af5",
+   "callsign": "BAW246",
+   "flightNo": "BA246",
+   "airline": {
+    "name": "British Airways",
+    "icao": "BAW",
+    "iata": "BA"
+   },
+   "origin": {
+    "icao": "SBGR",
+    "iata": "GRU",
+    "name": "Guarulhos - Governador André Franco Montoro International Airport",
+    "city": "São Paulo",
+    "country": "Brazil",
+    "lat": -23.431944,
+    "lon": -46.467778,
+    "tz": "America/Sao_Paulo",
+    "utcOffsetS": -10800
+   },
+   "dest": {
+    "icao": "EGLL",
+    "iata": "LHR",
+    "name": "London Heathrow Airport",
+    "city": "London",
+    "country": "United Kingdom",
+    "lat": 51.4706,
+    "lon": -0.461941,
+    "tz": "Europe/London",
+    "utcOffsetS": 3600
+   },
+   "pos": {
+    "lat": 38.4352,
+    "lon": -14.0696,
+    "altM": 11582,
+    "gsMs": 260,
+    "trackDeg": 26.8,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 9460,
+   "flownKm": 7664,
+   "depTime": 1791049757,
+   "eta": 1791091362,
+   "depTempC": 21.8,
+   "arrTempC": 10.9,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "4952ab-20261003",
+   "icao24": "4952ab",
+   "callsign": "TAP082",
+   "flightNo": "TP82",
+   "airline": {
+    "name": "TAP Portugal",
+    "icao": "TAP",
+    "iata": "TP"
+   },
+   "origin": {
+    "icao": "SBGR",
+    "iata": "GRU",
+    "name": "Guarulhos - Governador André Franco Montoro International Airport",
+    "city": "São Paulo",
+    "country": "Brazil",
+    "lat": -23.431944,
+    "lon": -46.467778,
+    "tz": "America/Sao_Paulo",
+    "utcOffsetS": -10800
+   },
+   "dest": {
+    "icao": "LPPT",
+    "iata": "LIS",
+    "name": "Humberto Delgado Airport (Lisbon Portela Airport)",
+    "city": "Lisbon",
+    "country": "Portugal",
+    "lat": 38.7813,
+    "lon": -9.13592,
+    "tz": "Europe/Lisbon",
+    "utcOffsetS": 3600
+   },
+   "pos": {
+    "lat": 36.8959,
+    "lon": -10.8348,
+    "altM": 9441,
+    "gsMs": 256.2,
+    "trackDeg": 34.8,
+    "vRateMs": -8.4,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 7935,
+   "flownKm": 7677,
+   "depTime": 1791049197,
+   "eta": 1791085458,
+   "depTempC": 22,
+   "arrTempC": 19.2,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "aa9f76-20261003",
+   "icao24": "aa9f76",
+   "callsign": "AVA026",
+   "flightNo": "AV26",
+   "airline": {
+    "name": "Avianca - Aerovias Nacionales de Colombia, S.A.",
+    "icao": "AVA",
+    "iata": "AV"
+   },
+   "origin": {
+    "icao": "SKBO",
+    "iata": "BOG",
+    "name": "El Dorado International Airport",
+    "city": "Bogota",
+    "country": "Colombia",
+    "lat": 4.70159,
+    "lon": -74.1469,
+    "tz": "America/Bogota",
+    "utcOffsetS": -18000
+   },
+   "dest": {
+    "icao": "LEMD",
+    "iata": "MAD",
+    "name": "Adolfo Suárez Madrid–Barajas Airport",
+    "city": "Madrid",
+    "country": "Spain",
+    "lat": 40.471926,
+    "lon": -3.56264,
+    "tz": "Europe/Madrid",
+    "utcOffsetS": 7200
+   },
+   "pos": {
+    "lat": 39.2922,
+    "lon": -11.027,
+    "altM": 11887,
+    "gsMs": 268.6,
+    "trackDeg": 74.5,
+    "vRateMs": -0.3,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 8031,
+   "flownKm": 7381,
+   "depTime": 1791052026,
+   "eta": 1791086874,
+   "depTempC": 16.8,
+   "arrTempC": 16.9,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "3c6565-20261003",
+   "icao24": "3c6565",
+   "callsign": "OCN617",
+   "flightNo": "617",
+   "airline": {
+    "name": "O Air",
+    "icao": "OCN",
+    "iata": null
+   },
+   "origin": {
+    "icao": "KRSW",
+    "iata": "RSW",
+    "name": "Southwest Florida International Airport",
+    "city": "Fort Myers",
+    "country": "United States",
+    "lat": 26.53619956970215,
+    "lon": -81.75520324707031,
+    "tz": "America/New_York",
+    "utcOffsetS": -14400
+   },
+   "dest": {
+    "icao": "EDDF",
+    "iata": "FRA",
+    "name": "Frankfurt am Main Airport",
+    "city": "Frankfurt am Main",
+    "country": "Germany",
+    "lat": 50.033333,
+    "lon": 8.570556,
+    "tz": "Europe/Berlin",
+    "utcOffsetS": 7200
+   },
+   "pos": {
+    "lat": 43.6361,
+    "lon": -57.0533,
+    "altM": 11887,
+    "gsMs": 272.8,
+    "trackDeg": 36.7,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083545
+   },
+   "distKm": 7803,
+   "flownKm": 2924,
+   "depTime": 1791071075,
+   "eta": 1791102344,
+   "depTempC": 28.7,
+   "arrTempC": 14.7,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "3c4a14-20261003",
+   "icao24": "3c4a14",
+   "callsign": "DLH479",
+   "flightNo": "LH479",
+   "airline": {
+    "name": "Lufthansa",
+    "icao": "DLH",
+    "iata": "LH"
+   },
+   "origin": {
+    "icao": "CYUL",
+    "iata": "YUL",
+    "name": "Montreal / Pierre Elliott Trudeau International Airport",
+    "city": "Montréal",
+    "country": "Canada",
+    "lat": 45.4706001282,
+    "lon": -73.7407989502,
+    "tz": "America/Toronto",
+    "utcOffsetS": -14400
+   },
+   "dest": {
+    "icao": "EDDF",
+    "iata": "FRA",
+    "name": "Frankfurt am Main Airport",
+    "city": "Frankfurt am Main",
+    "country": "Germany",
+    "lat": 50.033333,
+    "lon": 8.570556,
+    "tz": "Europe/Berlin",
+    "utcOffsetS": 7200
+   },
+   "pos": {
+    "lat": 55.043,
+    "lon": -13.4657,
+    "altM": 11887,
+    "gsMs": 287.2,
+    "trackDeg": 99.3,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083549
+   },
+   "distKm": 5855,
+   "flownKm": 4272,
+   "depTime": 1791066353,
+   "eta": 1791089965,
+   "depTempC": 13,
+   "arrTempC": 10.2,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "440081-20261003",
+   "icao24": "440081",
+   "callsign": "AUA38",
+   "flightNo": "OS38",
+   "airline": {
+    "name": "Austrian Airlines",
+    "icao": "AUA",
+    "iata": "OS"
+   },
+   "origin": {
+    "icao": "KEWR",
+    "iata": "EWR",
+    "name": "Newark Liberty International Airport",
+    "city": "New York",
+    "country": "United States",
+    "lat": 40.692501,
+    "lon": -74.168701,
+    "tz": "America/New_York",
+    "utcOffsetS": -14400
+   },
+   "dest": {
+    "icao": "LOWW",
+    "iata": "VIE",
+    "name": "Vienna International Airport",
+    "city": "Vienna",
+    "country": "Austria",
+    "lat": 48.110298,
+    "lon": 16.5697,
+    "tz": "Europe/Vienna",
+    "utcOffsetS": 7200
+   },
+   "pos": {
+    "lat": 54.0122,
+    "lon": -7.909,
+    "altM": 11598,
+    "gsMs": 264.2,
+    "trackDeg": 112.1,
+    "vRateMs": 1.6,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 6826,
+   "flownKm": 5005,
+   "depTime": 1791061729,
+   "eta": 1791091345,
+   "depTempC": 22.3,
+   "arrTempC": 7.8,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "44019a-20261003",
+   "icao24": "44019a",
+   "callsign": "AUA42",
+   "flightNo": "OS42",
+   "airline": {
+    "name": "Austrian Airlines",
+    "icao": "AUA",
+    "iata": "OS"
+   },
+   "origin": {
+    "icao": "KIAD",
+    "iata": "IAD",
+    "name": "Washington Dulles International Airport",
+    "city": "Washington",
+    "country": "United States",
+    "lat": 38.9445,
+    "lon": -77.455803,
+    "tz": "America/New_York",
+    "utcOffsetS": -14400
+   },
+   "dest": {
+    "icao": "LOWW",
+    "iata": "VIE",
+    "name": "Vienna International Airport",
+    "city": "Vienna",
+    "country": "Austria",
+    "lat": 48.110298,
+    "lon": 16.5697,
+    "tz": "Europe/Vienna",
+    "utcOffsetS": 7200
+   },
+   "pos": {
+    "lat": 54.4673,
+    "lon": -11.1378,
+    "altM": 11887,
+    "gsMs": 276,
+    "trackDeg": 101.4,
+    "vRateMs": -0.3,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 7165,
+   "flownKm": 5129,
+   "depTime": 1791062140,
+   "eta": 1791091831,
+   "depTempC": 18,
+   "arrTempC": 7.7,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "440184-20261003",
+   "icao24": "440184",
+   "callsign": "AUA2R",
+   "flightNo": "OS2R",
+   "airline": {
+    "name": "Austrian Airlines",
+    "icao": "AUA",
+    "iata": "OS"
+   },
+   "origin": {
+    "icao": "KORD",
+    "iata": "ORD",
+    "name": "Chicago O'Hare International Airport",
+    "city": "Chicago",
+    "country": "United States",
+    "lat": 41.9786,
+    "lon": -87.9048,
+    "tz": "America/Chicago",
+    "utcOffsetS": -18000
+   },
+   "dest": {
+    "icao": "LOWW",
+    "iata": "VIE",
+    "name": "Vienna International Airport",
+    "city": "Vienna",
+    "country": "Austria",
+    "lat": 48.110298,
+    "lon": 16.5697,
+    "tz": "Europe/Vienna",
+    "utcOffsetS": 7200
+   },
+   "pos": {
+    "lat": 56.7762,
+    "lon": -8.6102,
+    "altM": 11887,
+    "gsMs": 273.5,
+    "trackDeg": 111.4,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083548
+   },
+   "distKm": 7566,
+   "flownKm": 5623,
+   "depTime": 1791059894,
+   "eta": 1791091561,
+   "depTempC": 20.1,
+   "arrTempC": 7.7,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "0200ca-20261004",
+   "icao24": "0200ca",
+   "callsign": "RAM209M",
+   "flightNo": "AT209M",
+   "airline": {
+    "name": "Royal Air Maroc",
+    "icao": "RAM",
+    "iata": "AT"
+   },
+   "origin": {
+    "icao": "CYUL",
+    "iata": "YUL",
+    "name": "Montreal / Pierre Elliott Trudeau International Airport",
+    "city": "Montréal",
+    "country": "Canada",
+    "lat": 45.4706001282,
+    "lon": -73.7407989502,
+    "tz": "America/Toronto",
+    "utcOffsetS": -14400
+   },
+   "dest": {
+    "icao": "GMMN",
+    "iata": "CMN",
+    "name": "Mohammed V International Airport",
+    "city": "Casablanca",
+    "country": "Morocco",
+    "lat": 33.36750030517578,
+    "lon": -7.589970111846924,
+    "tz": "Africa/Casablanca",
+    "utcOffsetS": 3600
+   },
+   "pos": {
+    "lat": 46.4276,
+    "lon": -56.5169,
+    "altM": 11880,
+    "gsMs": 302.6,
+    "trackDeg": 91.2,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083233
+   },
+   "distKm": 5674,
+   "flownKm": 1333,
+   "depTime": 1791078290,
+   "eta": 1791098802,
+   "depTempC": 8.7,
+   "arrTempC": 20.9,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "3965a4-20261003",
+   "icao24": "3965a4",
+   "callsign": "AFR703",
+   "flightNo": "AF703",
+   "airline": {
+    "name": "Air France",
+    "icao": "AFR",
+    "iata": "AF"
+   },
+   "origin": {
+    "icao": "DIAP",
+    "iata": "ABJ",
+    "name": "Félix-Houphouët-Boigny International Airport",
+    "city": "Abidjan",
+    "country": "Côte d'Ivoire",
+    "lat": 5.26139,
+    "lon": -3.92629,
+    "tz": "Africa/Abidjan",
+    "utcOffsetS": 0
+   },
+   "dest": {
+    "icao": "LFPG",
+    "iata": "CDG",
+    "name": "Charles de Gaulle International Airport",
+    "city": "Paris",
+    "country": "France",
+    "lat": 49.012798,
+    "lon": 2.55,
+    "tz": "Europe/Paris",
+    "utcOffsetS": 7200
+   },
+   "pos": {
+    "lat": 45.5812,
+    "lon": 1.7493,
+    "altM": 10973,
+    "gsMs": 263.2,
+    "trackDeg": 26,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 4903,
+   "flownKm": 4517,
+   "depTime": 1791063754,
+   "eta": 1791085922,
+   "depTempC": 25.3,
+   "arrTempC": 12,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "c023bd-20261003",
+   "icao24": "c023bd",
+   "callsign": "ACA832",
+   "flightNo": "AC832",
+   "airline": {
+    "name": "Air Canada",
+    "icao": "ACA",
+    "iata": "AC"
+   },
+   "origin": {
+    "icao": "CYUL",
+    "iata": "YUL",
+    "name": "Montreal / Pierre Elliott Trudeau International Airport",
+    "city": "Montréal",
+    "country": "Canada",
+    "lat": 45.4706001282,
+    "lon": -73.7407989502,
+    "tz": "America/Toronto",
+    "utcOffsetS": -14400
+   },
+   "dest": {
+    "icao": "EBBR",
+    "iata": "BRU",
+    "name": "Brussels Airport",
+    "city": "Brussels",
+    "country": "Belgium",
+    "lat": 50.9014015198,
+    "lon": 4.48443984985,
+    "tz": "Europe/Brussels",
+    "utcOffsetS": 7200
+   },
+   "pos": {
+    "lat": 54.1834,
+    "lon": -9.8317,
+    "altM": 11201,
+    "gsMs": 264.1,
+    "trackDeg": 112,
+    "vRateMs": 2.6,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 5554,
+   "flownKm": 4521,
+   "depTime": 1791063796,
+   "eta": 1791088364,
+   "depTempC": 14.7,
+   "arrTempC": 12.6,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "44ccca-20261003",
+   "icao24": "44ccca",
+   "callsign": "BEL52B",
+   "flightNo": "SN52B",
+   "airline": {
+    "name": "Brussels Airlines",
+    "icao": "BEL",
+    "iata": "SN"
+   },
+   "origin": {
+    "icao": "KJFK",
+    "iata": "JFK",
+    "name": "John F Kennedy International Airport",
+    "city": "New York",
+    "country": "United States",
+    "lat": 40.639801,
+    "lon": -73.7789,
+    "tz": "America/New_York",
+    "utcOffsetS": -14400
+   },
+   "dest": {
+    "icao": "EBBR",
+    "iata": "BRU",
+    "name": "Brussels Airport",
+    "city": "Brussels",
+    "country": "Belgium",
+    "lat": 50.9014015198,
+    "lon": 4.48443984985,
+    "tz": "Europe/Brussels",
+    "utcOffsetS": 7200
+   },
+   "pos": {
+    "lat": 53.6152,
+    "lon": -12.2193,
+    "altM": 11887,
+    "gsMs": 259.7,
+    "trackDeg": 106.1,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 5886,
+   "flownKm": 4712,
+   "depTime": 1791062634,
+   "eta": 1791088972,
+   "depTempC": 20.4,
+   "arrTempC": 12.5,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "abafe4-20261003",
+   "icao24": "abafe4",
+   "callsign": "AAL50",
+   "flightNo": "AA50",
+   "airline": {
+    "name": "American Airlines",
+    "icao": "AAL",
+    "iata": "AA"
+   },
+   "origin": {
+    "icao": "KDFW",
+    "iata": "DFW",
+    "name": "Dallas Fort Worth International Airport",
+    "city": "Dallas-Fort Worth",
+    "country": "United States",
+    "lat": 32.896801,
+    "lon": -97.038002,
+    "tz": "America/Chicago",
+    "utcOffsetS": -18000
+   },
+   "dest": {
+    "icao": "EGLL",
+    "iata": "LHR",
+    "name": "London Heathrow Airport",
+    "city": "London",
+    "country": "United Kingdom",
+    "lat": 51.4706,
+    "lon": -0.461941,
+    "tz": "Europe/London",
+    "utcOffsetS": 3600
+   },
+   "pos": {
+    "lat": 54.1875,
+    "lon": -11.5948,
+    "altM": 11880,
+    "gsMs": 273.5,
+    "trackDeg": 109.2,
+    "vRateMs": 0.3,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 7627,
+   "flownKm": 6822,
+   "depTime": 1791054910,
+   "eta": 1791087399,
+   "depTempC": 22.8,
+   "arrTempC": 11.6,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "a8c4d8-20261004",
+   "icao24": "a8c4d8",
+   "callsign": "UAL940",
+   "flightNo": "UA940",
+   "airline": {
+    "name": "United Airlines",
+    "icao": "UAL",
+    "iata": "UA"
+   },
+   "origin": {
+    "icao": "KEWR",
+    "iata": "EWR",
+    "name": "Newark Liberty International Airport",
+    "city": "New York",
+    "country": "United States",
+    "lat": 40.692501,
+    "lon": -74.168701,
+    "tz": "America/New_York",
+    "utcOffsetS": -14400
+   },
+   "dest": {
+    "icao": "EGLL",
+    "iata": "LHR",
+    "name": "London Heathrow Airport",
+    "city": "London",
+    "country": "United Kingdom",
+    "lat": 51.4706,
+    "lon": -0.461941,
+    "tz": "Europe/London",
+    "utcOffsetS": 3600
+   },
+   "pos": {
+    "lat": 47.7186,
+    "lon": -59.4898,
+    "altM": 10668,
+    "gsMs": 286.1,
+    "trackDeg": 59.1,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 5562,
+   "flownKm": 1403,
+   "depTime": 1791077681,
+   "eta": 1791098988,
+   "depTempC": 16.2,
+   "arrTempC": 11.8,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "ab20e7-20261004",
+   "icao24": "ab20e7",
+   "callsign": "DAL176",
+   "flightNo": "DL176",
+   "airline": {
+    "name": "Delta Air Lines",
+    "icao": "DAL",
+    "iata": "DL"
+   },
+   "origin": {
+    "icao": "KATL",
+    "iata": "ATL",
+    "name": "Hartsfield Jackson Atlanta International Airport",
+    "city": "Atlanta",
+    "country": "United States",
+    "lat": 33.6367,
+    "lon": -84.428101,
+    "tz": "America/New_York",
+    "utcOffsetS": -14400
+   },
+   "dest": {
+    "icao": "EIDW",
+    "iata": "DUB",
+    "name": "Dublin Airport",
+    "city": "Dublin",
+    "country": "Ireland",
+    "lat": 53.421299,
+    "lon": -6.27007,
+    "tz": "Europe/Dublin",
+    "utcOffsetS": 3600
+   },
+   "pos": {
+    "lat": 48.2202,
+    "lon": -59.8812,
+    "altM": 11278,
+    "gsMs": 292.4,
+    "trackDeg": 59,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083549
+   },
+   "distKm": 6323,
+   "flownKm": 2604,
+   "depTime": 1791073135,
+   "eta": 1791097175,
+   "depTempC": 26.6,
+   "arrTempC": 13.8,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "ab7ae4-20261003",
+   "icao24": "ab7ae4",
+   "callsign": "DAL90",
+   "flightNo": "DL90",
+   "airline": {
+    "name": "Delta Air Lines",
+    "icao": "DAL",
+    "iata": "DL"
+   },
+   "origin": {
+    "icao": "KATL",
+    "iata": "ATL",
+    "name": "Hartsfield Jackson Atlanta International Airport",
+    "city": "Atlanta",
+    "country": "United States",
+    "lat": 33.6367,
+    "lon": -84.428101,
+    "tz": "America/New_York",
+    "utcOffsetS": -14400
+   },
+   "dest": {
+    "icao": "EDDL",
+    "iata": "DUS",
+    "name": "Düsseldorf Airport",
+    "city": "Düsseldorf",
+    "country": "Germany",
+    "lat": 51.289501,
+    "lon": 6.76678,
+    "tz": "Europe/Berlin",
+    "utcOffsetS": 7200
+   },
+   "pos": {
+    "lat": 54.4932,
+    "lon": -11.499,
+    "altM": 10363,
+    "gsMs": 265.6,
+    "trackDeg": 118,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083549
+   },
+   "distKm": 7236,
+   "flownKm": 5964,
+   "depTime": 1791057733,
+   "eta": 1791089244,
+   "depTempC": 29.4,
+   "arrTempC": 13.9,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "3949e3-20261003",
+   "icao24": "3949e3",
+   "callsign": "AFR357E",
+   "flightNo": "AF357E",
+   "airline": {
+    "name": "Air France",
+    "icao": "AFR",
+    "iata": "AF"
+   },
+   "origin": {
+    "icao": "CYYZ",
+    "iata": "YYZ",
+    "name": "Lester B. Pearson International Airport",
+    "city": "Toronto",
+    "country": "Canada",
+    "lat": 43.6772003174,
+    "lon": -79.63059997559999,
+    "tz": "America/Toronto",
+    "utcOffsetS": -14400
+   },
+   "dest": {
+    "icao": "LFPG",
+    "iata": "CDG",
+    "name": "Charles de Gaulle International Airport",
+    "city": "Paris",
+    "country": "France",
+    "lat": 49.012798,
+    "lon": 2.55,
+    "tz": "Europe/Paris",
+    "utcOffsetS": 7200
+   },
+   "pos": {
+    "lat": 52.9282,
+    "lon": -12.8558,
+    "altM": 11582,
+    "gsMs": 275,
+    "trackDeg": 112.2,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083549
+   },
+   "distKm": 6020,
+   "flownKm": 4859,
+   "depTime": 1791063177,
+   "eta": 1791088673,
+   "depTempC": 15.7,
+   "arrTempC": 12.2,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "a999d2-20261003",
+   "icao24": "a999d2",
+   "callsign": "AAL100",
+   "flightNo": "AA100",
+   "airline": {
+    "name": "American Airlines",
+    "icao": "AAL",
+    "iata": "AA"
+   },
+   "origin": {
+    "icao": "KJFK",
+    "iata": "JFK",
+    "name": "John F Kennedy International Airport",
+    "city": "New York",
+    "country": "United States",
+    "lat": 40.639801,
+    "lon": -73.7789,
+    "tz": "America/New_York",
+    "utcOffsetS": -14400
+   },
+   "dest": {
+    "icao": "EGLL",
+    "iata": "LHR",
+    "name": "London Heathrow Airport",
+    "city": "London",
+    "country": "United Kingdom",
+    "lat": 51.4706,
+    "lon": -0.461941,
+    "tz": "Europe/London",
+    "utcOffsetS": 3600
+   },
+   "pos": {
+    "lat": 53.3035,
+    "lon": -13.7785,
+    "altM": 10973,
+    "gsMs": 272.1,
+    "trackDeg": 102.7,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 5540,
+   "flownKm": 4615,
+   "depTime": 1791063981,
+   "eta": 1791087854,
+   "depTempC": 19.9,
+   "arrTempC": 11.5,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "a2ca64-20261003",
+   "icao24": "a2ca64",
+   "callsign": "UAL108",
+   "flightNo": "UA108",
+   "airline": {
+    "name": "United Airlines",
+    "icao": "UAL",
+    "iata": "UA"
+   },
+   "origin": {
+    "icao": "KEWR",
+    "iata": "EWR",
+    "name": "Newark Liberty International Airport",
+    "city": "New York",
+    "country": "United States",
+    "lat": 40.692501,
+    "lon": -74.168701,
+    "tz": "America/New_York",
+    "utcOffsetS": -14400
+   },
+   "dest": {
+    "icao": "EGPH",
+    "iata": "EDI",
+    "name": "Edinburgh Airport",
+    "city": "Edinburgh",
+    "country": "United Kingdom",
+    "lat": 55.950145,
+    "lon": -3.372288,
+    "tz": "Europe/London",
+    "utcOffsetS": 3600
+   },
+   "pos": {
+    "lat": 56.6866,
+    "lon": -11.7541,
+    "altM": 11270,
+    "gsMs": 271,
+    "trackDeg": 108,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 5245,
+   "flownKm": 4722,
+   "depTime": 1791063457,
+   "eta": 1791086384,
+   "depTempC": 21.2,
+   "arrTempC": 11.2,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "4b15a3-20261003",
+   "icao24": "4b15a3",
+   "callsign": "SWR2V",
+   "flightNo": "LX2V",
+   "airline": {
+    "name": "Swiss International Air Lines",
+    "icao": "SWR",
+    "iata": "LX"
+   },
+   "origin": {
+    "icao": "KBOS",
+    "iata": "BOS",
+    "name": "Logan International Airport",
+    "city": "Boston",
+    "country": "United States",
+    "lat": 42.3643,
+    "lon": -71.005203,
+    "tz": "America/New_York",
+    "utcOffsetS": -14400
+   },
+   "dest": {
+    "icao": "LSZH",
+    "iata": "ZRH",
+    "name": "Zürich Airport",
+    "city": "Zurich",
+    "country": "Switzerland",
+    "lat": 47.458056,
+    "lon": 8.548056,
+    "tz": "Europe/Zurich",
+    "utcOffsetS": 7200
+   },
+   "pos": {
+    "lat": 49.9693,
+    "lon": -0.5071,
+    "altM": 12192,
+    "gsMs": 258.1,
+    "trackDeg": 102.4,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 6010,
+   "flownKm": 5290,
+   "depTime": 1791059966,
+   "eta": 1791087244,
+   "depTempC": 16.3,
+   "arrTempC": 8.5,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "abfa24-20261003",
+   "icao24": "abfa24",
+   "callsign": "AAL92",
+   "flightNo": "AA92",
+   "airline": {
+    "name": "American Airlines",
+    "icao": "AAL",
+    "iata": "AA"
+   },
+   "origin": {
+    "icao": "KPHL",
+    "iata": "PHL",
+    "name": "Philadelphia International Airport",
+    "city": "Philadelphia",
+    "country": "United States",
+    "lat": 39.87189865112305,
+    "lon": -75.24109649658203,
+    "tz": "America/New_York",
+    "utcOffsetS": -14400
+   },
+   "dest": {
+    "icao": "LSZH",
+    "iata": "ZRH",
+    "name": "Zürich Airport",
+    "city": "Zurich",
+    "country": "Switzerland",
+    "lat": 47.458056,
+    "lon": 8.548056,
+    "tz": "Europe/Zurich",
+    "utcOffsetS": 7200
+   },
+   "pos": {
+    "lat": 51.3457,
+    "lon": -8.0205,
+    "altM": 12489,
+    "gsMs": 261.6,
+    "trackDeg": 114.2,
+    "vRateMs": -0.3,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 6460,
+   "flownKm": 5189,
+   "depTime": 1791060713,
+   "eta": 1791089313,
+   "depTempC": 20.6,
+   "arrTempC": 8.8,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "4006c4-20261003",
+   "icao24": "4006c4",
+   "callsign": "BAW9E",
+   "flightNo": "BA9E",
+   "airline": {
+    "name": "British Airways",
+    "icao": "BAW",
+    "iata": "BA"
+   },
+   "origin": {
+    "icao": "KEWR",
+    "iata": "EWR",
+    "name": "Newark Liberty International Airport",
+    "city": "New York",
+    "country": "United States",
+    "lat": 40.692501,
+    "lon": -74.168701,
+    "tz": "America/New_York",
+    "utcOffsetS": -14400
+   },
+   "dest": {
+    "icao": "EGLL",
+    "iata": "LHR",
+    "name": "London Heathrow Airport",
+    "city": "London",
+    "country": "United Kingdom",
+    "lat": 51.4706,
+    "lon": -0.461941,
+    "tz": "Europe/London",
+    "utcOffsetS": 3600
+   },
+   "pos": {
+    "lat": 52.6897,
+    "lon": -7.6582,
+    "altM": 11887,
+    "gsMs": 262.8,
+    "trackDeg": 112.2,
+    "vRateMs": -0.3,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 5562,
+   "flownKm": 5052,
+   "depTime": 1791061411,
+   "eta": 1791086394,
+   "depTempC": 22.6,
+   "arrTempC": 11.7,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "4a91b3-20261003",
+   "icao24": "4a91b3",
+   "callsign": "SAS950",
+   "flightNo": "SK950",
+   "airline": {
+    "name": "Scandinavian Airlines System",
+    "icao": "SAS",
+    "iata": "SK"
+   },
+   "origin": {
+    "icao": "CYYZ",
+    "iata": "YYZ",
+    "name": "Lester B. Pearson International Airport",
+    "city": "Toronto",
+    "country": "Canada",
+    "lat": 43.6772003174,
+    "lon": -79.63059997559999,
+    "tz": "America/Toronto",
+    "utcOffsetS": -14400
+   },
+   "dest": {
+    "icao": "EKCH",
+    "iata": "CPH",
+    "name": "Copenhagen Kastrup Airport",
+    "city": "Copenhagen",
+    "country": "Denmark",
+    "lat": 55.617900848389,
+    "lon": 12.656000137329,
+    "tz": "Europe/Copenhagen",
+    "utcOffsetS": 7200
+   },
+   "pos": {
+    "lat": 59.3816,
+    "lon": -3.8875,
+    "altM": 11270,
+    "gsMs": 264.8,
+    "trackDeg": 99.3,
+    "vRateMs": 0.3,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 6269,
+   "flownKm": 5200,
+   "depTime": 1791060940,
+   "eta": 1791088494,
+   "depTempC": 16.2,
+   "arrTempC": 11.5,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "400685-20261003",
+   "icao24": "400685",
+   "callsign": "BAW216",
+   "flightNo": "BA216",
+   "airline": {
+    "name": "British Airways",
+    "icao": "BAW",
+    "iata": "BA"
+   },
+   "origin": {
+    "icao": "KIAD",
+    "iata": "IAD",
+    "name": "Washington Dulles International Airport",
+    "city": "Washington",
+    "country": "United States",
+    "lat": 38.9445,
+    "lon": -77.455803,
+    "tz": "America/New_York",
+    "utcOffsetS": -14400
+   },
+   "dest": {
+    "icao": "EGLL",
+    "iata": "LHR",
+    "name": "London Heathrow Airport",
+    "city": "London",
+    "country": "United Kingdom",
+    "lat": 51.4706,
+    "lon": -0.461941,
+    "tz": "Europe/London",
+    "utcOffsetS": 3600
+   },
+   "pos": {
+    "lat": 53.1285,
+    "lon": -10.9892,
+    "altM": 12192,
+    "gsMs": 276.2,
+    "trackDeg": 109.8,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 5902,
+   "flownKm": 5163,
+   "depTime": 1791062007,
+   "eta": 1791087128,
+   "depTempC": 18,
+   "arrTempC": 11.6,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "a21dc4-20261003",
+   "icao24": "a21dc4",
+   "callsign": "UAL989",
+   "flightNo": "UA989",
+   "airline": {
+    "name": "United Airlines",
+    "icao": "UAL",
+    "iata": "UA"
+   },
+   "origin": {
+    "icao": "KIAD",
+    "iata": "IAD",
+    "name": "Washington Dulles International Airport",
+    "city": "Washington",
+    "country": "United States",
+    "lat": 38.9445,
+    "lon": -77.455803,
+    "tz": "America/New_York",
+    "utcOffsetS": -14400
+   },
+   "dest": {
+    "icao": "EDDF",
+    "iata": "FRA",
+    "name": "Frankfurt am Main Airport",
+    "city": "Frankfurt am Main",
+    "country": "Germany",
+    "lat": 50.033333,
+    "lon": 8.570556,
+    "tz": "Europe/Berlin",
+    "utcOffsetS": 7200
+   },
+   "pos": {
+    "lat": 53.4412,
+    "lon": -7.6046,
+    "altM": 10973,
+    "gsMs": 264.1,
+    "trackDeg": 106.2,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 6551,
+   "flownKm": 5377,
+   "depTime": 1791060115,
+   "eta": 1791088898,
+   "depTempC": 18.2,
+   "arrTempC": 10.3,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "48ae01-20261003",
+   "icao24": "48ae01",
+   "callsign": "LOT57V",
+   "flightNo": "LO57V",
+   "airline": {
+    "name": "LOT Polish Airlines",
+    "icao": "LOT",
+    "iata": "LO"
+   },
+   "origin": {
+    "icao": "KJFK",
+    "iata": "JFK",
+    "name": "John F Kennedy International Airport",
+    "city": "New York",
+    "country": "United States",
+    "lat": 40.639801,
+    "lon": -73.7789,
+    "tz": "America/New_York",
+    "utcOffsetS": -14400
+   },
+   "dest": {
+    "icao": "EPWA",
+    "iata": "WAW",
+    "name": "Warsaw Chopin Airport",
+    "city": "Warsaw",
+    "country": "Poland",
+    "lat": 52.1656990051,
+    "lon": 20.967100143399996,
+    "tz": "Europe/Warsaw",
+    "utcOffsetS": 7200
+   },
+   "pos": {
+    "lat": 57.6509,
+    "lon": -4.5101,
+    "altM": 12497,
+    "gsMs": 263.5,
+    "trackDeg": 100.2,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 6848,
+   "flownKm": 5121,
+   "depTime": 1791061166,
+   "eta": 1791091007,
+   "depTempC": 21,
+   "arrTempC": 11,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "4cadca-20261004",
+   "icao24": "4cadca",
+   "callsign": "ITY6KC",
+   "flightNo": "AZ6KC",
+   "airline": {
+    "name": "ITA Airways",
+    "icao": "ITY",
+    "iata": "AZ"
+   },
+   "origin": {
+    "icao": "KJFK",
+    "iata": "JFK",
+    "name": "John F Kennedy International Airport",
+    "city": "New York",
+    "country": "United States",
+    "lat": 40.639801,
+    "lon": -73.7789,
+    "tz": "America/New_York",
+    "utcOffsetS": -14400
+   },
+   "dest": {
+    "icao": "LIRF",
+    "iata": "FCO",
+    "name": "Rome–Fiumicino Leonardo da Vinci International Airport",
+    "city": "Rome",
+    "country": "Italy",
+    "lat": 41.804532,
+    "lon": 12.251998,
+    "tz": "Europe/Rome",
+    "utcOffsetS": 7200
+   },
+   "pos": {
+    "lat": 46.5504,
+    "lon": -57.7878,
+    "altM": 11887,
+    "gsMs": 295.7,
+    "trackDeg": 59.2,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083439
+   },
+   "distKm": 6866,
+   "flownKm": 1442,
+   "depTime": 1791077728,
+   "eta": 1791102795,
+   "depTempC": 15.5,
+   "arrTempC": 22.9,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "aa86cc-20261004",
+   "icao24": "aa86cc",
+   "callsign": "AAL720",
+   "flightNo": "AA720",
+   "airline": {
+    "name": "American Airlines",
+    "icao": "AAL",
+    "iata": "AA"
+   },
+   "origin": {
+    "icao": "KCLT",
+    "iata": "CLT",
+    "name": "Charlotte Douglas International Airport",
+    "city": "Charlotte",
+    "country": "United States",
+    "lat": 35.2140007019043,
+    "lon": -80.94309997558594,
+    "tz": "America/New_York",
+    "utcOffsetS": -14400
+   },
+   "dest": {
+    "icao": "LIRF",
+    "iata": "FCO",
+    "name": "Rome–Fiumicino Leonardo da Vinci International Airport",
+    "city": "Rome",
+    "country": "Italy",
+    "lat": 41.804532,
+    "lon": 12.251998,
+    "tz": "Europe/Rome",
+    "utcOffsetS": 7200
+   },
+   "pos": {
+    "lat": 45.4673,
+    "lon": -57.8041,
+    "altM": 11582,
+    "gsMs": 297.3,
+    "trackDeg": 63,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 7727,
+   "flownKm": 2256,
+   "depTime": 1791074629,
+   "eta": 1791102856,
+   "depTempC": 19.6,
+   "arrTempC": 22.9,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "39d2a4-20261004",
+   "icao24": "39d2a4",
+   "callsign": "AFR33J",
+   "flightNo": "AF33J",
+   "airline": {
+    "name": "Air France",
+    "icao": "AFR",
+    "iata": "AF"
+   },
+   "origin": {
+    "icao": "KATL",
+    "iata": "ATL",
+    "name": "Hartsfield Jackson Atlanta International Airport",
+    "city": "Atlanta",
+    "country": "United States",
+    "lat": 33.6367,
+    "lon": -84.428101,
+    "tz": "America/New_York",
+    "utcOffsetS": -14400
+   },
+   "dest": {
+    "icao": "LFPG",
+    "iata": "CDG",
+    "name": "Charles de Gaulle International Airport",
+    "city": "Paris",
+    "country": "France",
+    "lat": 49.012798,
+    "lon": 2.55,
+    "tz": "Europe/Paris",
+    "utcOffsetS": 7200
+   },
+   "pos": {
+    "lat": 47.2693,
+    "lon": -58.8505,
+    "altM": 11887,
+    "gsMs": 301.7,
+    "trackDeg": 58.3,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083502
+   },
+   "distKm": 7056,
+   "flownKm": 2623,
+   "depTime": 1791073382,
+   "eta": 1791099149,
+   "depTempC": 26.5,
+   "arrTempC": 13,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "c04cf4-20261004",
+   "icao24": "c04cf4",
+   "callsign": "WJA40",
+   "flightNo": "WS40",
+   "airline": {
+    "name": "WestJet",
+    "icao": "WJA",
+    "iata": "WS"
+   },
+   "origin": {
+    "icao": "CYHZ",
+    "iata": "YHZ",
+    "name": "Halifax / Stanfield International Airport",
+    "city": "Halifax",
+    "country": "Canada",
+    "lat": 44.8807983398,
+    "lon": -63.5085983276,
+    "tz": "America/Halifax",
+    "utcOffsetS": -10800
+   },
+   "dest": {
+    "icao": "EGKK",
+    "iata": "LGW",
+    "name": "London Gatwick Airport",
+    "city": "London",
+    "country": "United Kingdom",
+    "lat": 51.148102,
+    "lon": -0.190278,
+    "tz": "Europe/London",
+    "utcOffsetS": 3600
+   },
+   "pos": {
+    "lat": 47.0188,
+    "lon": -58.254,
+    "altM": 10668,
+    "gsMs": 290.6,
+    "trackDeg": 72.3,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083495
+   },
+   "distKm": 4613,
+   "flownKm": 471,
+   "depTime": 1791081422,
+   "eta": 1791098710,
+   "depTempC": 9.6,
+   "arrTempC": 10.1,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "896354-20261003",
+   "icao24": "896354",
+   "callsign": "ETD49D",
+   "flightNo": "EY49D",
+   "airline": {
+    "name": "Etihad Airways",
+    "icao": "ETD",
+    "iata": "EY"
+   },
+   "origin": {
+    "icao": "OMAA",
+    "iata": "AUH",
+    "name": "Abu Dhabi International Airport",
+    "city": "Abu Dhabi",
+    "country": "United Arab Emirates",
+    "lat": 24.443764,
+    "lon": 54.651718,
+    "tz": "Asia/Dubai",
+    "utcOffsetS": 14400
+   },
+   "dest": {
+    "icao": "EGCC",
+    "iata": "MAN",
+    "name": "Manchester Airport",
+    "city": "Manchester",
+    "country": "United Kingdom",
+    "lat": 53.349375,
+    "lon": -2.279521,
+    "tz": "Europe/London",
+    "utcOffsetS": 3600
+   },
+   "pos": {
+    "lat": 46.0738,
+    "lon": 25.241,
+    "altM": 10973,
+    "gsMs": 249.9,
+    "trackDeg": 291.5,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083546
+   },
+   "distKm": 5678,
+   "flownKm": 3557,
+   "depTime": 1791067083,
+   "eta": 1791092941,
+   "depTempC": 29.7,
+   "arrTempC": 5.8,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "8963d4-20261003",
+   "icao24": "8963d4",
+   "callsign": "UAE9W",
+   "flightNo": "EK9W",
+   "airline": {
+    "name": "Emirates",
+    "icao": "UAE",
+    "iata": "EK"
+   },
+   "origin": {
+    "icao": "OMDB",
+    "iata": "DXB",
+    "name": "Dubai International Airport",
+    "city": "Dubai",
+    "country": "United Arab Emirates",
+    "lat": 25.2527999878,
+    "lon": 55.3643989563,
+    "tz": "Asia/Dubai",
+    "utcOffsetS": 14400
+   },
+   "dest": {
+    "icao": "EGKK",
+    "iata": "LGW",
+    "name": "London Gatwick Airport",
+    "city": "London",
+    "country": "United Kingdom",
+    "lat": 51.148102,
+    "lon": -0.190278,
+    "tz": "Europe/London",
+    "utcOffsetS": 3600
+   },
+   "pos": {
+    "lat": 44.1666,
+    "lon": 27.365,
+    "altM": 10363,
+    "gsMs": 252.6,
+    "trackDeg": 294.4,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 5473,
+   "flownKm": 3284,
+   "depTime": 1791068479,
+   "eta": 1791093122,
+   "depTempC": 30.8,
+   "arrTempC": 9,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "040172-20261003",
+   "icao24": "040172",
+   "callsign": "ETH706",
+   "flightNo": "ET706",
+   "airline": {
+    "name": "Ethiopian Airlines",
+    "icao": "ETH",
+    "iata": "ET"
+   },
+   "origin": {
+    "icao": "HAAB",
+    "iata": "ADD",
+    "name": "Addis Ababa Bole International Airport",
+    "city": "Addis Ababa",
+    "country": "Ethiopia",
+    "lat": 8.97789,
+    "lon": 38.799301,
+    "tz": "Africa/Addis_Ababa",
+    "utcOffsetS": 10800
+   },
+   "dest": {
+    "icao": "EDDF",
+    "iata": "FRA",
+    "name": "Frankfurt am Main Airport",
+    "city": "Frankfurt am Main",
+    "country": "Germany",
+    "lat": 50.033333,
+    "lon": 8.570556,
+    "tz": "Europe/Berlin",
+    "utcOffsetS": 7200
+   },
+   "pos": {
+    "lat": 40.9967,
+    "lon": 18.7131,
+    "altM": 10973,
+    "gsMs": 256.9,
+    "trackDeg": 316.1,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 5349,
+   "flownKm": 4073,
+   "depTime": 1791065237,
+   "eta": 1791089421,
+   "depTempC": 13.7,
+   "arrTempC": 10.3,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "06a2e6-20261003",
+   "icao24": "06a2e6",
+   "callsign": "QTR29X",
+   "flightNo": "QR29X",
+   "airline": {
+    "name": "Qatar Airways",
+    "icao": "QTR",
+    "iata": "QR"
+   },
+   "origin": {
+    "icao": "OTHH",
+    "iata": "DOH",
+    "name": "Hamad International Airport",
+    "city": "Doha",
+    "country": "Qatar",
+    "lat": 25.273056,
+    "lon": 51.608056,
+    "tz": "Asia/Qatar",
+    "utcOffsetS": 10800
+   },
+   "dest": {
+    "icao": "EDDB",
+    "iata": "BER",
+    "name": "Berlin Brandenburg Airport",
+    "city": "Berlin",
+    "country": "Germany",
+    "lat": 52.351389,
+    "lon": 13.493889,
+    "tz": "Europe/Berlin",
+    "utcOffsetS": 7200
+   },
+   "pos": {
+    "lat": 44.4131,
+    "lon": 30.5141,
+    "altM": 12192,
+    "gsMs": 251.4,
+    "trackDeg": 303.4,
+    "vRateMs": -0.3,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 4382,
+   "flownKm": 2852,
+   "depTime": 1791070362,
+   "eta": 1791090539,
+   "depTempC": 30.5,
+   "arrTempC": 11.8,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "4952d1-20261004",
+   "icao24": "4952d1",
+   "callsign": "TAP901",
+   "flightNo": "TP901",
+   "airline": {
+    "name": "TAP Portugal",
+    "icao": "TAP",
+    "iata": "TP"
+   },
+   "origin": {
+    "icao": "LGAV",
+    "iata": "ATH",
+    "name": "Athens Eleftherios Venizelos International Airport",
+    "city": "Athens",
+    "country": "Greece",
+    "lat": 37.936401,
+    "lon": 23.9445,
+    "tz": "Europe/Athens",
+    "utcOffsetS": 10800
+   },
+   "dest": {
+    "icao": "LPPT",
+    "iata": "LIS",
+    "name": "Humberto Delgado Airport (Lisbon Portela Airport)",
+    "city": "Lisbon",
+    "country": "Portugal",
+    "lat": 38.7813,
+    "lon": -9.13592,
+    "tz": "Europe/Lisbon",
+    "utcOffsetS": 3600
+   },
+   "pos": {
+    "lat": 38.5073,
+    "lon": 20.246,
+    "altM": 10973,
+    "gsMs": 250.3,
+    "trackDeg": 278.6,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 2870,
+   "flownKm": 329,
+   "depTime": 1791081760,
+   "eta": 1791094606,
+   "depTempC": 16.8,
+   "arrTempC": 17.9,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "3c666f-20261004",
+   "icao24": "3c666f",
+   "callsign": "DLH1561",
+   "flightNo": "LH1561",
+   "airline": {
+    "name": "Lufthansa",
+    "icao": "DLH",
+    "iata": "LH"
+   },
+   "origin": {
+    "icao": "UDYZ",
+    "iata": "EVN",
+    "name": "Zvartnots International Airport",
+    "city": "Yerevan",
+    "country": "Armenia",
+    "lat": 40.1473007202,
+    "lon": 44.3959007263,
+    "tz": "Asia/Yerevan",
+    "utcOffsetS": 14400
+   },
+   "dest": {
+    "icao": "EDDF",
+    "iata": "FRA",
+    "name": "Frankfurt am Main Airport",
+    "city": "Frankfurt am Main",
+    "country": "Germany",
+    "lat": 50.033333,
+    "lon": 8.570556,
+    "tz": "Europe/Berlin",
+    "utcOffsetS": 7200
+   },
+   "pos": {
+    "lat": 46.2008,
+    "lon": 29.1291,
+    "altM": 10363,
+    "gsMs": 269.9,
+    "trackDeg": 283.1,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083266
+   },
+   "distKm": 2985,
+   "flownKm": 1406,
+   "depTime": 1791077375,
+   "eta": 1791090304,
+   "depTempC": 9.8,
+   "arrTempC": 10.2,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "4007f4-20261003",
+   "icao24": "4007f4",
+   "callsign": "BAW78",
+   "flightNo": "BA78",
+   "airline": {
+    "name": "British Airways",
+    "icao": "BAW",
+    "iata": "BA"
+   },
+   "origin": {
+    "icao": "DGAA",
+    "iata": "ACC",
+    "name": "Kotoka International Airport",
+    "city": "Accra",
+    "country": "Ghana",
+    "lat": 5.605189800262451,
+    "lon": -0.16678600013256073,
+    "tz": "Africa/Accra",
+    "utcOffsetS": 0
+   },
+   "dest": {
+    "icao": "EGLL",
+    "iata": "LHR",
+    "name": "London Heathrow Airport",
+    "city": "London",
+    "country": "United Kingdom",
+    "lat": 51.4706,
+    "lon": -0.461941,
+    "tz": "Europe/London",
+    "utcOffsetS": 3600
+   },
+   "pos": {
+    "lat": 41.0595,
+    "lon": -0.3639,
+    "altM": 11582,
+    "gsMs": 254.4,
+    "trackDeg": 8.6,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083549
+   },
+   "distKm": 5100,
+   "flownKm": 3942,
+   "depTime": 1791065647,
+   "eta": 1791089004,
+   "depTempC": 25.4,
+   "arrTempC": 11.3,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "a6329d-20261004",
+   "icao24": "a6329d",
+   "callsign": "GTI573",
+   "flightNo": "5Y573",
+   "airline": {
+    "name": "Atlas Air",
+    "icao": "GTI",
+    "iata": "5Y"
+   },
+   "origin": {
+    "icao": "LEZG",
+    "iata": "ZAZ",
+    "name": "Zaragoza Airport",
+    "city": "Zaragoza",
+    "country": "Spain",
+    "lat": 41.666199,
+    "lon": -1.04155,
+    "tz": "Europe/Madrid",
+    "utcOffsetS": 7200
+   },
+   "dest": {
+    "icao": "UAAA",
+    "iata": "ALA",
+    "name": "Almaty Airport",
+    "city": "Almaty",
+    "country": "Kazakhstan",
+    "lat": 43.35210037231445,
+    "lon": 77.04049682617188,
+    "tz": "Asia/Almaty",
+    "utcOffsetS": 18000
+   },
+   "pos": {
+    "lat": 42.893,
+    "lon": 1.9327,
+    "altM": 11582,
+    "gsMs": 255.9,
+    "trackDeg": 62.5,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 6155,
+   "flownKm": 280,
+   "depTime": 1791082010,
+   "eta": 1791107414,
+   "depTempC": 17.8,
+   "arrTempC": 26.3,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "0101b8-20261004",
+   "icao24": "0101b8",
+   "callsign": "MSR862",
+   "flightNo": "MS862",
+   "airline": {
+    "name": "Egyptair",
+    "icao": "MSR",
+    "iata": "MS"
+   },
+   "origin": {
+    "icao": "GMMN",
+    "iata": "CMN",
+    "name": "Mohammed V International Airport",
+    "city": "Casablanca",
+    "country": "Morocco",
+    "lat": 33.36750030517578,
+    "lon": -7.589970111846924,
+    "tz": "Africa/Casablanca",
+    "utcOffsetS": 3600
+   },
+   "dest": {
+    "icao": "HECA",
+    "iata": "CAI",
+    "name": "Cairo International Airport",
+    "city": "Cairo",
+    "country": "Egypt",
+    "lat": 30.12190055847168,
+    "lon": 31.40559959411621,
+    "tz": "Africa/Cairo",
+    "utcOffsetS": 10800
+   },
+   "pos": {
+    "lat": 32.8082,
+    "lon": 16.7975,
+    "altM": 11278,
+    "gsMs": 253.8,
+    "trackDeg": 101.2,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 3684,
+   "flownKm": 2268,
+   "depTime": 1791073103,
+   "eta": 1791090033,
+   "depTempC": 23,
+   "arrTempC": 18.6,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "40742e-20261003",
+   "icao24": "40742e",
+   "callsign": "UBT796",
+   "flightNo": "Z0796",
+   "airline": {
+    "name": "Norse Atlantic UK",
+    "icao": "UBT",
+    "iata": "Z0"
+   },
+   "origin": {
+    "icao": "FACT",
+    "iata": "CPT",
+    "name": "Cape Town International Airport",
+    "city": "Cape Town",
+    "country": "South Africa",
+    "lat": -33.9648017883,
+    "lon": 18.6016998291,
+    "tz": "Africa/Johannesburg",
+    "utcOffsetS": 7200
+   },
+   "dest": {
+    "icao": "EGKK",
+    "iata": "LGW",
+    "name": "London Gatwick Airport",
+    "city": "London",
+    "country": "United Kingdom",
+    "lat": 51.148102,
+    "lon": -0.190278,
+    "tz": "Europe/London",
+    "utcOffsetS": 3600
+   },
+   "pos": {
+    "lat": 4.145,
+    "lon": 11.3076,
+    "altM": 10958,
+    "gsMs": 258.8,
+    "trackDeg": 333.7,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 9641,
+   "flownKm": 4306,
+   "depTime": 1791064348,
+   "eta": 1791105066,
+   "depTempC": 14.3,
+   "arrTempC": 14.1,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "39c427-20261004",
+   "icao24": "39c427",
+   "callsign": "AFR551",
+   "flightNo": "AF551",
+   "airline": {
+    "name": "Air France",
+    "icao": "AFR",
+    "iata": "AF"
+   },
+   "origin": {
+    "icao": "HECA",
+    "iata": "CAI",
+    "name": "Cairo International Airport",
+    "city": "Cairo",
+    "country": "Egypt",
+    "lat": 30.12190055847168,
+    "lon": 31.40559959411621,
+    "tz": "Africa/Cairo",
+    "utcOffsetS": 10800
+   },
+   "dest": {
+    "icao": "LFPG",
+    "iata": "CDG",
+    "name": "Charles de Gaulle International Airport",
+    "city": "Paris",
+    "country": "France",
+    "lat": 49.012798,
+    "lon": 2.55,
+    "tz": "Europe/Paris",
+    "utcOffsetS": 7200
+   },
+   "pos": {
+    "lat": 40.9334,
+    "lon": 18.2908,
+    "altM": 11582,
+    "gsMs": 256.7,
+    "trackDeg": 302.5,
+    "vRateMs": -0.3,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 3210,
+   "flownKm": 1686,
+   "depTime": 1791075794,
+   "eta": 1791090393,
+   "depTempC": 19.2,
+   "arrTempC": 12.3,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "710119-20261004",
+   "icao24": "710119",
+   "callsign": "SVA143",
+   "flightNo": "SV143",
+   "airline": {
+    "name": "Saudi Arabian Airlines",
+    "icao": "SVA",
+    "iata": "SV"
+   },
+   "origin": {
+    "icao": "OERK",
+    "iata": "RUH",
+    "name": "King Khaled International Airport",
+    "city": "Riyadh",
+    "country": "Saudi Arabia",
+    "lat": 24.957599639892575,
+    "lon": 46.69879913330078,
+    "tz": "Asia/Riyadh",
+    "utcOffsetS": 10800
+   },
+   "dest": {
+    "icao": "LFPG",
+    "iata": "CDG",
+    "name": "Charles de Gaulle International Airport",
+    "city": "Paris",
+    "country": "France",
+    "lat": 49.012798,
+    "lon": 2.55,
+    "tz": "Europe/Paris",
+    "utcOffsetS": 7200
+   },
+   "pos": {
+    "lat": 39.3413,
+    "lon": 27.8308,
+    "altM": 11582,
+    "gsMs": 255.1,
+    "trackDeg": 296.7,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 4651,
+   "flownKm": 2381,
+   "depTime": 1791072650,
+   "eta": 1791093350,
+   "depTempC": 27.8,
+   "arrTempC": 12.3,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "89611b-20261003",
+   "icao24": "89611b",
+   "callsign": "UAE1KM",
+   "flightNo": "EK1KM",
+   "airline": {
+    "name": "Emirates",
+    "icao": "UAE",
+    "iata": "EK"
+   },
+   "origin": {
+    "icao": "OMDB",
+    "iata": "DXB",
+    "name": "Dubai International Airport",
+    "city": "Dubai",
+    "country": "United Arab Emirates",
+    "lat": 25.2527999878,
+    "lon": 55.3643989563,
+    "tz": "Asia/Dubai",
+    "utcOffsetS": 14400
+   },
+   "dest": {
+    "icao": "EGCC",
+    "iata": "MAN",
+    "name": "Manchester Airport",
+    "city": "Manchester",
+    "country": "United Kingdom",
+    "lat": 53.349375,
+    "lon": -2.279521,
+    "tz": "Europe/London",
+    "utcOffsetS": 3600
+   },
+   "pos": {
+    "lat": 43.5131,
+    "lon": 31.7744,
+    "altM": 10363,
+    "gsMs": 256.6,
+    "trackDeg": 302.2,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 5655,
+   "flownKm": 2948,
+   "depTime": 1791070200,
+   "eta": 1791095004,
+   "depTempC": 30.6,
+   "arrTempC": 6.1,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "89617e-20261003",
+   "icao24": "89617e",
+   "callsign": "UAE232",
+   "flightNo": "EK232",
+   "airline": {
+    "name": "Emirates",
+    "icao": "UAE",
+    "iata": "EK"
+   },
+   "origin": {
+    "icao": "KIAD",
+    "iata": "IAD",
+    "name": "Washington Dulles International Airport",
+    "city": "Washington",
+    "country": "United States",
+    "lat": 38.9445,
+    "lon": -77.455803,
+    "tz": "America/New_York",
+    "utcOffsetS": -14400
+   },
+   "dest": {
+    "icao": "OMDB",
+    "iata": "DXB",
+    "name": "Dubai International Airport",
+    "city": "Dubai",
+    "country": "United Arab Emirates",
+    "lat": 25.2527999878,
+    "lon": 55.3643989563,
+    "tz": "Asia/Dubai",
+    "utcOffsetS": 14400
+   },
+   "pos": {
+    "lat": 27.3894,
+    "lon": 53.6276,
+    "altM": 11278,
+    "gsMs": 259.2,
+    "trackDeg": 110.5,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083549
+   },
+   "distKm": 11355,
+   "flownKm": 11061,
+   "depTime": 1791034751,
+   "eta": 1791085588,
+   "depTempC": 13.6,
+   "arrTempC": 31.2,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "8963e2-20261003",
+   "icao24": "8963e2",
+   "callsign": "UAE194",
+   "flightNo": "EK194",
+   "airline": {
+    "name": "Emirates",
+    "icao": "UAE",
+    "iata": "EK"
+   },
+   "origin": {
+    "icao": "LPPT",
+    "iata": "LIS",
+    "name": "Humberto Delgado Airport (Lisbon Portela Airport)",
+    "city": "Lisbon",
+    "country": "Portugal",
+    "lat": 38.7813,
+    "lon": -9.13592,
+    "tz": "Europe/Lisbon",
+    "utcOffsetS": 3600
+   },
+   "dest": {
+    "icao": "OMDB",
+    "iata": "DXB",
+    "name": "Dubai International Airport",
+    "city": "Dubai",
+    "country": "United Arab Emirates",
+    "lat": 25.2527999878,
+    "lon": 55.3643989563,
+    "tz": "Asia/Dubai",
+    "utcOffsetS": 14400
+   },
+   "pos": {
+    "lat": 26.8833,
+    "lon": 52.2654,
+    "altM": 11887,
+    "gsMs": 255.2,
+    "trackDeg": 110.4,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 6138,
+   "flownKm": 5779,
+   "depTime": 1791057525,
+   "eta": 1791085859,
+   "depTempC": 21,
+   "arrTempC": 31.3,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "06a2e5-20261003",
+   "icao24": "06a2e5",
+   "callsign": "QTR72Q",
+   "flightNo": "QR72Q",
+   "airline": {
+    "name": "Qatar Airways",
+    "icao": "QTR",
+    "iata": "QR"
+   },
+   "origin": {
+    "icao": "EIDW",
+    "iata": "DUB",
+    "name": "Dublin Airport",
+    "city": "Dublin",
+    "country": "Ireland",
+    "lat": 53.421299,
+    "lon": -6.27007,
+    "tz": "Europe/Dublin",
+    "utcOffsetS": 3600
+   },
+   "dest": {
+    "icao": "OTHH",
+    "iata": "DOH",
+    "name": "Hamad International Airport",
+    "city": "Doha",
+    "country": "Qatar",
+    "lat": 25.273056,
+    "lon": 51.608056,
+    "tz": "Asia/Qatar",
+    "utcOffsetS": 10800
+   },
+   "pos": {
+    "lat": 26.5894,
+    "lon": 50.3457,
+    "altM": 10058,
+    "gsMs": 258,
+    "trackDeg": 108.7,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 5670,
+   "flownKm": 5477,
+   "depTime": 1791059132,
+   "eta": 1791085203,
+   "depTempC": 12.5,
+   "arrTempC": 30.4,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "06a2e0-20261004",
+   "icao24": "06a2e0",
+   "callsign": "QTR8694",
+   "flightNo": "QR8694",
+   "airline": {
+    "name": "Qatar Airways",
+    "icao": "QTR",
+    "iata": "QR"
+   },
+   "origin": {
+    "icao": "OTHH",
+    "iata": "DOH",
+    "name": "Hamad International Airport",
+    "city": "Doha",
+    "country": "Qatar",
+    "lat": 25.273056,
+    "lon": 51.608056,
+    "tz": "Asia/Qatar",
+    "utcOffsetS": 10800
+   },
+   "dest": {
+    "icao": "VOBL",
+    "iata": "BLR",
+    "name": "Kempegowda International Airport",
+    "city": "Bangalore",
+    "country": "India",
+    "lat": 13.1979,
+    "lon": 77.706299,
+    "tz": "Asia/Kolkata",
+    "utcOffsetS": 19800
+   },
+   "pos": {
+    "lat": 24.0002,
+    "lon": 55.0724,
+    "altM": 10668,
+    "gsMs": 257.3,
+    "trackDeg": 122.7,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083549
+   },
+   "distKm": 3043,
+   "flownKm": 378,
+   "depTime": 1791081587,
+   "eta": 1791094812,
+   "depTempC": 29,
+   "arrTempC": 29,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "06a2ee-20261004",
+   "icao24": "06a2ee",
+   "callsign": "QTR1R",
+   "flightNo": "QR1R",
+   "airline": {
+    "name": "Qatar Airways",
+    "icao": "QTR",
+    "iata": "QR"
+   },
+   "origin": {
+    "icao": "OTHH",
+    "iata": "DOH",
+    "name": "Hamad International Airport",
+    "city": "Doha",
+    "country": "Qatar",
+    "lat": 25.273056,
+    "lon": 51.608056,
+    "tz": "Asia/Qatar",
+    "utcOffsetS": 10800
+   },
+   "dest": {
+    "icao": "LGAV",
+    "iata": "ATH",
+    "name": "Athens Eleftherios Venizelos International Airport",
+    "city": "Athens",
+    "country": "Greece",
+    "lat": 37.936401,
+    "lon": 23.9445,
+    "tz": "Europe/Athens",
+    "utcOffsetS": 10800
+   },
+   "pos": {
+    "lat": 26.7366,
+    "lon": 49.2498,
+    "altM": 10051,
+    "gsMs": 273.6,
+    "trackDeg": 101.6,
+    "vRateMs": -0.3,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 2958,
+   "flownKm": 286,
+   "depTime": 1791082065,
+   "eta": 1791094217,
+   "depTempC": 28.9,
+   "arrTempC": 17.7,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "06a0ad-20261003",
+   "icao24": "06a0ad",
+   "callsign": "QTR59G",
+   "flightNo": "QR59G",
+   "airline": {
+    "name": "Qatar Airways",
+    "icao": "QTR",
+    "iata": "QR"
+   },
+   "origin": {
+    "icao": "LDZA",
+    "iata": "ZAG",
+    "name": "Zagreb Airport",
+    "city": "Zagreb",
+    "country": "Croatia",
+    "lat": 45.7429008484,
+    "lon": 16.0687999725,
+    "tz": "Europe/Zagreb",
+    "utcOffsetS": 7200
+   },
+   "dest": {
+    "icao": "OTHH",
+    "iata": "DOH",
+    "name": "Hamad International Airport",
+    "city": "Doha",
+    "country": "Qatar",
+    "lat": 25.273056,
+    "lon": 51.608056,
+    "tz": "Asia/Qatar",
+    "utcOffsetS": 10800
+   },
+   "pos": {
+    "lat": 26.3882,
+    "lon": 50.356,
+    "altM": 9418,
+    "gsMs": 267.2,
+    "trackDeg": 103.5,
+    "vRateMs": -4.5,
+    "t": 1791083554,
+    "fixT": 1791083549
+   },
+   "distKm": 3890,
+   "flownKm": 3714,
+   "depTime": 1791067457,
+   "eta": 1791085114,
+   "depTempC": 5.7,
+   "arrTempC": 30.3,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "06a0e4-20261003",
+   "icao24": "06a0e4",
+   "callsign": "QTR813",
+   "flightNo": "QR813",
+   "airline": {
+    "name": "Qatar Airways",
+    "icao": "QTR",
+    "iata": "QR"
+   },
+   "origin": {
+    "icao": "RJTT",
+    "iata": "HND",
+    "name": "Tokyo Haneda International Airport",
+    "city": "Tokyo",
+    "country": "Japan",
+    "lat": 35.552299,
+    "lon": 139.779999,
+    "tz": "Asia/Tokyo",
+    "utcOffsetS": 32400
+   },
+   "dest": {
+    "icao": "OTHH",
+    "iata": "DOH",
+    "name": "Hamad International Airport",
+    "city": "Doha",
+    "country": "Qatar",
+    "lat": 25.273056,
+    "lon": 51.608056,
+    "tz": "Asia/Qatar",
+    "utcOffsetS": 10800
+   },
+   "pos": {
+    "lat": 27.1263,
+    "lon": 54.9654,
+    "altM": 12192,
+    "gsMs": 257.4,
+    "trackDeg": 277.5,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 8254,
+   "flownKm": 7861,
+   "depTime": 1791048542,
+   "eta": 1791085982,
+   "depTempC": 17.9,
+   "arrTempC": 30.8,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "3c65a1-20261003",
+   "icao24": "3c65a1",
+   "callsign": "DLH767",
+   "flightNo": "LH767",
+   "airline": {
+    "name": "Lufthansa",
+    "icao": "DLH",
+    "iata": "LH"
+   },
+   "origin": {
+    "icao": "VABB",
+    "iata": "BOM",
+    "name": "Chhatrapati Shivaji International Airport",
+    "city": "Mumbai",
+    "country": "India",
+    "lat": 19.0886993408,
+    "lon": 72.8678970337,
+    "tz": "Asia/Kolkata",
+    "utcOffsetS": 19800
+   },
+   "dest": {
+    "icao": "EDDM",
+    "iata": "MUC",
+    "name": "Munich Airport",
+    "city": "Munich",
+    "country": "Germany",
+    "lat": 48.353802,
+    "lon": 11.7861,
+    "tz": "Europe/Berlin",
+    "utcOffsetS": 7200
+   },
+   "pos": {
+    "lat": 42.0702,
+    "lon": 38.5253,
+    "altM": 12192,
+    "gsMs": 249.4,
+    "trackDeg": 276,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 6312,
+   "flownKm": 4117,
+   "depTime": 1791064491,
+   "eta": 1791093256,
+   "depTempC": 26,
+   "arrTempC": 6.7,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "710112-20261004",
+   "icao24": "710112",
+   "callsign": "SVA111",
+   "flightNo": "SV111",
+   "airline": {
+    "name": "Saudi Arabian Airlines",
+    "icao": "SVA",
+    "iata": "SV"
+   },
+   "origin": {
+    "icao": "OERK",
+    "iata": "RUH",
+    "name": "King Khaled International Airport",
+    "city": "Riyadh",
+    "country": "Saudi Arabia",
+    "lat": 24.957599639892575,
+    "lon": 46.69879913330078,
+    "tz": "Asia/Riyadh",
+    "utcOffsetS": 10800
+   },
+   "dest": {
+    "icao": "EGLL",
+    "iata": "LHR",
+    "name": "London Heathrow Airport",
+    "city": "London",
+    "country": "United Kingdom",
+    "lat": 51.4706,
+    "lon": -0.461941,
+    "tz": "Europe/London",
+    "utcOffsetS": 3600
+   },
+   "pos": {
+    "lat": 39.6707,
+    "lon": 29.1858,
+    "altM": 9754,
+    "gsMs": 271.6,
+    "trackDeg": 302.6,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083525
+   },
+   "distKm": 4941,
+   "flownKm": 2312,
+   "depTime": 1791073583,
+   "eta": 1791094132,
+   "depTempC": 27.6,
+   "arrTempC": 10.7,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "a8dd7b-20261003",
+   "icao24": "a8dd7b",
+   "callsign": "UAL30",
+   "flightNo": "UA30",
+   "airline": {
+    "name": "United Airlines",
+    "icao": "UAL",
+    "iata": "UA"
+   },
+   "origin": {
+    "icao": "KEWR",
+    "iata": "EWR",
+    "name": "Newark Liberty International Airport",
+    "city": "New York",
+    "country": "United States",
+    "lat": 40.692501,
+    "lon": -74.168701,
+    "tz": "America/New_York",
+    "utcOffsetS": -14400
+   },
+   "dest": {
+    "icao": "EDDM",
+    "iata": "MUC",
+    "name": "Munich Airport",
+    "city": "Munich",
+    "country": "Germany",
+    "lat": 48.353802,
+    "lon": 11.7861,
+    "tz": "Europe/Berlin",
+    "utcOffsetS": 7200
+   },
+   "pos": {
+    "lat": 50.4861,
+    "lon": 4.6951,
+    "altM": 11278,
+    "gsMs": 255.6,
+    "trackDeg": 107.1,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083549
+   },
+   "distKm": 6503,
+   "flownKm": 5938,
+   "depTime": 1791056858,
+   "eta": 1791086663,
+   "depTempC": 23.3,
+   "arrTempC": 6.4,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "aa3b85-20261003",
+   "icao24": "aa3b85",
+   "callsign": "AAL704",
+   "flightNo": "AA704",
+   "airline": {
+    "name": "American Airlines",
+    "icao": "AAL",
+    "iata": "AA"
+   },
+   "origin": {
+    "icao": "KCLT",
+    "iata": "CLT",
+    "name": "Charlotte Douglas International Airport",
+    "city": "Charlotte",
+    "country": "United States",
+    "lat": 35.2140007019043,
+    "lon": -80.94309997558594,
+    "tz": "America/New_York",
+    "utcOffsetS": -14400
+   },
+   "dest": {
+    "icao": "EDDF",
+    "iata": "FRA",
+    "name": "Frankfurt am Main Airport",
+    "city": "Frankfurt am Main",
+    "country": "Germany",
+    "lat": 50.033333,
+    "lon": 8.570556,
+    "tz": "Europe/Berlin",
+    "utcOffsetS": 7200
+   },
+   "pos": {
+    "lat": 52.184,
+    "lon": -0.5613,
+    "altM": 10668,
+    "gsMs": 253.3,
+    "trackDeg": 117.5,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 7059,
+   "flownKm": 6379,
+   "depTime": 1791054640,
+   "eta": 1791087140,
+   "depTempC": 25.4,
+   "arrTempC": 10.5,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "ab4e94-20261003",
+   "icao24": "ab4e94",
+   "callsign": "AAL718",
+   "flightNo": "AA718",
+   "airline": {
+    "name": "American Airlines",
+    "icao": "AAL",
+    "iata": "AA"
+   },
+   "origin": {
+    "icao": "KPHL",
+    "iata": "PHL",
+    "name": "Philadelphia International Airport",
+    "city": "Philadelphia",
+    "country": "United States",
+    "lat": 39.87189865112305,
+    "lon": -75.24109649658203,
+    "tz": "America/New_York",
+    "utcOffsetS": -14400
+   },
+   "dest": {
+    "icao": "LIRF",
+    "iata": "FCO",
+    "name": "Rome–Fiumicino Leonardo da Vinci International Airport",
+    "city": "Rome",
+    "country": "Italy",
+    "lat": 41.804532,
+    "lon": 12.251998,
+    "tz": "Europe/Rome",
+    "utcOffsetS": 7200
+   },
+   "pos": {
+    "lat": 45.5106,
+    "lon": 2.3487,
+    "altM": 11887,
+    "gsMs": 255.1,
+    "trackDeg": 113.4,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 7017,
+   "flownKm": 6121,
+   "depTime": 1791055985,
+   "eta": 1791087967,
+   "depTempC": 21.2,
+   "arrTempC": 18.9,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "aaf828-20261003",
+   "icao24": "aaf828",
+   "callsign": "AAL758",
+   "flightNo": "AA758",
+   "airline": {
+    "name": "American Airlines",
+    "icao": "AAL",
+    "iata": "AA"
+   },
+   "origin": {
+    "icao": "KPHL",
+    "iata": "PHL",
+    "name": "Philadelphia International Airport",
+    "city": "Philadelphia",
+    "country": "United States",
+    "lat": 39.87189865112305,
+    "lon": -75.24109649658203,
+    "tz": "America/New_York",
+    "utcOffsetS": -14400
+   },
+   "dest": {
+    "icao": "LGAV",
+    "iata": "ATH",
+    "name": "Athens Eleftherios Venizelos International Airport",
+    "city": "Athens",
+    "country": "Greece",
+    "lat": 37.936401,
+    "lon": 23.9445,
+    "tz": "Europe/Athens",
+    "utcOffsetS": 10800
+   },
+   "pos": {
+    "lat": 45.3968,
+    "lon": 8.2088,
+    "altM": 12497,
+    "gsMs": 256.8,
+    "trackDeg": 123.6,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 8083,
+   "flownKm": 6539,
+   "depTime": 1791054322,
+   "eta": 1791090466,
+   "depTempC": 21.1,
+   "arrTempC": 16.8,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "896596-20261004",
+   "icao24": "896596",
+   "callsign": "ETD2",
+   "flightNo": "EY2",
+   "airline": {
+    "name": "Etihad Airways",
+    "icao": "ETD",
+    "iata": "EY"
+   },
+   "origin": {
+    "icao": "EDDF",
+    "iata": "FRA",
+    "name": "Frankfurt am Main Airport",
+    "city": "Frankfurt am Main",
+    "country": "Germany",
+    "lat": 50.033333,
+    "lon": 8.570556,
+    "tz": "Europe/Berlin",
+    "utcOffsetS": 7200
+   },
+   "dest": {
+    "icao": "OMAA",
+    "iata": "AUH",
+    "name": "Abu Dhabi International Airport",
+    "city": "Abu Dhabi",
+    "country": "United Arab Emirates",
+    "lat": 24.443764,
+    "lon": 54.651718,
+    "tz": "Asia/Dubai",
+    "utcOffsetS": 14400
+   },
+   "pos": {
+    "lat": 46.7311,
+    "lon": 20.3479,
+    "altM": 11278,
+    "gsMs": 260.4,
+    "trackDeg": 127.1,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 4861,
+   "flownKm": 943,
+   "depTime": 1791079140,
+   "eta": 1791099501,
+   "depTempC": 11.7,
+   "arrTempC": 38,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "8965f5-20261003",
+   "icao24": "8965f5",
+   "callsign": "ETD6PX",
+   "flightNo": "EY6PX",
+   "airline": {
+    "name": "Etihad Airways",
+    "icao": "ETD",
+    "iata": "EY"
+   },
+   "origin": {
+    "icao": "KBOS",
+    "iata": "BOS",
+    "name": "Logan International Airport",
+    "city": "Boston",
+    "country": "United States",
+    "lat": 42.3643,
+    "lon": -71.005203,
+    "tz": "America/New_York",
+    "utcOffsetS": -14400
+   },
+   "dest": {
+    "icao": "OMAA",
+    "iata": "AUH",
+    "name": "Abu Dhabi International Airport",
+    "city": "Abu Dhabi",
+    "country": "United Arab Emirates",
+    "lat": 24.443764,
+    "lon": 54.651718,
+    "tz": "Asia/Dubai",
+    "utcOffsetS": 14400
+   },
+   "pos": {
+    "lat": 54.3703,
+    "lon": 5.2864,
+    "altM": 11278,
+    "gsMs": 249.8,
+    "trackDeg": 111.8,
+    "vRateMs": -0.3,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 10731,
+   "flownKm": 5502,
+   "depTime": 1791058226,
+   "eta": 1791105385,
+   "depTempC": 16.7,
+   "arrTempC": 39.6,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "48e97b-20261004",
+   "icao24": "48e97b",
+   "callsign": "LOT500",
+   "flightNo": "LO500",
+   "airline": {
+    "name": "LOT Polish Airlines",
+    "icao": "LOT",
+    "iata": "LO"
+   },
+   "origin": {
+    "icao": "BIKF",
+    "iata": "KEF",
+    "name": "Keflavik International Airport",
+    "city": "Reykjavík",
+    "country": "Iceland",
+    "lat": 63.985001,
+    "lon": -22.6056,
+    "tz": "Atlantic/Reykjavik",
+    "utcOffsetS": 0
+   },
+   "dest": {
+    "icao": "EPWA",
+    "iata": "WAW",
+    "name": "Warsaw Chopin Airport",
+    "city": "Warsaw",
+    "country": "Poland",
+    "lat": 52.1656990051,
+    "lon": 20.967100143399996,
+    "tz": "Europe/Warsaw",
+    "utcOffsetS": 7200
+   },
+   "pos": {
+    "lat": 58.9658,
+    "lon": 6.0032,
+    "altM": 11278,
+    "gsMs": 257.6,
+    "trackDeg": 124.8,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 2804,
+   "flownKm": 1602,
+   "depTime": 1791076188,
+   "eta": 1791089122,
+   "depTempC": 8.6,
+   "arrTempC": 10.7,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "a17ecd-20261003",
+   "icao24": "a17ecd",
+   "callsign": "DAL218",
+   "flightNo": "DL218",
+   "airline": {
+    "name": "Delta Air Lines",
+    "icao": "DAL",
+    "iata": "DL"
+   },
+   "origin": {
+    "icao": "KJFK",
+    "iata": "JFK",
+    "name": "John F Kennedy International Airport",
+    "city": "New York",
+    "country": "United States",
+    "lat": 40.639801,
+    "lon": -73.7789,
+    "tz": "America/New_York",
+    "utcOffsetS": -14400
+   },
+   "dest": {
+    "icao": "EKCH",
+    "iata": "CPH",
+    "name": "Copenhagen Kastrup Airport",
+    "city": "Copenhagen",
+    "country": "Denmark",
+    "lat": 55.617900848389,
+    "lon": 12.656000137329,
+    "tz": "Europe/Copenhagen",
+    "utcOffsetS": 7200
+   },
+   "pos": {
+    "lat": 56.3345,
+    "lon": 9.5135,
+    "altM": 8481,
+    "gsMs": 253.1,
+    "trackDeg": 98.9,
+    "vRateMs": -10.7,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 6189,
+   "flownKm": 5978,
+   "depTime": 1791056412,
+   "eta": 1791085288,
+   "depTempC": 22.3,
+   "arrTempC": 12.1,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "c0583f-20261003",
+   "icao24": "c0583f",
+   "callsign": "ACA840",
+   "flightNo": "AC840",
+   "airline": {
+    "name": "Air Canada",
+    "icao": "ACA",
+    "iata": "AC"
+   },
+   "origin": {
+    "icao": "CYYZ",
+    "iata": "YYZ",
+    "name": "Lester B. Pearson International Airport",
+    "city": "Toronto",
+    "country": "Canada",
+    "lat": 43.6772003174,
+    "lon": -79.63059997559999,
+    "tz": "America/Toronto",
+    "utcOffsetS": -14400
+   },
+   "dest": {
+    "icao": "EDDF",
+    "iata": "FRA",
+    "name": "Frankfurt am Main Airport",
+    "city": "Frankfurt am Main",
+    "country": "Germany",
+    "lat": 50.033333,
+    "lon": 8.570556,
+    "tz": "Europe/Berlin",
+    "utcOffsetS": 7200
+   },
+   "pos": {
+    "lat": 52.1987,
+    "lon": 2.09,
+    "altM": 11887,
+    "gsMs": 252,
+    "trackDeg": 115.3,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 6344,
+   "flownKm": 5832,
+   "depTime": 1791056956,
+   "eta": 1791086487,
+   "depTempC": 16.8,
+   "arrTempC": 10.6,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "a82aa0-20261004",
+   "icao24": "a82aa0",
+   "callsign": "UPS16",
+   "flightNo": "5X16",
+   "airline": {
+    "name": "United Parcel Service",
+    "icao": "UPS",
+    "iata": "5X"
+   },
+   "origin": {
+    "icao": "EDDK",
+    "iata": "CGN",
+    "name": "Cologne Bonn Airport",
+    "city": "Cologne",
+    "country": "Germany",
+    "lat": 50.8658981323,
+    "lon": 7.1427397728,
+    "tz": "Europe/Berlin",
+    "utcOffsetS": 7200
+   },
+   "dest": {
+    "icao": "VOBL",
+    "iata": "BLR",
+    "name": "Kempegowda International Airport",
+    "city": "Bangalore",
+    "country": "India",
+    "lat": 13.1979,
+    "lon": 77.706299,
+    "tz": "Asia/Kolkata",
+    "utcOffsetS": 19800
+   },
+   "pos": {
+    "lat": 48.6121,
+    "lon": 22.6549,
+    "altM": 10058,
+    "gsMs": 261.8,
+    "trackDeg": 114.3,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 7513,
+   "flownKm": 1140,
+   "depTime": 1791078305,
+   "eta": 1791108797,
+   "depTempC": 13.1,
+   "arrTempC": 28,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "ac9923-20261003",
+   "icao24": "ac9923",
+   "callsign": "UAL944",
+   "flightNo": "UA944",
+   "airline": {
+    "name": "United Airlines",
+    "icao": "UAL",
+    "iata": "UA"
+   },
+   "origin": {
+    "icao": "KORD",
+    "iata": "ORD",
+    "name": "Chicago O'Hare International Airport",
+    "city": "Chicago",
+    "country": "United States",
+    "lat": 41.9786,
+    "lon": -87.9048,
+    "tz": "America/Chicago",
+    "utcOffsetS": -18000
+   },
+   "dest": {
+    "icao": "EDDF",
+    "iata": "FRA",
+    "name": "Frankfurt am Main Airport",
+    "city": "Frankfurt am Main",
+    "country": "Germany",
+    "lat": 50.033333,
+    "lon": 8.570556,
+    "tz": "Europe/Berlin",
+    "utcOffsetS": 7200
+   },
+   "pos": {
+    "lat": 52.2261,
+    "lon": 2.8856,
+    "altM": 10668,
+    "gsMs": 265.8,
+    "trackDeg": 110.2,
+    "vRateMs": -0.3,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 6971,
+   "flownKm": 6506,
+   "depTime": 1791055439,
+   "eta": 1791086205,
+   "depTempC": 19.8,
+   "arrTempC": 10.6,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "abb007-20261003",
+   "icao24": "abb007",
+   "callsign": "DAL22",
+   "flightNo": "DL22",
+   "airline": {
+    "name": "Delta Air Lines",
+    "icao": "DAL",
+    "iata": "DL"
+   },
+   "origin": {
+    "icao": "KDTW",
+    "iata": "DTW",
+    "name": "Detroit Metropolitan Wayne County Airport",
+    "city": "Detroit",
+    "country": "United States",
+    "lat": 42.212398529052734,
+    "lon": -83.35340118408203,
+    "tz": "America/Detroit",
+    "utcOffsetS": -14400
+   },
+   "dest": {
+    "icao": "EDDM",
+    "iata": "MUC",
+    "name": "Munich Airport",
+    "city": "Munich",
+    "country": "Germany",
+    "lat": 48.353802,
+    "lon": 11.7861,
+    "tz": "Europe/Berlin",
+    "utcOffsetS": 7200
+   },
+   "pos": {
+    "lat": 51.5199,
+    "lon": 3.536,
+    "altM": 12192,
+    "gsMs": 250,
+    "trackDeg": 110.2,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 6977,
+   "flownKm": 6290,
+   "depTime": 1791054664,
+   "eta": 1791087201,
+   "depTempC": 17.7,
+   "arrTempC": 6.4,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "3c66b7-20261004",
+   "icao24": "3c66b7",
+   "callsign": "OCN2RD",
+   "flightNo": "2RD",
+   "airline": {
+    "name": "O Air",
+    "icao": "OCN",
+    "iata": null
+   },
+   "origin": {
+    "icao": "BIKF",
+    "iata": "KEF",
+    "name": "Keflavik International Airport",
+    "city": "Reykjavík",
+    "country": "Iceland",
+    "lat": 63.985001,
+    "lon": -22.6056,
+    "tz": "Atlantic/Reykjavik",
+    "utcOffsetS": 0
+   },
+   "dest": {
+    "icao": "EDDM",
+    "iata": "MUC",
+    "name": "Munich Airport",
+    "city": "Munich",
+    "country": "Germany",
+    "lat": 48.353802,
+    "lon": 11.7861,
+    "tz": "Europe/Berlin",
+    "utcOffsetS": 7200
+   },
+   "pos": {
+    "lat": 56.0494,
+    "lon": 0.6935,
+    "altM": 11278,
+    "gsMs": 254,
+    "trackDeg": 136.2,
+    "vRateMs": -0.3,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 2692,
+   "flownKm": 1553,
+   "depTime": 1791076307,
+   "eta": 1791088939,
+   "depTempC": 8.6,
+   "arrTempC": 6.3,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "76cd08-20261003",
+   "icao24": "76cd08",
+   "callsign": "SIA248",
+   "flightNo": "SQ248",
+   "airline": {
+    "name": "Singapore Airlines",
+    "icao": "SIA",
+    "iata": "SQ"
+   },
+   "origin": {
+    "icao": "YMML",
+    "iata": "MEL",
+    "name": "Melbourne International Airport",
+    "city": "Melbourne",
+    "country": "Australia",
+    "lat": -37.673302,
+    "lon": 144.843002,
+    "tz": "Australia/Melbourne",
+    "utcOffsetS": 39600
+   },
+   "dest": {
+    "icao": "WSSS",
+    "iata": "SIN",
+    "name": "Singapore Changi Airport",
+    "city": "Singapore",
+    "country": "Singapore",
+    "lat": 1.35019,
+    "lon": 103.994003,
+    "tz": "Asia/Singapore",
+    "utcOffsetS": 28800
+   },
+   "pos": {
+    "lat": -0.5759,
+    "lon": 105.5887,
+    "altM": 13106,
+    "gsMs": 249.2,
+    "trackDeg": 318.2,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083549
+   },
+   "distKm": 6033,
+   "flownKm": 5755,
+   "depTime": 1791057012,
+   "eta": 1791085570,
+   "depTempC": 9.5,
+   "arrTempC": 30.9,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "7815fa-20261003",
+   "icao24": "7815fa",
+   "callsign": "CHH785",
+   "flightNo": "HU785",
+   "airline": {
+    "name": "Hainan Airlines",
+    "icao": "CHH",
+    "iata": "HU"
+   },
+   "origin": {
+    "icao": "ZJHK",
+    "iata": "HAK",
+    "name": "Haikou Meilan International Airport",
+    "city": "Haikou (Meilan)",
+    "country": "China",
+    "lat": 19.9349,
+    "lon": 110.459,
+    "tz": "Asia/Shanghai",
+    "utcOffsetS": 28800
+   },
+   "dest": {
+    "icao": "NZAA",
+    "iata": "AKL",
+    "name": "Auckland International Airport",
+    "city": "Auckland",
+    "country": "New Zealand",
+    "lat": -37.008099,
+    "lon": 174.792007,
+    "tz": "Pacific/Auckland",
+    "utcOffsetS": 46800
+   },
+   "pos": {
+    "lat": -25.216,
+    "lon": 156.2148,
+    "altM": 11278,
+    "gsMs": 264.4,
+    "trackDeg": 128.4,
+    "vRateMs": -0.3,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 9242,
+   "flownKm": 7047,
+   "depTime": 1791052969,
+   "eta": 1791092754,
+   "depTempC": 26.1,
+   "arrTempC": 13.4,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "7c6db9-20261003",
+   "icao24": "7c6db9",
+   "callsign": "QFA644",
+   "flightNo": "QF644",
+   "airline": {
+    "name": "Qantas",
+    "icao": "QFA",
+    "iata": "QF"
+   },
+   "origin": {
+    "icao": "YPPH",
+    "iata": "PER",
+    "name": "Perth International Airport",
+    "city": "Perth",
+    "country": "Australia",
+    "lat": -31.94029998779297,
+    "lon": 115.96700286865234,
+    "tz": "Australia/Perth",
+    "utcOffsetS": 28800
+   },
+   "dest": {
+    "icao": "YSSY",
+    "iata": "SYD",
+    "name": "Sydney Kingsford Smith International Airport",
+    "city": "Sydney",
+    "country": "Australia",
+    "lat": -33.94609832763672,
+    "lon": 151.177001953125,
+    "tz": "Australia/Sydney",
+    "utcOffsetS": 39600
+   },
+   "pos": {
+    "lat": -34.3168,
+    "lon": 145.3591,
+    "altM": 11278,
+    "gsMs": 265.1,
+    "trackDeg": 87.9,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 3277,
+   "flownKm": 2740,
+   "depTime": 1791071509,
+   "eta": 1791086480,
+   "depTempC": 13.3,
+   "arrTempC": 20.7,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "770592-20261003",
+   "icao24": "770592",
+   "callsign": "ALK604",
+   "flightNo": "UL604",
+   "airline": {
+    "name": "SriLankan Airlines",
+    "icao": "ALK",
+    "iata": "UL"
+   },
+   "origin": {
+    "icao": "VCBI",
+    "iata": "CMB",
+    "name": "Bandaranaike International Colombo Airport",
+    "city": "Colombo",
+    "country": "Sri Lanka",
+    "lat": 7.180759906768799,
+    "lon": 79.88410186767578,
+    "tz": "Asia/Colombo",
+    "utcOffsetS": 19800
+   },
+   "dest": {
+    "icao": "YMML",
+    "iata": "MEL",
+    "name": "Melbourne International Airport",
+    "city": "Melbourne",
+    "country": "Australia",
+    "lat": -37.673302,
+    "lon": 144.843002,
+    "tz": "Australia/Melbourne",
+    "utcOffsetS": 39600
+   },
+   "pos": {
+    "lat": -34.4669,
+    "lon": 136.0278,
+    "altM": 11887,
+    "gsMs": 276.6,
+    "trackDeg": 119.9,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 8358,
+   "flownKm": 7490,
+   "depTime": 1791052478,
+   "eta": 1791087594,
+   "depTempC": 25,
+   "arrTempC": 14.5,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "3c4ada-20261003",
+   "icao24": "3c4ada",
+   "callsign": "DLH780",
+   "flightNo": "LH780",
+   "airline": {
+    "name": "Lufthansa",
+    "icao": "DLH",
+    "iata": "LH"
+   },
+   "origin": {
+    "icao": "EDDF",
+    "iata": "FRA",
+    "name": "Frankfurt am Main Airport",
+    "city": "Frankfurt am Main",
+    "country": "Germany",
+    "lat": 50.033333,
+    "lon": 8.570556,
+    "tz": "Europe/Berlin",
+    "utcOffsetS": 7200
+   },
+   "dest": {
+    "icao": "WSSS",
+    "iata": "SIN",
+    "name": "Singapore Changi Airport",
+    "city": "Singapore",
+    "country": "Singapore",
+    "lat": 1.35019,
+    "lon": 103.994003,
+    "tz": "Asia/Singapore",
+    "utcOffsetS": 28800
+   },
+   "pos": {
+    "lat": 28.8203,
+    "lon": 77.8518,
+    "altM": 11278,
+    "gsMs": 269.7,
+    "trackDeg": 133.1,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083236
+   },
+   "distKm": 10279,
+   "flownKm": 6155,
+   "depTime": 1791057365,
+   "eta": 1791099747,
+   "depTempC": 15,
+   "arrTempC": 29.6,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "76cd75-20261003",
+   "icao24": "76cd75",
+   "callsign": "SIA319",
+   "flightNo": "SQ319",
+   "airline": {
+    "name": "Singapore Airlines",
+    "icao": "SIA",
+    "iata": "SQ"
+   },
+   "origin": {
+    "icao": "EGLL",
+    "iata": "LHR",
+    "name": "London Heathrow Airport",
+    "city": "London",
+    "country": "United Kingdom",
+    "lat": 51.4706,
+    "lon": -0.461941,
+    "tz": "Europe/London",
+    "utcOffsetS": 3600
+   },
+   "dest": {
+    "icao": "WSSS",
+    "iata": "SIN",
+    "name": "Singapore Changi Airport",
+    "city": "Singapore",
+    "country": "Singapore",
+    "lat": 1.35019,
+    "lon": 103.994003,
+    "tz": "Asia/Singapore",
+    "utcOffsetS": 28800
+   },
+   "pos": {
+    "lat": 30.9811,
+    "lon": 77.5967,
+    "altM": 11278,
+    "gsMs": 264.9,
+    "trackDeg": 136.3,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 10883,
+   "flownKm": 6574,
+   "depTime": 1791055051,
+   "eta": 1791100721,
+   "depTempC": 16.1,
+   "arrTempC": 29.4,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "3c670a-20261003",
+   "icao24": "3c670a",
+   "callsign": "DLH768",
+   "flightNo": "LH768",
+   "airline": {
+    "name": "Lufthansa",
+    "icao": "DLH",
+    "iata": "LH"
+   },
+   "origin": {
+    "icao": "EDDM",
+    "iata": "MUC",
+    "name": "Munich Airport",
+    "city": "Munich",
+    "country": "Germany",
+    "lat": 48.353802,
+    "lon": 11.7861,
+    "tz": "Europe/Berlin",
+    "utcOffsetS": 7200
+   },
+   "dest": {
+    "icao": "WSSS",
+    "iata": "SIN",
+    "name": "Singapore Changi Airport",
+    "city": "Singapore",
+    "country": "Singapore",
+    "lat": 1.35019,
+    "lon": 103.994003,
+    "tz": "Asia/Singapore",
+    "utcOffsetS": 28800
+   },
+   "pos": {
+    "lat": 29.1141,
+    "lon": 75.564,
+    "altM": 11278,
+    "gsMs": 282.9,
+    "trackDeg": 96,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083549
+   },
+   "distKm": 10058,
+   "flownKm": 5746,
+   "depTime": 1791060175,
+   "eta": 1791099696,
+   "depTempC": 11,
+   "arrTempC": 29.6,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "76cdac-20261003",
+   "icao24": "76cdac",
+   "callsign": "SIA337",
+   "flightNo": "SQ337",
+   "airline": {
+    "name": "Singapore Airlines",
+    "icao": "SIA",
+    "iata": "SQ"
+   },
+   "origin": {
+    "icao": "LFPG",
+    "iata": "CDG",
+    "name": "Charles de Gaulle International Airport",
+    "city": "Paris",
+    "country": "France",
+    "lat": 49.012798,
+    "lon": 2.55,
+    "tz": "Europe/Paris",
+    "utcOffsetS": 7200
+   },
+   "dest": {
+    "icao": "WSSS",
+    "iata": "SIN",
+    "name": "Singapore Changi Airport",
+    "city": "Singapore",
+    "country": "Singapore",
+    "lat": 1.35019,
+    "lon": 103.994003,
+    "tz": "Asia/Singapore",
+    "utcOffsetS": 28800
+   },
+   "pos": {
+    "lat": 33.7924,
+    "lon": 70.5614,
+    "altM": 11278,
+    "gsMs": 268.5,
+    "trackDeg": 129.8,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083548
+   },
+   "distKm": 10725,
+   "flownKm": 5715,
+   "depTime": 1791059066,
+   "eta": 1791103113,
+   "depTempC": 16.5,
+   "arrTempC": 29.5,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "4b1921-20261003",
+   "icao24": "4b1921",
+   "callsign": "SWR176",
+   "flightNo": "LX176",
+   "airline": {
+    "name": "Swiss International Air Lines",
+    "icao": "SWR",
+    "iata": "LX"
+   },
+   "origin": {
+    "icao": "LSZH",
+    "iata": "ZRH",
+    "name": "Zürich Airport",
+    "city": "Zurich",
+    "country": "Switzerland",
+    "lat": 47.458056,
+    "lon": 8.548056,
+    "tz": "Europe/Zurich",
+    "utcOffsetS": 7200
+   },
+   "dest": {
+    "icao": "WSSS",
+    "iata": "SIN",
+    "name": "Singapore Changi Airport",
+    "city": "Singapore",
+    "country": "Singapore",
+    "lat": 1.35019,
+    "lon": 103.994003,
+    "tz": "Asia/Singapore",
+    "utcOffsetS": 28800
+   },
+   "pos": {
+    "lat": 32.2877,
+    "lon": 70.0607,
+    "altM": 10058,
+    "gsMs": 264.8,
+    "trackDeg": 120.6,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083550
+   },
+   "distKm": 10306,
+   "flownKm": 5363,
+   "depTime": 1791060239,
+   "eta": 1791103124,
+   "depTempC": 13.8,
+   "arrTempC": 29.5,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  },
+  {
+   "id": "151db5-20261003",
+   "icao24": "151db5",
+   "callsign": "AFL272",
+   "flightNo": "SU272",
+   "airline": {
+    "name": "Aeroflot Russian Airlines",
+    "icao": "AFL",
+    "iata": "SU"
+   },
+   "origin": {
+    "icao": "UUEE",
+    "iata": "SVO",
+    "name": "Sheremetyevo International Airport",
+    "city": "Moscow",
+    "country": "Russia",
+    "lat": 55.972599,
+    "lon": 37.4146,
+    "tz": "Europe/Moscow",
+    "utcOffsetS": 10800
+   },
+   "dest": {
+    "icao": "VTBS",
+    "iata": "BKK",
+    "name": "Suvarnabhumi Airport",
+    "city": "Bangkok",
+    "country": "Thailand",
+    "lat": 13.681099891662598,
+    "lon": 100.74700164794922,
+    "tz": "Asia/Bangkok",
+    "utcOffsetS": 25200
+   },
+   "pos": {
+    "lat": 18.0728,
+    "lon": 97.6379,
+    "altM": 10668,
+    "gsMs": 252.8,
+    "trackDeg": 128.8,
+    "vRateMs": 0,
+    "t": 1791083554,
+    "fixT": 1791083540
+   },
+   "distKm": 7105,
+   "flownKm": 6514,
+   "depTime": 1791053980,
+   "eta": 1791086790,
+   "depTempC": 3.3,
+   "arrTempC": 32.1,
+   "flags": {
+    "depTimeSource": "estimated"
+   }
+  }
+ ],
+ "meta": {
+  "known": 3094,
+  "routed": 718,
+  "creditsRemaining": 3301,
+  "stepMs": 0
+ }
+}
