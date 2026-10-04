@@ -120,13 +120,13 @@ ADS-B carries a callsign, not a route, so the route has to come from a separate 
 
 ```mermaid
 pie showData
-  title OpenSky credits/day (of 4,000)
-  "Global state polls (960 × 4)" : 3840
-  "Live tracks for departure time" : 100
-  "Headroom" : 60
+  title OpenSky credits/day (of 4,000), as built
+  "Global state polls (720 × 4)" : 2880
+  "Live tracks, max 250 × 4" : 1000
+  "Headroom" : 120
 ```
 
-This is tight. If track calls turn out to cost more than expected, stretch polling to 120 s (2,880 credits). Dead-reckoning hides the difference visually.
+**Measured in P0/P1:** a live-track call costs about **4 credits**, the same as a worldwide poll. So the poller fetches positions every **120 s**, not 90 s. Tracks are only spent while more than 1,500 credits remain, and departure times mostly come for free: the poller records every take-off it sees (ground → airborne between two polls), and tracks are only needed for flights already airborne when it starts. Dead-reckoning hides the longer interval visually.
 
 ---
 
@@ -492,6 +492,8 @@ flowchart LR
 | **Community APIs have no SLA** | Outages | Failover chain OpenSky → adsb.lol → adsb.fi; serve last good snapshot with a stale badge |
 | **OpenSky `/tracks` is experimental** | No observed departure time | Estimation fallback (§3.2), flagged in the UI |
 | **Quota exhaustion** from search traffic | Snapshot gaps | Search reads from the in-memory global snapshot, which needs no extra OpenSky call; per-IP rate limit on `/search` |
+| **Workers free plan: 10 ms CPU per run.** Parsing OpenSky's ~800 KB worldwide response takes ~11 ms in V8, and a poll run needs ~15-20 ms in total | Poll runs get cut off in production | Decision pending: Workers Paid ($5/mo, 30 s CPU) or another way to host the parse step. Runs that don't poll (route/weather/track fill-in, ~3-5 ms) fit the free limit |
+| **Free-plan request limit: ~50 outbound requests per run** | Can't resolve thousands of routes in one go | Built: work runs in 30 s ticks with ≤ 44 requests each. Positions every 4th tick, route/weather/track fill-in between. Cold start shows ~60 flights after 4 min and fills toward 150 over the first hour |
 | **GPU load on low-end phones** | Jank | Adaptive quality: drop bloom, halve line segments, cap at 75 flights when frame time > 20 ms |
 
 ---
@@ -500,7 +502,7 @@ flowchart LR
 
 All planning questions are answered (see the decisions table at the top), and the OpenSky API client has been created.
 
-- **OpenSky credentials:** stored as Worker secrets `OPENSKY_CLIENT_ID` and `OPENSKY_CLIENT_SECRET` (`wrangler secret put`), and in a git-ignored `.dev.vars` for local dev (template: `.dev.vars.example`). They are never committed and never sent to the browser.
+- **OpenSky credentials:** stored as Worker secrets `OPENSKY_CLIENT_ID` and `OPENSKY_CLIENT_SECRET` (`wrangler secret put`), and in a git-ignored `.dev.vars` for local dev (template: `worker/.dev.vars.example`). They are never committed and never sent to the browser.
 - **Token flow:** `POST https://auth.opensky-network.org/auth/realms/opensky-network/protocol/openid-connect/token` with `grant_type=client_credentials`, `client_id`, `client_secret` (form-encoded). Send the returned `access_token` as `Authorization: Bearer …` to `https://opensky-network.org/api/…`. The Worker caches the token and refreshes it about 1 minute before its ~30 min expiry, or on any 401.
 - **P0 check, done 2026-10-04:** credentials verified.
 
