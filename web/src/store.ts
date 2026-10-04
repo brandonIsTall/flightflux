@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import type { Flight } from "../../shared/types";
 
 export type Units = "C" | "F";
 
@@ -24,6 +25,9 @@ interface State {
   /** Globe auto-spin is paused while the user interacts and for 30 s after. */
   spinPaused: boolean;
   setSpinPaused: (v: boolean) => void;
+  /** Flights found by search that aren't in the curated snapshot; drawn alongside it. */
+  extraFlights: Flight[];
+  addFlight: (f: Flight) => void;
 }
 
 export const useStore = create<State>((set) => ({
@@ -42,4 +46,6 @@ export const useStore = create<State>((set) => ({
   select: (selectedId) => set({ selectedId }),
   spinPaused: false,
   setSpinPaused: (spinPaused) => set({ spinPaused }),
+  extraFlights: [],
+  addFlight: (f) => set((s) => ({ extraFlights: [...s.extraFlights.filter((x) => x.id !== f.id), f].slice(-20) })),
 }));
