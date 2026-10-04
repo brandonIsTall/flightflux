@@ -502,7 +502,17 @@ All planning questions are answered (see the decisions table at the top), and th
 
 - **OpenSky credentials:** stored as Worker secrets `OPENSKY_CLIENT_ID` and `OPENSKY_CLIENT_SECRET` (`wrangler secret put`), and in a git-ignored `.dev.vars` for local dev (template: `.dev.vars.example`). They are never committed and never sent to the browser.
 - **Token flow:** `POST https://auth.opensky-network.org/auth/realms/opensky-network/protocol/openid-connect/token` with `grant_type=client_credentials`, `client_id`, `client_secret` (form-encoded). Send the returned `access_token` as `Authorization: Bearer …` to `https://opensky-network.org/api/…`. The Worker caches the token and refreshes it about 1 minute before its ~30 min expiry, or on any 401.
-- **First P0 check:** request a token and one `/states/all` call, then confirm the `X-Rate-Limit-Remaining` header shows the 4,000-credit registered quota.
+- **P0 check, done 2026-10-04:** credentials verified.
+
+  | Source | Result |
+  |---|---|
+  | OpenSky token | `200`, Bearer token, `expires_in` 1800 s |
+  | OpenSky `/states/all` | `200`, 6,341 aircraft (5,676 airborne, 4,286 with airline-style callsigns), 830 KB, about 1 s. `X-Rate-Limit-Remaining: 3996` confirms the 4,000-credit registered quota and the 4-credit global cost. |
+  | adsbdb `/v0/callsign/UAL880` | `200`, IAH → LHR, consistent with the plane's position near Newfoundland |
+  | Open-Meteo, 2 airports, `past_days=1` | `200`, array of 2 locations, 72 hourly values each |
+  | adsb.lol `POST /api/0/routeset` | **`201` with an empty body** (a known upstream issue). Not usable right now. |
+
+  **Consequence:** adsbdb is the only route source. Our own cross-track plausibility guard (§2.2) is the route check, and the adsb.lol routeset becomes an optional second opinion if it starts returning data again.
 
 ---
 
