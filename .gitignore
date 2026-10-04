@@ -9,3 +9,4 @@ credentials.json
 node_modules/
 dist/
 .wrangler/
+.live-snapshot.json
