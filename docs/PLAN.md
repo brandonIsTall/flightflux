@@ -13,7 +13,9 @@
 >
 > Clicking a flight flies the camera down into a **stylized first-person cockpit view** with a glass-cockpit display.
 >
-> **Main constraint:** every free tier used here is **non-commercial only**. Monetizing the app later would mean switching data providers (see [Risks](#9-risks--mitigations)).
+> **Design direction:** a cold-luxury instrument-panel look (§6). The interface chrome has no hue, so the only saturated color on screen is temperature data, on a colorblind-validated blue → gray → red scale. Type is Geist with Geist Mono numerals, controls are frosted-glass pills, and every animation has to communicate something.
+>
+> **Main constraint:** every free tier used here is **non-commercial only**. Monetizing the app later would mean switching data providers (see [Risks](#10-risks--mitigations)).
 
 Decisions already made (from the planning Q&A):
 
@@ -157,15 +159,11 @@ Recompute the ETA on every poll. If the ETA moves to a different hour, the arriv
 
 As decided, this is a **straight two-stop blend**: `color(t) = scale(lerp(depTempC, arrTempC, t))` for t ∈ [0, 1] along the path.
 
-- **Color scale:** one global, fixed scale so colors mean the same thing on every flight. Interpolate in **OKLab** so the middle of the blend doesn't go muddy.
-
-  | °C | −30 | −10 | 0 | 10 | 20 | 30 | 40+ |
-  |---|---|---|---|---|---|---|---|
-  | Color | deep indigo | ice blue | cyan-white | mint | amber | orange | magenta-red |
+- **Color scale:** one global, fixed **diverging** scale (blue → neutral gray at 15°C → red-orange) so colors mean the same thing on every flight. It is interpolated in OKLab and validated for colorblind viewers and for contrast on the globe. Full hex values and validation are in §6.4.
 
 - **Path geometry:** a great circle from origin to destination, drawn as a slightly raised arc. The **flown portion** is bright and solid. The **remaining portion** is dimmer, with an animated dash flowing toward the destination, which gives the motion-graphics feel.
-- **Plane marker:** a small glowing chevron at the current position, tinted with the interpolated temperature at its progress point.
-- **Legend:** a thin color bar along the bottom edge, with a °C/°F toggle that defaults from the browser locale.
+- **Plane marker:** a small chevron at the current position, tinted with the interpolated temperature at its progress point.
+- **Legend:** a thin color bar at the bottom-left with numeric ticks, and a °C/°F toggle that defaults from the browser locale (§6.6).
 
 ---
 
@@ -191,11 +189,13 @@ Run this every poll in the Durable Object:
 | 3D | **three.js** via **react-three-fiber** + **drei** | Full shader control for glowing gradient lines, atmosphere and bloom |
 | Globe base | **globe.gl / three-globe** as a starting point (arcs layer accepts color arrays and interpolators; supports tiled imagery) | Fastest route to a good-looking globe; can be swapped for a custom R3F globe later |
 | Lines | Custom `Line2`/`MeshLine` with a per-vertex color attribute + dash-offset uniform | GPU-animated flow, one draw call per batch |
-| Post-processing | `@react-three/postprocessing` (Bloom, Vignette) | The "glow" look |
-| Animation | **GSAP** for camera flights and UI; R3F `useFrame` for per-frame motion | Easing and timelines for transitions |
+| Post-processing | `@react-three/postprocessing` (Bloom with luminance threshold, Vignette) | Glow on data only, never on UI (§6.5) |
+| Styling | **Tailwind v4** (Vite plugin) + CSS-variable tokens for both themes | Tokens in §6.3 |
+| Fonts / icons | **Geist + Geist Mono**, self-hosted and subset; **Phosphor** icons, Light weight | §6.5 |
+| Animation | **Motion** (`motion/react`) for the DOM overlay; **GSAP** for camera timelines inside the R3F tree only; `useFrame` for per-frame motion | Kept in separate component trees so they never fight over frames (§6.7) |
 | State | **Zustand** | Simple global store for selection, camera mode, units |
 | Data | **TanStack Query** + `persistQueryClient` (IndexedDB) | Polling, stale-while-revalidate, persistence |
-| Charts (detail panel) | **visx** or a hand-rolled SVG | Temperature-along-route mini chart |
+| Charts (detail panel) | Hand-rolled SVG (one small chart) | Temperature-along-route chart, spec in §6.6 |
 
 **Alternative considered:** CesiumJS gives real terrain and photoreal imagery for the cockpit view. However, it is ~3 MB heavier, harder to style, and the free Cesium ion tier has usage caps. A *stylized* cockpit doesn't need photoreal terrain, so three.js wins. Revisit if you later want photoreal.
 
@@ -218,12 +218,9 @@ stateDiagram-v2
 
 - **Auto-spin:** ~2°/s around the polar axis, so the globe is never still but you can still read it. While hovering, the spin slows to 0 so the target doesn't drift out from under the cursor.
 - **Drag/zoom:** `OrbitControls` with damping, pausing the auto-spin on interaction. Zoom is clamped between a full-globe view and roughly continent level.
-- **Hover:** raycast against a fat invisible hit-tube for each path, because thin lines are hard to hit. The hovered line brightens, the others dim to 30%, and a tooltip follows the cursor:
-  > **BA117** · British Airways · B777-300ER
-  > LHR 🌡 12°C → JFK 🌡 24°C · **Δ +12°C**
-  > 63% complete · lands ~14:20 local
+- **Hover:** raycast against a fat invisible hit-tube for each path, because thin lines are hard to hit. The hovered line brightens, the others dim to 30%, and a glass tooltip follows the cursor. Its layout is in §6.6.
 - **Click:**
-  1. A detail panel slides in on the right with: aircraft photo, route, departure/arrival times and temps, a **temperature-along-route chart** with a "you are here" marker, altitude, speed, and data-freshness badges ("departure time estimated" when the fallback was used).
+  1. A detail panel slides in on the right, led by the large departure/arrival temperature pair, then the **temperature-along-route chart**, flight facts, and the aircraft photo. Its composition is in §6.6.
   2. At the same time, a GSAP timeline flies the camera on a curved path from orbit, down past the plane marker, to cockpit position.
 
 ### 5.3 Cockpit view (stylized first-person)
@@ -231,21 +228,181 @@ stateDiagram-v2
 - **Camera** sits at the aircraft's dead-reckoned position. Altitude is exaggerated about 3×, because 11 km is visually indistinguishable from the ground at globe scale. The camera looks along the track with ~6° downward pitch.
 - **World:** higher-detail imagery tiles load near the camera. The sky uses an atmosphere scattering shader, and day/night is set from the sun's real position. At night you see city lights.
 - **The gradient line continues ahead** as a glowing ribbon toward the destination over the horizon, like a heads-up-display route line.
-- **Glass-cockpit HUD** (HTML/CSS overlay, not 3D):
-  - Left: speed tape. Right: altitude tape. Top: heading.
-  - Bottom strip: progress bar across the temperature gradient (origin temp ← plane → destination temp).
-  - Corner: "local outside air temp" (blended value), time to destination, origin/destination clocks.
+- **Glass-cockpit HUD** (HTML/CSS overlay, not 3D): speed and altitude tapes, a heading ribbon, and a bottom gradient strip with the plane's position and the blended outside temperature. Layout is in §6.6.
 - **Interaction:** drag to look around with limited yaw/pitch that springs back. Esc or "Back to globe" reverses the camera flight.
 
 ---
 
-## 6. Loading sequence: "Thermal Boot"
+## 6. Design language
+
+> **Design read:** an immersive, data-driven product experience for curious, design-literate travellers. The visual language is **cold-luxury instrument panel**: a precise, quiet dark interface where the only saturated color on screen is temperature data. It leans toward native CSS + Tailwind v4 tokens, self-hosted Geist, and restrained, purposeful motion.
+
+The `design-taste-frontend` skill targets landing pages. Flight Flux is mostly a full-screen interactive product, which the skill puts out of scope. So this plan applies its **aesthetic and anti-slop rules** to every 2D surface (chrome, tooltip, panel, HUD, boot sequence). It does not apply its landing-page layout rules (hero copy limits, bento grids, section rhythm). If a marketing or about page is added later, the full skill applies there.
+
+### 6.1 Dials
+
+| Dial | Value | Reasoning |
+|---|---|---|
+| `DESIGN_VARIANCE` | **6** | The globe is the composition. The chrome sits asymmetrically in the corners and edges, never in a centered stack. |
+| `MOTION_INTENSITY` | **8** | Motion graphics are the brief, but every animation has to communicate something (see §6.7). |
+| `VISUAL_DENSITY` | **3** globe / **7** cockpit | The globe view is airy. The cockpit HUD is deliberately instrument-dense, with mono numerals and hairline separators instead of cards. |
+
+### 6.2 The core rule: color is data
+
+**The interface chrome has no hue.** It is built entirely from cool neutrals. The only saturated color anywhere on screen is the temperature scale. That makes the gradient lines the most vivid thing in the frame, and blue/red always means cold/hot, never "button" or "link".
+
+- There is **no brand accent color**. Primary actions use off-white fill with off-black text. Selection, focus and hover use brightness and weight, not hue.
+- **Status** (stale data, estimated values) uses an icon plus a label in neutral ink, never red/amber. Those hues already mean temperature.
+- **No purple or magenta anywhere**, including the warm end of the scale. That rules out the "AI glow" look by construction.
+
+### 6.3 Surfaces and neutrals
+
+| Token | Dark (default) | Light ("Atlas") | Use |
+|---|---|---|---|
+| `--space` | `#0B0E13` | `#E6E9ED` | Page and WebGL clear color. Never pure black or white. |
+| `--surface-1` | `rgb(20 24 31 / 0.72)` + blur | `rgb(250 251 252 / 0.78)` + blur | Tooltip, panel, HUD backplates |
+| `--hairline` | `rgb(255 255 255 / 0.08)` | `rgb(15 20 28 / 0.10)` | 1px dividers, panel inner border |
+| `--ink-1` | `#E8EBEF` | `#12161C` | Primary text and numerals |
+| `--ink-2` | `#9AA3AE` | `#4E5763` | Secondary text, units, labels |
+| `--ink-3` | `#646D78` | `#7A838E` | Tertiary text, axis ticks (non-essential only) |
+| `--ocean` / `--land` | `#0F141B` / `#1A212B` | `#D5DAE0` / `#F2F4F6` | Globe base in its stylized "night" and "atlas" modes |
+
+**Theme:** dark is the default, because the bloom, city lights and atmosphere rim only work against dark space. The light **Atlas** theme is a fully designed second mode, not an automatic inversion: silver-grey ocean, pale land, no bloom, and its own validated temperature steps (§6.4). It follows `prefers-color-scheme` only after the first visit; the first visit is always dark, so the boot sequence lands as designed.
+
+### 6.4 Temperature scale (validated)
+
+A **diverging** scale: a cool blue arm and a warm red-orange arm meeting at a **neutral gray midpoint at 15°C**. 15°C is the comfortable "neither" point, so a mild-to-mild flight reads as calm gray and dramatic swings carry strong color. Stops are interpolated in **OKLab**.
+
+| °C | ≤ −25 | −10 | 3 | **15** | 26 | 35 | ≥ 44 |
+|---|---|---|---|---|---|---|---|
+| Dark theme | `#3B6FD9` | `#6E9BEA` | `#A9C3EE` | **`#C9C8C2`** | `#F0B48C` | `#EC7A50` | `#D9412B` |
+| Atlas theme | `#2A56B8` | `#3D66BE` | `#5B79A8` | **`#7F7E78`** | `#9C6E48` | `#BF5537` | `#B8321F` |
+
+**Validation** (dataviz skill validator plus a WCAG contrast check):
+- Cold and hot ends are distinct for colorblind viewers: worst-case ΔE 26 in the protan simulation, 33 with normal vision, against a target of 8 or more.
+- Every stop is at least **4:1** against the dark globe and at least **3.3:1** against the Atlas surface, so even the gray midpoint stays visible as a line.
+- In both themes, each arm changes lightness steadily toward the gray midpoint, so magnitude reads in grayscale too.
+- The validator's chroma-floor check flags the gray midpoint. That is expected: a diverging scale needs a neutral middle.
+
+**Color is never the only signal.** Every tooltip, panel and HUD shows the numbers. The legend has numeric ticks. The flight list view (§6.6) sorts by temperature change.
+
+### 6.5 Typography, icons, shape
+
+- **Type:** **Geist** for UI text, **Geist Mono** with `font-variant-numeric: tabular-nums` for *every* number (temperatures, times, altitudes, flight numbers). Both are SIL OFL, self-hosted with `@font-face` + `font-display: swap`, and subset to Latin plus `°`, `Δ` and arrows. No serif anywhere. The look comes from mono numerals against a quiet sans.
+  - Scale: 12 / 13 / 15 / 20 / 28 / 44 px. **Big numerals** (the 44 px departure and arrival temperatures in the panel) set the hierarchy, not big headings.
+  - Uppercase tracked labels are rationed to the HUD instrument captions (`IAS`, `ALT`, `HDG`, `OAT`), where they are real avionics conventions.
+- **Icons:** **Phosphor** (`@phosphor-icons/react`), **Light** weight everywhere, 20 px. No emoji, no hand-drawn SVG paths.
+- **Shape lock:** interactive controls (search, buttons, toggles) are **full pills**. Surfaces (tooltip, detail panel, HUD backplates) use **14 px** radius. Nothing else.
+- **Materials:** surfaces are frosted glass. They use `backdrop-filter: blur(20px) saturate(140%)`, a 1px `--hairline` inner border and an `inset 0 1px 0 rgb(255 255 255 / .06)` top highlight. Shadows are tinted toward `--space`, never black. Under `prefers-reduced-transparency`, glass falls back to an opaque `#141820`.
+- **Glow is for data only.** Bloom runs in the WebGL pass with a luminance threshold, so only the gradient lines, plane markers, atmosphere rim and city lights glow. No CSS `box-shadow` glows and no gradient text in the UI.
+
+### 6.6 Screen compositions
+
+**Globe view (desktop):**
+```
+┌──────────────────────────────────────────────────────────────────┐
+│ FLIGHT FLUX   ( Search flight, e.g. BA117      )       °C|°F  ≡ │  ← 64px bar, transparent
+│                                                                  │
+│                                                                  │
+│                         ( spinning globe )                       │
+│                                                                  │
+│                                                                  │
+│ −25° ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬ 44°                 Live, 1 min ago │  ← legend + freshness
+└──────────────────────────────────────────────────────────────────┘
+```
+- The wordmark is set in Geist Medium with tight tracking. There is no logo mark until there's a real one.
+- **Legend:** bottom-left, 240 × 6 px with 4 numeric ticks. It is the only place the full scale appears as a swatch.
+- **Freshness:** bottom-right. It carries the **one permitted status dot** on the screen, because it reports real state (live / stale / offline).
+- **≡ (Phosphor `List` icon) opens the flight list:** an accessible, sortable list of all curated flights (route, both temperatures, change, progress), sorted by largest temperature change. It is the table-view counterpart the dataviz rules require, and the keyboard route into the globe.
+
+**Hover tooltip** (14 px glass, follows the cursor with spring damping, offset so it never covers the hovered line):
+```
+BA117   British Airways, 777-300ER
+12°  London LHR   →   New York JFK  24°      +12°
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━●─────────────
+63% flown                                lands 14:20 local
+```
+The progress rule is drawn in the flight's own gradient, with the plane's position as a marker. There is no gray background track. Temperatures are 20 px mono, and everything else is 13 px `--ink-2`.
+
+**Detail panel** (right side, 400 px, glass, slides in with a spring while the camera starts moving):
+1. **Temperature pair:** `12°` and `24°` at 44 px mono, with city names below and a `+12°` change chip between them. This is the panel's headline.
+2. **Temperature-along-route chart** (spec below).
+3. **Flight facts** in a two-column grid with no per-row dividers: departed, ETA, altitude, ground speed, aircraft, registration. Estimated values carry a Phosphor `Clock` icon and an "estimated" label.
+4. **Aircraft photo** from adsbdb when one exists, full panel width, with no overlay text. Credit goes below the photo only when the source provides a photographer name.
+5. **Primary action:** one pill button, "Back to globe". Esc does the same.
+
+**Temperature-along-route chart** (hand-rolled SVG, 352 × 120 px, following the dataviz mark specs):
+- One series: x = route progress (origin → destination), y = temperature. No legend; the panel heading names it.
+- A 2px line stroked with the flight's own gradient. The color repeats the y-value on purpose, so it ties the chart to the globe line.
+- A **"now" marker** at least 8px across, with a 2px `--space` ring and the current blended temperature labeled directly.
+- Recessive axes: 3 y-ticks in `--ink-3`, origin and destination codes on x, no gridlines.
+- Hover: a crosshair plus tooltip with distance from origin and blended temperature. A visually hidden `<table>` mirrors the data.
+- One axis only. Altitude is shown as a number in the facts grid, never plotted on this chart.
+
+**Cockpit HUD** (density 7, no cards, hairlines only):
+- Speed tape (left) and altitude tape (right) as narrow vertical scales in Geist Mono. A heading ribbon runs across the top.
+- Bottom strip: the flight's gradient as a 4px rule with origin/destination temperatures at the ends and the plane's position as a marker. `OAT` shows the blended outside temperature at that point.
+- Every element sits on a `--surface-1` backplate at 0.5 opacity, so it stays readable over both bright day terrain and night.
+
+**Mobile (< 768px):** the bar collapses to wordmark + search icon. The legend shrinks to 160 px. The detail panel becomes a **bottom sheet** (drag handle, 40% peek, 90% expanded). The cockpit HUD drops the tapes and shows a single numeric row instead.
+
+### 6.7 Motion system
+
+Every animation has a one-line reason. Anything without one gets cut.
+
+| Motion | Reason (what it communicates) | Spec |
+|---|---|---|
+| Globe auto-spin | The data is live and the world is turning | 2°/s; eases to 0 over 600 ms on interaction, back in over 2 s |
+| Dash flow on remaining route | Direction of travel and what's still ahead | 40 px/s shader offset; paused when off-screen |
+| Plane marker drift | Real position updating between polls | Dead-reckoned every frame, never jumps |
+| Hover dim/brighten | Which line you are pointing at | 180 ms, `cubic-bezier(0.16, 1, 0.3, 1)` |
+| Tooltip follow | It belongs to the cursor | Spring, stiffness 300, damping 30 |
+| Panel enter/exit | A layer opened on top of the globe | Spring, stiffness 100, damping 20; translate + opacity only |
+| Camera fly-in/out | Moving from overview into the flight | 2.4 s GSAP timeline, eased `power3.inOut`, curved path |
+| Number changes (temps, ETA) | A value updated | 300 ms digit roll, mono, no color flash |
+| Boot sequence | Real loading progress (§7) | Stage-gated, skippable |
+
+**Library isolation:** **Motion** (`motion/react`) drives the DOM overlay only. **GSAP** drives camera timelines inside the R3F tree only. The two never share a component tree.
+
+**Reduced motion:** no auto-spin, no dash flow, and camera transitions become a 200 ms cross-fade. The boot sequence becomes a static globe with a single progress hairline. Plane markers still update, but snap on each poll.
+
+### 6.8 Copy rules
+
+- Plain, functional language: "Back to globe", "Search flight", "Estimated", "Live, 1 min ago". No emoji, no em-dashes, no filler verbs.
+- Middle dots are rationed to at most one per line.
+- Real data only. No invented flights, sample numbers or placeholder names ship in the UI. Empty and error states say what happened and what to do:
+  - "No airborne flight matches BA1170. Check the number, or it may have landed."
+  - "Showing positions from 4 min ago. Live data will resume automatically."
+- Required attributions (OpenSky, adsb.lol ODbL, Open-Meteo CC BY 4.0, OurAirports) live in a single "Data sources" sheet linked from the ≡ menu.
+
+### 6.9 Loading, empty and error states
+
+- **Loading:** the boot sequence (§7) covers the first load. Later loads (opening the panel, search) use shape-matched skeletons: the 44 px number pair, the chart frame and the facts grid shimmer in place. No spinners.
+- **Empty search:** the search field keeps its value and shows the message above, plus three currently airborne suggestions as pills.
+- **Stale or offline:** the freshness indicator switches its dot and label. The globe keeps rendering cached flights dead-reckoned forward, and lines past 15 min old fade to 50% opacity.
+
+### 6.10 Design pre-flight (per phase review)
+
+Before each UI phase is accepted, check:
+- No hue outside the temperature scale in the chrome
+- No em-dashes or emoji in UI strings
+- Pills for controls and 14 px for surfaces, nothing else
+- All numerals in Geist Mono tabular
+- WCAG AA text contrast in both themes, checked over bright and dark globe regions
+- Every animation listed in §6.7 with its reason
+- Reduced-motion and reduced-transparency paths tested
+- Mobile layout checked at 375 px
+- Both themes screenshotted and reviewed side by side
+
+---
+
+## 7. Loading sequence: "Thermal Boot"
 
 The loading graphic is **tied to real progress stages**, so it never lies and it ends exactly when the data is ready. On repeat visits the cached snapshot makes it play at roughly 4× speed (~1 s).
 
 ```mermaid
 gantt
-  title Thermal Boot (first visit, typical ~3–6 s)
+  title Thermal Boot (first visit, typical ~3 to 6 s)
   dateFormat  X
   axisFormat %s s
   section Visual
@@ -263,23 +420,23 @@ gantt
 ```
 
 **Beat by beat:**
-1. **Black screen, one heartbeat.** A single thin horizontal line sweeps across the screen. Its color runs the full temperature scale, previewing the app's visual language. It curls into the equator.
+1. **Dark space, one heartbeat.** A single 2px line sweeps across the `--space` background. Its color runs the temperature scale cold to hot, previewing the app's only use of color. It curls into the equator.
 2. **Graticule.** Latitude and longitude lines draw themselves with a stroke-dashoffset effect, forming a wireframe sphere that starts rotating.
 3. **Dot-matrix earth.** Land masses fade in as a halftone dot field. This is cheap, looks deliberate, and works before the real texture finishes loading. It cross-fades to the real texture when ready.
-4. **Transponder pings.** As positions arrive, each plane appears as a white dot with a radar-ping ring. A small counter ticks up in a split-flap / departures-board style: `ACQUIRING TRANSPONDERS ··· 1,284`.
-5. **Route tracing.** Grey arcs draw from each origin to the plane's current position. Board text: `RESOLVING ROUTES ··· 147`.
-6. **Warm-up.** Weather lands and each line floods with color from the origin outward, like a thermal camera coming online. Board text: `READING SKIES ··· LHR 12° · NRT 27° · DXB 38° …`, cycling real values.
-7. **Hand-off.** The board flips to `FLIGHT FLUX` and fades. The camera eases into auto-spin and the UI chrome slides in.
+4. **Transponder pings.** As positions arrive, each plane appears as a white dot with a radar-ping ring. A status line bottom-left, in Geist Mono with a split-flap digit roll, reads `Acquiring transponders  1,284`.
+5. **Route tracing.** Grey arcs draw from each origin to the plane's current position. The status line reads `Resolving routes  147`.
+6. **Warm-up.** Weather lands and each line floods with color from the origin outward, like a thermal camera coming online. The status line reads `Reading skies`, followed by one real airport at a time (`DXB 38°`, then `NRT 27°`) with each temperature in its own scale color.
+7. **Hand-off.** The status line flips to the wordmark, which glides to its top-left position in the bar. The camera eases into auto-spin, and the legend and freshness indicator fade in.
 
 **Rules:**
 - **Skippable** with any click or key after 1 s.
-- **`prefers-reduced-motion`:** replace the sequence with a static wireframe globe and a simple progress line.
-- **Slow network:** if any stage takes more than 8 s, the board shows an honest status ("OpenSky is slow, using positions from 3 min ago") and continues with cached data.
+- **`prefers-reduced-motion`:** replace the sequence with a static wireframe globe and a single progress hairline (§6.7).
+- **Slow network:** if any stage takes more than 8 s, the status line shows an honest message ("OpenSky is slow, using positions from 3 min ago") and continues with cached data.
 - **Hard failure:** show the last cached snapshot with a "stale data" badge rather than an error screen.
 
 ---
 
-## 7. Caching strategy
+## 8. Caching strategy
 
 | What | Where | Policy | Effect |
 |---|---|---|---|
@@ -296,12 +453,12 @@ gantt
 
 ---
 
-## 8. Build phases
+## 9. Build phases
 
 ```mermaid
 flowchart LR
   P0["P0 · Data spike<br/>validate every API,<br/>measure credits"] --> P1["P1 · Edge poller<br/>Worker + DO,<br/>/snapshot"]
-  P1 --> P2["P2 · Globe + gradients<br/>auto-spin, drag/zoom,<br/>lines + legend"]
+  P1 --> P2["P2 · Design system + globe<br/>tokens, type, scale,<br/>lines + legend"]
   P2 --> P3["P3 · Hover + detail<br/>tooltip, panel,<br/>temp chart"]
   P3 --> P4["P4 · Cockpit<br/>camera flight,<br/>HUD"]
   P2 --> P5["P5 · Thermal Boot<br/>+ caching / SW"]
@@ -313,15 +470,15 @@ flowchart LR
 |---|---|---|
 | **P0** Data spike | Scripts hitting OpenSky (OAuth2), adsbdb, adsb.lol routeset, Open-Meteo | Real credit cost of `/tracks` known; route hit-rate for long-haul callsigns ≥ 80% |
 | **P1** Edge poller | Cloudflare Worker + cron + Durable Object; `/snapshot`, `/flight/:id`, `/search` | Snapshot of ≥ 120 curated flights with temps, refreshed every 90 s, within quotas for 48 h |
-| **P2** Globe | R3F globe, atmosphere, gradient arcs, dead-reckoned markers, auto-spin with pause/resume | 60 fps on a mid-range laptop with 150 flights |
+| **P2** Globe + design system | Tokens for both themes, fonts, glass surfaces, validated temperature scale; R3F globe, atmosphere, gradient arcs, dead-reckoned markers, auto-spin with pause/resume | 60 fps on a mid-range laptop with 150 flights; §6.10 pre-flight passes |
 | **P3** Interaction | Hover tooltip, click panel, temperature chart, search box | Hit-testing feels effortless; search finds a flight by "BA117" or "BAW117" |
 | **P4** Cockpit | Camera fly-in/out, first-person camera, HUD, day/night | Transition never clips through the globe; Esc always returns |
 | **P5** Boot + cache | Thermal Boot tied to real progress; SW + IndexedDB persistence | First visit < 6 s on 4G; repeat visit shows flights in < 1 s |
-| **P6** Polish | Mobile touch gestures, reduced-motion, keyboard nav, attribution/credits page, error states | Lighthouse perf ≥ 80 on mobile; all data licenses credited |
+| **P6** Polish | Mobile bottom sheet and touch gestures, Atlas light theme, reduced-motion/transparency, keyboard nav and flight list, Data sources sheet, empty/error states | Lighthouse perf ≥ 80 on mobile; §6.10 pre-flight passes in both themes; all data licenses credited |
 
 ---
 
-## 9. Risks & mitigations
+## 10. Risks & mitigations
 
 | Risk | Impact | Mitigation |
 |---|---|---|
@@ -335,13 +492,14 @@ flowchart LR
 
 ---
 
-## 10. Open questions for you
+## 11. Open questions for you
 
 1. **Auto-spin resume:** the plan resumes spinning after 10 s idle. Do you want that, or should the globe stay paused until the user clicks a "resume spin" control?
-2. **Units:** default to °F or °C from the browser locale, with a toggle. OK?
-3. **Mobile priority:** first-class (touch gestures, bottom-sheet detail panel) from P2, or desktop-first with mobile in P6?
-4. **Hosting:** Cloudflare (Workers + Pages, free) is the recommendation. Do you have an existing preference or account?
-5. **OpenSky account:** you'll need to register (free) and create OAuth2 API client credentials. I can't do that step for you.
+2. **Theme:** dark by default, with the light Atlas theme as a fully designed second mode (§6.3). Is a light mode worth building for you, or should the app be dark-only to save effort?
+3. **Units:** default to °F or °C from the browser locale, with a toggle. OK?
+4. **Mobile priority:** first-class (touch gestures, bottom-sheet detail panel) from P2, or desktop-first with mobile in P6?
+5. **Hosting:** Cloudflare (Workers + Pages, free) is the recommendation. Do you have an existing preference or account?
+6. **OpenSky account:** you'll need to register (free) and create OAuth2 API client credentials. I can't do that step for you.
 
 ---
 
