@@ -30,6 +30,22 @@ Append `?noeffects` to the URL to skip bloom and vignette (useful on weak GPUs o
 | `src/lib/format.ts`, `src/lib/gradient.ts` | Unit-aware formatting; a flight's gradient as CSS/SVG stops |
 | `src/styles.css` | Design tokens, fonts, glass and pill primitives |
 
+## Loading and caching
+
+The **Thermal Boot** (`src/boot.ts`, `globe/BootDirector.tsx`, `globe/BootLayer.tsx`,
+`ui/BootOverlay.tsx`) plays while the real loading happens: a sweep line in the temperature scale,
+the graticule drawing itself, land fading in as dots and cross-fading to the texture, transponder
+pings as the snapshot lands, routes tracing in grey, then warming into color, then the wordmark.
+Each beat waits for the stage it represents (texture, snapshot), so it never finishes before the
+data. When both are cached it plays at 3× (about a second). Any click or key after 1 s skips it;
+`prefers-reduced-motion` gets a static globe and a progress hairline. If the feed is slow the
+status line says so after 8 s; if it's dead, the boot ends on whatever is cached.
+
+Caching: a service worker (vite-plugin-pwa) precaches the shell, fonts and the land atlas and
+keeps the last `/api/snapshot` (network-first, 5 s timeout) and `/api/flight/*` answers; the
+snapshot is also persisted in IndexedDB (TanStack persister, 6 h) so a repeat visit draws flights,
+dead-reckoned forward, before the network answers.
+
 ## Behavior
 
 - The globe spins at 2°/s. Dragging or zooming pauses it; it eases back in 30 s after the last

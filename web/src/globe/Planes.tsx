@@ -8,6 +8,7 @@ import type { Flight } from "../../../shared/types";
 import { progressAt, tempAtProgress } from "../data/snapshot";
 import { tempToRgb } from "../lib/color";
 import { arcLift, centralAngle, interpolate, toVec3 } from "../lib/geo";
+import { beats } from "../boot";
 import { useStore } from "../store";
 import { spin } from "./spin";
 
@@ -52,8 +53,10 @@ export function Planes({ flights }: { flights: Flight[] }) {
       // From the seat, other planes are tiny neighbours; anything within a few seat-heights of
       // the lens would fill the screen, so it isn't drawn at all.
       const tooClose = seated && camera.position.distanceTo(tmpObj.position.clone().applyAxisAngle(UP, spin.y)) < 0.25;
+      // During the boot, planes grow in with the transponder pings (staggered like them).
+      const boot = Math.min(1, Math.max(0, (beats.pings * 1.4 - ((i * 0.618034) % 1)) * 3));
       const s =
-        (hideSelected && f.id === selectedId) || tooClose ? 0 : seated ? 0.2 : active === f.id ? 1.6 : active === null ? 1 : 0.8;
+        boot * ((hideSelected && f.id === selectedId) || tooClose ? 0 : seated ? 0.2 : active === f.id ? 1.6 : active === null ? 1 : 0.8);
       tmpObj.scale.setScalar(s);
       tmpObj.updateMatrix();
       im.setMatrixAt(i, tmpObj.matrix);
