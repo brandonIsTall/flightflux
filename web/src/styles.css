@@ -1,0 +1,100 @@
+@import "tailwindcss";
+
+/* Design tokens: docs/PLAN.md §6.3. Dark only. The chrome has no hue; color is temperature data. */
+@theme {
+  --color-space: #0b0e13;
+  --color-ink-1: #e8ebef;
+  --color-ink-2: #9aa3ae;
+  --color-ink-3: #646d78;
+  --color-hairline: rgb(255 255 255 / 0.08);
+  --color-surface-1: rgb(20 24 31 / 0.72);
+  --color-surface-solid: #141820;
+
+  --font-sans: "Geist", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SF Mono", monospace;
+
+  --radius-surface: 14px;
+
+  --ease-out-quint: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@font-face {
+  font-family: "Geist";
+  src: url("/fonts/Geist-Variable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Geist Mono";
+  src: url("/fonts/GeistMono-Variable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: var(--color-space);
+  color: var(--color-ink-1);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Every number in the app: tabular mono, so columns and tickers don't jitter. */
+.num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Frosted-glass surface with a 1px inner hairline and a top highlight. */
+.glass {
+  background: var(--color-surface-1);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  backdrop-filter: blur(20px) saturate(140%);
+  border: 1px solid var(--color-hairline);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.06),
+    0 12px 40px rgb(11 14 19 / 0.5);
+  border-radius: var(--radius-surface);
+}
+@media (prefers-reduced-transparency: reduce) {
+  .glass {
+    background: var(--color-surface-solid);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+/* Interactive controls are full pills. */
+.pill {
+  border-radius: 9999px;
+  border: 1px solid var(--color-hairline);
+  background: rgb(255 255 255 / 0.04);
+  color: var(--color-ink-1);
+  transition:
+    background-color 180ms var(--ease-out-quint),
+    transform 120ms var(--ease-out-quint);
+}
+.pill:hover {
+  background: rgb(255 255 255 / 0.09);
+}
+.pill:active {
+  transform: scale(0.98);
+}
+.pill:focus-visible,
+.focus-ring:focus-visible {
+  outline: 2px solid var(--color-ink-1);
+  outline-offset: 2px;
+}
+
+canvas {
+  display: block;
+  touch-action: none;
+}
