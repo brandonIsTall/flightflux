@@ -7,7 +7,10 @@ import { useEffect, useRef } from "react";
 import type { Group } from "three";
 import type { Flight } from "../../../shared/types";
 import { useStore } from "../store";
+import { BootDirector } from "./BootDirector";
+import { BootLayer } from "./BootLayer";
 import { CameraRig } from "./CameraRig";
+import { useEarthAssets } from "./earthAssets";
 import { Globe } from "./Globe";
 import { Planes } from "./Planes";
 import { Routes } from "./Routes";
@@ -93,8 +96,9 @@ function Controls() {
   );
 }
 
-export function Scene({ flights }: { flights: Flight[] }) {
+export function Scene({ flights, failed }: { flights: Flight[]; failed: boolean }) {
   const effects = !new URLSearchParams(location.search).has("noeffects");
+  const assets = useEarthAssets();
   return (
     <Canvas
       camera={{ position: [0, 0.6, 3], fov: 40, near: 0.1, far: 50 }}
@@ -108,7 +112,9 @@ export function Scene({ flights }: { flights: Flight[] }) {
         <Globe />
         <Routes flights={flights} />
         <Planes flights={flights} />
+        <BootLayer flights={flights} landSamples={assets?.landSamples ?? null} />
       </Spinner>
+      <BootDirector flights={flights} failed={failed} />
       <Controls />
       <FitCamera />
       <CameraRig flights={flights} />
