@@ -26,6 +26,10 @@ Decisions already made (from the planning Q&A):
 | Gradient | Two-stop blend: departure temp (at departure time) → arrival forecast (at ETA) |
 | Cockpit view | Stylized first-person camera + glass-cockpit display (no 3D cockpit model) |
 | Theme | Dark only (no light theme) |
+| Auto-spin | Pauses on drag/zoom, resumes after 30 s idle |
+| Units | °C or °F from browser locale, with a remembered toggle |
+| Mobile | Desktop-first; mobile layout in P6 |
+| Hosting | Cloudflare (Workers + Pages + Durable Objects, free tier) |
 
 ---
 
@@ -207,7 +211,7 @@ stateDiagram-v2
   [*] --> Booting
   Booting --> OrbitAuto: loading sequence done / skipped
   OrbitAuto --> OrbitManual: pointerdown / wheel / pinch
-  OrbitManual --> OrbitAuto: 10 s idle (spin eases back in over 2 s)
+  OrbitManual --> OrbitAuto: 30 s idle (spin eases back in over 2 s)
   OrbitAuto --> Hover: pointer over a flight
   OrbitManual --> Hover: pointer over a flight
   Hover --> OrbitAuto: pointer leaves
@@ -352,7 +356,7 @@ Every animation has a one-line reason. Anything without one gets cut.
 
 | Motion | Reason (what it communicates) | Spec |
 |---|---|---|
-| Globe auto-spin | The data is live and the world is turning | 2°/s; eases to 0 over 600 ms on interaction, back in over 2 s |
+| Globe auto-spin | The data is live and the world is turning | 2°/s; eases to 0 over 600 ms on interaction, back in over 2 s after 30 s idle |
 | Dash flow on remaining route | Direction of travel and what's still ahead | 40 px/s shader offset; paused when off-screen |
 | Plane marker drift | Real position updating between polls | Dead-reckoned every frame, never jumps |
 | Hover dim/brighten | Which line you are pointing at | 180 ms, `cubic-bezier(0.16, 1, 0.3, 1)` |
@@ -492,13 +496,11 @@ flowchart LR
 
 ---
 
-## 11. Open questions for you
+## 11. Before building
 
-1. **Auto-spin resume:** the plan resumes spinning after 10 s idle. Do you want that, or should the globe stay paused until the user clicks a "resume spin" control?
-2. **Units:** default to °F or °C from the browser locale, with a toggle. OK?
-3. **Mobile priority:** first-class (touch gestures, bottom-sheet detail panel) from P2, or desktop-first with mobile in P6?
-4. **Hosting:** Cloudflare (Workers + Pages, free) is the recommendation. Do you have an existing preference or account?
-5. **OpenSky account:** you'll need to register (free) and create OAuth2 API client credentials. I can't do that step for you.
+All planning questions are answered (see the decisions table at the top). One step needs you:
+
+- **OpenSky account:** register (free) at opensky-network.org and create OAuth2 API client credentials. They go into the Cloudflare Worker as secrets in P1. I can't do this step for you.
 
 ---
 
