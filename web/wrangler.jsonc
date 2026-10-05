@@ -1,0 +1,7 @@
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "flightflux",
+  "compatibility_date": "2026-09-01",
+  // Static site served by Workers assets (the current form of Cloudflare Pages).
+  "assets": { "directory": "./dist", "not_found_handling": "single-page-application" }
+}

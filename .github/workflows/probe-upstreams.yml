@@ -1,0 +1,21 @@
+# Can a GitHub-hosted runner reach the flight-data providers? (Cloudflare Workers cannot.)
+name: Probe upstreams
+on:
+  workflow_dispatch:
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Probe each provider anonymously
+        run: |
+          for u in \
+            "https://opensky-network.org/api/states/all?icao24=abc123" \
+            "https://auth.opensky-network.org/" \
+            "https://api.adsb.lol/v2/callsign/BAW117" \
+            "https://api.airplanes.live/v2/callsign/BAW117" \
+            "https://opendata.adsb.fi/api/v2/callsign/BAW117" \
+            "https://api.adsbdb.com/v0/callsign/BAW117" \
+            "https://api.open-meteo.com/v1/forecast?latitude=51.47&longitude=-0.46&hourly=temperature_2m&forecast_days=1"; do
+            printf '%-75s ' "$u"; curl -s -m 20 -o /dev/null -w "HTTP %{http_code} in %{time_total}s\n" "$u" || echo "failed"
+          done
