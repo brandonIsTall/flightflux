@@ -13,6 +13,8 @@ export class SqlStore extends MemoryStore {
     super();
     sql.exec("CREATE TABLE IF NOT EXISTS routes (k TEXT PRIMARY KEY, v TEXT NOT NULL, at INTEGER NOT NULL)");
     sql.exec("CREATE TABLE IF NOT EXISTS weather (k TEXT PRIMARY KEY, v TEXT NOT NULL, at INTEGER NOT NULL)");
+    // One row per document (a row may hold up to 2 MB), so saving the known set costs one row write.
+    sql.exec("CREATE TABLE IF NOT EXISTS blobs (k TEXT PRIMARY KEY, v TEXT NOT NULL)");
     for (const r of sql.exec<{ k: string; v: string }>("SELECT k, v FROM routes")) this.rawRoutes.set(r.k, r.v);
     for (const r of sql.exec<{ k: string; v: string }>("SELECT k, v FROM weather")) this.rawWeather.set(r.k, r.v);
   }
@@ -45,6 +47,14 @@ export class SqlStore extends MemoryStore {
     this.rawWeather.delete(k);
     super.putWeather(k, s);
     this.sql.exec("INSERT OR REPLACE INTO weather VALUES (?, ?, ?)", k, JSON.stringify(s), s.fetchedAt);
+  }
+
+  override getBlob(k: string) {
+    return this.sql.exec<{ v: string }>("SELECT v FROM blobs WHERE k = ?", k).toArray()[0]?.v;
+  }
+
+  override putBlob(k: string, v: string) {
+    this.sql.exec("INSERT OR REPLACE INTO blobs VALUES (?, ?)", k, v);
   }
 
   // Departures stay in memory only: they're cheap to re-estimate if the object restarts.

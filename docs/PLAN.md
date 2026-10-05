@@ -29,7 +29,7 @@ Decisions already made (from the planning Q&A):
 | Auto-spin | Pauses on drag/zoom, resumes after 30 s idle |
 | Units | °C or °F from browser locale, with a remembered toggle |
 | Mobile | Desktop-first; mobile layout in P6 |
-| Hosting | Cloudflare (Workers + Pages + Durable Objects, free tier) |
+| Hosting | Cloudflare (Workers + static assets + Durable Objects, free tier); position polling on a GitHub Actions cron (§1) |
 
 ---
 
@@ -44,9 +44,13 @@ flowchart LR
     OM["Open-Meteo<br/>hourly temperature_2m<br/>(10k calls/day)"]
   end
 
+  subgraph Poller["GitHub Actions cron (every 5 min)"]
+    GH["poll-once.ts<br/>asks /_plan, fetches OpenSky,<br/>POSTs rows to /_ingest"]
+  end
+
   subgraph Edge["Cloudflare (free tier)"]
     CRON["Alarm every 30 s<br/>(cron restarts it)"]
-    DO["Durable Object<br/>'SkyState'<br/>latest snapshot + caches"]
+    DO["Durable Object<br/>'SkyState'<br/>schedule + snapshot + caches"]
     API["Worker API<br/>/snapshot  /flight/:id  /search"]
   end
 
@@ -57,7 +61,8 @@ flowchart LR
   end
 
   CRON --> DO
-  DO -- poll --> OS
+  GH -- positions --> OS
+  GH -- plan / ingest --> DO
   DO -- on new callsign --> DB
   DO -- batch verify --> LOL
   DO -- hourly per airport --> OM
@@ -72,6 +77,14 @@ flowchart LR
 2. **Joining the data is expensive.** Positions, routes, departure times and weather all have to be stitched together. Doing it once on the server keeps the client payload to about 30 KB gzipped.
 3. **Secrets.** The OpenSky OAuth2 client secret can't be shipped to browsers.
 4. **CORS.** Not every source sends CORS headers.
+
+**Why the OpenSky calls run on GitHub Actions and not in the Worker (found at deploy, 2026-10-05):**
+Cloudflare's network cannot reach OpenSky. Its API and auth hosts sit behind OpenSky's own Cloudflare front, which answers every request from a Worker or Durable Object with a 522 or a timeout, from every data centre tried (Ashburn, Amsterdam); the community feeds (adsb.lol, airplanes.live, adsb.fi) return 403 to Workers. The same requests succeed from a GitHub-hosted runner (probe workflow, run on 2026-10-05: OpenSky 200, adsb.lol 200, adsb.fi 200) and from a laptop. adsbdb and Open-Meteo are reachable from Workers, so only position fetching moved out:
+
+- The Durable Object keeps the schedule and the credit budget. `GET /api/_plan` (bearer `INGEST_SECRET`) returns what is due now: the tracked icao24 list if its 5 min are up, and however many region boxes the sweep interval has earned (up to 12), marking them issued so they are never handed out twice.
+- The poller (`worker/scripts/poll-once.ts`, stateless) fetches each from OpenSky, drops rows the engine can't use (keeps cruising airliners and climbing-out airliners, about a third of a box), and `POST`s the compact rows to `/api/_ingest`, one request per box so the object parses ≤ ~1,000 rows per invocation.
+- `.github/workflows/poll.yml` runs it every 5 min. The cadence sets freshness only; the plan sets credit spend, so a 30 min cadence costs the same credits and hands out more boxes per run.
+- Fallback: if no poller has asked for a plan in 20 min, the object polls OpenSky itself, one call per tick as before. It fails today, but costs nothing and will work if OpenSky's front ever lets Cloudflare through.
 
 ---
 
@@ -122,7 +135,9 @@ ADS-B carries a callsign, not a route, so the route has to come from a separate 
 
 1. **Track.** One icao24-filtered call refreshes every flight on the globe (~150) every **5 min**. The response is ~6 KB and parses in ~0.1 ms.
 2. **Extrapolate.** Between fixes, the server and the client both advance each plane along its great-circle route at its last ground speed. Over oceans, where there are no receivers, this was going to happen anyway.
-3. **Discover.** New flights are found by sweeping the world in **29 region boxes**, one box per 30 s run, a full sweep every ~75 min. Boxes were sized from real traffic so each returns ≤ ~1,000 aircraft at peak (≤ 1.6 ms to parse), and any box that returns more than 900 is split in two for the next sweep. A fresh deploy sweeps one box per run, so the globe fills in ~12-15 min.
+3. **Discover.** New flights are found by sweeping the world in **29 region boxes**, a full sweep every ~75 min. Boxes were sized from real traffic so each returns ≤ ~1,000 aircraft at peak (≤ 1.6 ms to parse), and any box that returns more than 900 is split in two for the next sweep. While nothing is known yet, boxes are due every 28 s, so a fresh deploy fills the globe in a few poller runs.
+
+The calls themselves are made by the GitHub Actions poller (§1), which asks the Durable Object what is due; the budget below is unchanged.
 
 ```mermaid
 pie showData
@@ -500,7 +515,9 @@ flowchart LR
 | **Community APIs have no SLA** | Outages | Failover chain OpenSky → adsb.lol → adsb.fi; serve last good snapshot with a stale badge |
 | **Departure times are estimates for most flights** | Departure temperature could be off by an hour's change | Measured median error 6 min (worst 29), flagged as "estimated" in the UI; observed climb-outs replace estimates when caught |
 | **Quota exhaustion** from search traffic | Snapshot gaps | Search reads from the in-memory global snapshot, which needs no extra OpenSky call; per-IP rate limit on `/search` |
-| **Workers free plan: 10 ms CPU per run.** The unfiltered worldwide response takes ~11 ms just to parse | Poll runs cut off in production | **Solved by design** (§2.5): only filtered calls, ≤ 1.6 ms to parse; rebuild ~2 ms; boxes auto-split if traffic grows |
+| **Workers free plan: 10 ms CPU per run.** The unfiltered worldwide response takes ~11 ms just to parse | Poll runs cut off in production | **Solved by design** (§2.5): only filtered calls, ≤ 1.6 ms to parse; rebuild ~2 ms; boxes auto-split if traffic grows; the poller pre-filters rows before ingest |
+| **Cloudflare cannot reach OpenSky** (522/timeouts from every Worker data centre; community feeds 403) | No positions at all from the Worker | **Found at deploy; solved** (§1): positions fetched by a GitHub Actions cron and pushed to `/api/_ingest`. Any host that reaches OpenSky can run the same script |
+| **GitHub Actions minutes** (private repo: 2,000 free/month; a 5 min cron uses ~8,600) | Poller stops when minutes run out | Public repo (free), or `*/30` cadence (fits; same credits, positions 30 min stale between dead-reckoned fixes), or run `poll-once.ts` from any other scheduler |
 | **Free-plan request limit: ~50 outbound requests per run** | Can't resolve thousands of routes at once | Work runs in 30 s ticks with ≤ 44 requests and at most one OpenSky call each. Route lookups fill in over the first hour; curation shows the best 150 among what's resolved |
 | **GPU load on low-end phones** | Jank | Adaptive quality: drop bloom, halve line segments, cap at 75 flights when frame time > 20 ms |
 
@@ -510,7 +527,8 @@ flowchart LR
 
 All planning questions are answered (see the decisions table at the top), and the OpenSky API client has been created.
 
-- **OpenSky credentials:** stored as Worker secrets `OPENSKY_CLIENT_ID` and `OPENSKY_CLIENT_SECRET` (`wrangler secret put`), and in a git-ignored `.dev.vars` for local dev (template: `worker/.dev.vars.example`). They are never committed and never sent to the browser.
+- **OpenSky credentials:** stored as Worker secrets `OPENSKY_CLIENT_ID` and `OPENSKY_CLIENT_SECRET` (`wrangler secret put`), as GitHub Actions secrets of the same names for the poller, and in a git-ignored `.dev.vars` for local dev (template: `worker/.dev.vars.example`). They are never committed and never sent to the browser.
+- **Ingest secret:** `INGEST_SECRET`, a random string set both as a Worker secret and a GitHub Actions secret; the poller sends it as a bearer token to `/api/_plan` and `/api/_ingest`.
 - **Token flow:** `POST https://auth.opensky-network.org/auth/realms/opensky-network/protocol/openid-connect/token` with `grant_type=client_credentials`, `client_id`, `client_secret` (form-encoded). Send the returned `access_token` as `Authorization: Bearer …` to `https://opensky-network.org/api/…`. The Worker caches the token and refreshes it about 1 minute before its ~30 min expiry, or on any 401.
 - **P0 check, done 2026-10-04:** credentials verified.
 

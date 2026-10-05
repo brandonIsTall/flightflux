@@ -15,7 +15,8 @@ import { AdsbdbClient, type Aircraft, type Route } from "./adsbdb";
 import { curate, checkPlausible, hysteresisKey, isAirlineCallsign, MIN_ROUTE_KM } from "./curate";
 import { distanceKm, interpolate, trackOffsets } from "./geo";
 import { globalFetch } from "./http";
-import { OpenSkyClient, type Bbox, type StateVector } from "./opensky";
+import type { IngestBody } from "./ingest";
+import { OpenSkyClient, parseState, toRaw, type Bbox, type RawState, type StateVector, type StatesResult } from "./opensky";
 import { ROUTE_TTL_S, type Store } from "./store";
 import { SPLIT_AT, splitTile } from "./tiles";
 import { estimateDeparture, estimateEta, utcDay } from "./timing";
@@ -35,6 +36,10 @@ export const PIN_TTL_S = 3 * 3600;
 export const ROUTE_CONCURRENCY = 8;
 /** OpenSky caps the URL; 150 icao24 params is ~2.1 KB. */
 export const MAX_TRACKED = 160;
+/** Known aircraft saved across evictions, newest fixes first: ~130 bytes each as compact rows. */
+export const MAX_SAVED_KNOWN = 2500;
+const KNOWN_BLOB = "known";
+const CURATED_BLOB = "curated";
 
 /** Last fix for an aircraft. Only cruise-phase airline flights are kept. */
 export interface Known {
@@ -101,6 +106,7 @@ export class Engine {
   private neverCurated = new Map<string, number>();
   private adsbdbBackoffUntil = 0;
   private creditsRemaining: number | null = null;
+  private lastFixAt = 0;
 
   private readonly fetchFn: typeof fetch;
   private readonly now: () => number;
@@ -122,15 +128,36 @@ export class Engine {
     return this.known.size;
   }
 
-  /** Last fixes for the tracked flights, persisted so an evicted object wakes with a full globe. */
-  exportTracked(): Known[] {
-    return this.trackedIds().flatMap((id) => this.known.get(id) ?? []);
+  /**
+   * Save what an eviction would lose: the known aircraft (compact rows, newest first, minus the
+   * ones whose cached route can never be curated) and the credit count. One store row.
+   */
+  saveKnown() {
+    const rows = [...this.known.values()]
+      .filter((k) => {
+        const nc = this.neverCurated.get(k.s.callsign);
+        return nc === undefined || nc !== this.deps.store.getRoute(k.s.callsign)?.at;
+      })
+      .sort((a, b) => b.t - a.t)
+      .slice(0, MAX_SAVED_KNOWN)
+      .map((k) => [...toRaw(k.s), k.t]);
+    this.deps.store.putBlob(KNOWN_BLOB, JSON.stringify({ credits: this.creditsRemaining, at: this.now(), rows }));
   }
 
-  /** Restore persisted fixes, keep them curated, and rebuild from the cached routes and weather. */
-  importTracked(list: Known[]) {
-    for (const k of list) if (!this.known.has(k.s.icao24)) this.known.set(k.s.icao24, k);
-    for (const k of list) this.curatedKeys.add(hysteresisKey(k.s));
+  /** Reload saved aircraft and curation keys, then rebuild from the cached routes and weather. */
+  restore() {
+    const raw = this.deps.store.getBlob(KNOWN_BLOB);
+    if (raw) {
+      const saved = JSON.parse(raw) as { credits: number | null; at: number; rows: (RawState | number)[][] };
+      this.creditsRemaining = saved.credits;
+      this.lastFixAt = saved.at;
+      for (const r of saved.rows) {
+        const s = parseState(r as RawState);
+        if (!this.known.has(s.icao24)) this.known.set(s.icao24, { s, t: r[14] as number });
+      }
+    }
+    const curated = this.deps.store.getBlob(CURATED_BLOB);
+    if (curated) for (const k of JSON.parse(curated) as string[]) this.curatedKeys.add(k);
     this.rebuild();
   }
 
@@ -147,9 +174,7 @@ export class Engine {
     const ids = this.trackedIds();
     if (ids.length === 0) return 0;
     const res = await this.deps.opensky.states({ icao24: ids });
-    this.creditsRemaining = res.creditsRemaining;
-    for (const s of res.states) this.merge(s, res.time);
-    return res.states.length;
+    return this.applyStates(res).aircraft;
   }
 
   /**
@@ -157,14 +182,35 @@ export class Engine {
    * two halves when it came back too full to parse comfortably within the CPU limit.
    */
   async pollTile(tile: Bbox): Promise<{ aircraft: number; next: Bbox[] }> {
-    const res = await this.deps.opensky.states({ bbox: tile });
+    return this.applyStates(await this.deps.opensky.states({ bbox: tile }), tile);
+  }
+
+  /**
+   * Take in a states response, from our own call or an external poller. `total` is the size of
+   * the unfiltered response when the poller pre-filtered the rows. Returns how many aircraft were
+   * in the response and, for a region box, the boxes to use in its place next sweep.
+   */
+  applyStates(res: StatesResult, tile?: Bbox, total = res.states.length): { aircraft: number; next: Bbox[] } {
     this.creditsRemaining = res.creditsRemaining;
+    this.lastFixAt = this.now();
     for (const s of res.states) this.merge(s, res.time);
+    if (!tile) return { aircraft: total, next: [] };
     this.expireKnown();
     this.deps.store.prune(this.nowS());
-    const next = res.states.length > SPLIT_AT ? splitTile(tile) : [tile];
-    if (next.length > 1) this.log(`tile ${tile.join(",")} had ${res.states.length} aircraft; splitting`);
-    return { aircraft: res.states.length, next };
+    const next = total > SPLIT_AT ? splitTile(tile) : [tile];
+    if (next.length > 1) this.log(`tile ${tile.join(",")} had ${total} aircraft; splitting`);
+    return { aircraft: total, next };
+  }
+
+  /** Compact rows from an external poller (see core/ingest.ts). */
+  ingest(body: IngestBody): { aircraft: number; next: Bbox[] } {
+    const res: StatesResult = { time: body.time, states: body.states.map(parseState), creditsRemaining: body.creditsRemaining };
+    return this.applyStates(res, body.tile, body.total);
+  }
+
+  /** When positions last arrived from OpenSky, by any path (ms). 0 before the first. */
+  lastPositionsAt(): number {
+    return this.lastFixAt;
   }
 
   private merge(s: StateVector, responseTime: number) {
@@ -282,7 +328,11 @@ export class Engine {
     // Score cheap candidates; only the ~150 winners become full Flight objects. Building one per
     // eligible aircraft every run cost more in garbage collection than everything else combined.
     const chosen = curate(eligible, this.curatedKeys);
-    this.curatedKeys = new Set(chosen.map(hysteresisKey));
+    const keys = chosen.map(hysteresisKey);
+    if (keys.length !== this.curatedKeys.size || keys.some((k) => !this.curatedKeys.has(k))) {
+      this.deps.store.putBlob(CURATED_BLOB, JSON.stringify(keys)); // hysteresis survives an eviction
+    }
+    this.curatedKeys = new Set(keys);
     this.snapshot = {
       v: 1,
       generatedAt: nowS,

@@ -25,6 +25,9 @@ export interface Store {
   putWeather(icao: string, s: TempSeries): void;
   getDep(icao24: string): DepEntry | undefined;
   putDep(icao24: string, e: DepEntry): void;
+  /** Small named documents (the known-aircraft set, curation keys) that must outlive an eviction. */
+  getBlob(key: string): string | undefined;
+  putBlob(key: string, value: string): void;
   /** Drop entries older than their TTLs. */
   prune(nowS: number): void;
 }
@@ -37,6 +40,7 @@ export class MemoryStore implements Store {
   readonly routes = new Map<string, RouteEntry>();
   readonly weather = new Map<string, TempSeries>();
   readonly deps = new Map<string, DepEntry>();
+  readonly blobs = new Map<string, string>();
 
   getRoute(k: string) {
     return this.routes.get(k);
@@ -55,6 +59,12 @@ export class MemoryStore implements Store {
   }
   putDep(k: string, e: DepEntry) {
     this.deps.set(k, e);
+  }
+  getBlob(k: string) {
+    return this.blobs.get(k);
+  }
+  putBlob(k: string, v: string) {
+    this.blobs.set(k, v);
   }
 
   prune(nowS: number) {

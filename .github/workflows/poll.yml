@@ -1,0 +1,45 @@
+# Fetches flight positions from OpenSky and pushes them to the Worker, which cannot reach OpenSky
+# from Cloudflare's network. Each run asks the Worker what is due (/api/_plan), so the cadence here
+# only sets freshness, never the OpenSky credit spend.
+#
+# Cost: a run bills as 1 minute. Every 5 min is ~8,600 min/month: free on a public repository, far
+# over the 2,000 free minutes of a private one (every 30 min, "*/30", fits a private repo; the
+# Worker then hands out more boxes per run). GitHub also pauses schedules on repositories with no
+# activity for 60 days.
+#
+# Secrets (Settings -> Secrets and variables -> Actions): OPENSKY_CLIENT_ID, OPENSKY_CLIENT_SECRET,
+# INGEST_SECRET (same value as the Worker's). Variable: FLIGHTFLUX_API (the Worker origin).
+name: Poll positions
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+concurrency:
+  group: poll
+  cancel-in-progress: false
+jobs:
+  poll:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    env:
+      CONFIGURED: ${{ secrets.INGEST_SECRET != '' && secrets.OPENSKY_CLIENT_ID != '' }}
+    steps:
+      - name: Skip until the secrets are configured
+        if: env.CONFIGURED != 'true'
+        run: echo "::notice::Add the INGEST_SECRET, OPENSKY_CLIENT_ID and OPENSKY_CLIENT_SECRET secrets to enable polling."
+      - uses: actions/checkout@v5
+        if: env.CONFIGURED == 'true'
+      - uses: actions/setup-node@v5
+        if: env.CONFIGURED == 'true'
+        with:
+          node-version: 24
+          cache: npm
+      - if: env.CONFIGURED == 'true'
+        run: npm ci --workspace worker --ignore-scripts
+      - if: env.CONFIGURED == 'true'
+        run: npm run poll -w worker
+        env:
+          FLIGHTFLUX_API: ${{ vars.FLIGHTFLUX_API || 'https://flightflux-api.brandonisaacjames.workers.dev' }}
+          INGEST_SECRET: ${{ secrets.INGEST_SECRET }}
+          OPENSKY_CLIENT_ID: ${{ secrets.OPENSKY_CLIENT_ID }}
+          OPENSKY_CLIENT_SECRET: ${{ secrets.OPENSKY_CLIENT_SECRET }}

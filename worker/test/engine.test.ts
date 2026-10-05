@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { AdsbdbClient } from "../src/core/adsbdb";
 import { Engine } from "../src/core/engine";
+import { prefilter } from "../src/core/ingest";
 import { distanceKm, interpolate } from "../src/core/geo";
 import { OpenSkyClient, type Bbox } from "../src/core/opensky";
 import { MemoryStore } from "../src/core/store";
@@ -232,12 +233,17 @@ describe("Engine", () => {
     expect(await engine.search("ZZ999")).toBeNull();
   });
 
-  it("restores tracked fixes after an eviction", async () => {
+  it("restores the known set, credits and curation after an eviction from the store alone", async () => {
     const world = fakeWorld();
-    world.states = [sv("aa9300", "UAL880", interpolate(IAH, LHR, 0.4), 11000)];
+    world.states = [sv("aa9300", "UAL880", interpolate(IAH, LHR, 0.4), 11000), sv("cccccc", "DLH400", IAH, 11000)];
     const a = makeEngine(world);
     const snap = await warm(a.engine);
-    const saved = JSON.parse(JSON.stringify(a.engine.exportTracked()));
+    a.engine.saveKnown();
+    const blob = JSON.parse(a.store.blobs.get("known")!) as { credits: number; rows: unknown[][] };
+    expect(blob.credits).toBe(3000);
+    // DLH400's route is unknown (404) and so can never be curated: not worth saving.
+    expect(blob.rows.map((r) => r[1])).toEqual(["UAL880"]);
+    expect(a.store.blobs.get("curated")).toBe(JSON.stringify(["aa9300:UAL880"]));
 
     // A new object shares the SQLite caches (same store here) but starts with empty memory.
     const b = new Engine({
@@ -247,9 +253,11 @@ describe("Engine", () => {
       fetchFn: world.fetch,
       now: () => world.time * 1000,
     });
-    b.importTracked(saved);
+    b.restore();
     expect(b.getSnapshot()!.flights.map((f) => f.callsign)).toEqual(snap.flights.map((f) => f.callsign));
+    expect(b.getSnapshot()!.meta.creditsRemaining).toBe(3000);
     expect(b.trackedIds()).toEqual(["aa9300"]);
+    expect(b.knownCount()).toBe(1);
   });
 
   it("does not spend more requests than the budget", async () => {
@@ -261,5 +269,31 @@ describe("Engine", () => {
     const before = world.calls.length;
     await engine.enrich({ requests: 20 });
     expect(world.calls.length - before).toBeLessThanOrEqual(20);
+  });
+
+  it("ingests pre-filtered rows from an external poller exactly like its own call", async () => {
+    const world = fakeWorld();
+    const rows = [sv("aa9300", "UAL880", interpolate(IAH, LHR, 0.4), 11000), sv("bbbbbb", "N1", IAH, 11000)];
+    const { engine } = makeEngine(world);
+    const before = world.calls.length;
+    const r = engine.ingest({ time: T0, creditsRemaining: 2500, states: prefilter(rows), total: rows.length, tile: WORLD });
+    expect(r).toEqual({ aircraft: 2, next: [WORLD] });
+    expect(engine.lastPositionsAt()).toBe(T0 * 1000);
+    engine.rebuild();
+    await engine.enrich({ requests: 40 });
+    engine.rebuild();
+    await engine.enrich({ requests: 40 });
+    const snap = engine.rebuild();
+    expect(snap.flights.map((f) => f.callsign)).toEqual(["UAL880"]);
+    expect(snap.meta.creditsRemaining).toBe(2500);
+    // The engine itself never called OpenSky.
+    expect(world.calls.slice(before).some((u) => u.includes("opensky"))).toBe(false);
+  });
+
+  it("splits an ingested box by the unfiltered count, not the rows kept", () => {
+    const world = fakeWorld();
+    const { engine } = makeEngine(world);
+    const r = engine.ingest({ time: T0, creditsRemaining: null, states: [], total: SPLIT_AT + 1, tile: [0, 0, 40, 40] });
+    expect(r.next).toHaveLength(2);
   });
 });

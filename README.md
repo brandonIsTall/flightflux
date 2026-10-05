@@ -29,22 +29,29 @@ VITE_API_BASE=http://localhost:8787 npm run dev -w web
 
 ## Deploy
 
-Both halves run on Cloudflare's free tier.
+Both halves run on Cloudflare's free tier. Flight positions are fetched by a GitHub Actions cron,
+because Cloudflare's network cannot reach OpenSky (`docs/PLAN.md` §1).
 
 ```sh
 # API
 cd worker
 npx wrangler secret put OPENSKY_CLIENT_ID
 npx wrangler secret put OPENSKY_CLIENT_SECRET
+npx wrangler secret put INGEST_SECRET            # any long random string
 npx wrangler deploy                              # prints https://flightflux-api.<account>.workers.dev
 
-# Globe (Cloudflare Pages, or any static host)
+# Globe (Workers static assets; web/.env.production holds the API URL)
 cd ../web
-VITE_API_BASE=https://flightflux-api.<account>.workers.dev npm run build
-npx wrangler pages deploy dist --project-name flightflux
+npm run build
+npx wrangler deploy
 ```
 
-The first discovery sweep takes about 15 minutes to fill the globe after the API's first deploy.
+Then, in the GitHub repository settings, add Actions secrets `OPENSKY_CLIENT_ID`,
+`OPENSKY_CLIENT_SECRET` and `INGEST_SECRET` (same values as the Worker's) and the variable
+`FLIGHTFLUX_API` (the API URL). The "Poll positions" workflow (`.github/workflows/poll.yml`) runs
+every 5 minutes and fills the globe within a few runs. Note the Actions minutes: a 5 minute cron
+is free on a public repository but exceeds a private repository's 2,000 free minutes a month;
+there, use `*/30` (same OpenSky credits, positions dead-reckoned between fixes).
 
 ## Data and licenses
 

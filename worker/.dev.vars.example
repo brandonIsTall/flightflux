@@ -3,3 +3,8 @@
 #   npx wrangler secret put OPENSKY_CLIENT_SECRET
 OPENSKY_CLIENT_ID=
 OPENSKY_CLIENT_SECRET=
+# Shared with the external poller (scripts/poll-once.ts). Any long random string, e.g. `openssl rand -hex 32`.
+#   npx wrangler secret put INGEST_SECRET
+INGEST_SECRET=
+# For running the poller locally against a deployed Worker:
+# FLIGHTFLUX_API=https://flightflux-api.<subdomain>.workers.dev
