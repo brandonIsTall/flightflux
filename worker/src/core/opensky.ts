@@ -59,6 +59,14 @@ export function parseState(r: RawState): StateVector {
   };
 }
 
+/** Inverse of parseState: the 14 fields the engine uses, in OpenSky's order. */
+export function toRaw(s: StateVector): RawState {
+  return [
+    s.icao24, s.callsign, s.originCountry, s.timePosition, s.lastContact, s.lon, s.lat, s.baroAltM,
+    s.onGround, s.velocityMs, s.trackDeg, s.vRateMs, null, s.geoAltM,
+  ];
+}
+
 export class OpenSkyError extends Error {
   constructor(message: string, readonly status: number) {
     super(message);

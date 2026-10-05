@@ -3,7 +3,8 @@
 // Actions cron (.github/workflows/poll.yml), a laptop, any scheduler.
 //
 // Env: FLIGHTFLUX_API (Worker origin), INGEST_SECRET, OPENSKY_CLIENT_ID, OPENSKY_CLIENT_SECRET.
-// Usage: npm run poll -w worker   (also reads worker/.dev.vars when present, for local runs)
+// Usage: npm run poll -w worker [-- --restart]   (also reads worker/.dev.vars when present)
+//        --restart begins a fresh discovery sweep at first-sweep pace, e.g. after a long outage.
 
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -58,7 +59,7 @@ async function forward(filter: StatesFilter, label: string): Promise<void> {
   );
 }
 
-const plan = await call<PlanResponse>("/api/_plan");
+const plan = await call<PlanResponse>(process.argv.includes("--restart") ? "/api/_plan?restart" : "/api/_plan");
 console.log(`plan: ${plan.tracked ? `${plan.tracked.length} tracked` : "tracked not due"}, ${plan.tiles.length} boxes, credits ${plan.creditsRemaining ?? "?"}`);
 if (plan.tracked && plan.tracked.length > 0) await forward({ icao24: plan.tracked }, "tracked");
 for (const tile of plan.tiles) await forward({ bbox: tile }, `box ${tile.join(",")}`);

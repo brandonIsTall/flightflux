@@ -5,7 +5,7 @@
 
 import { DurableObject } from "cloudflare:workers";
 import { AdsbdbClient } from "./core/adsbdb";
-import { Engine, type Known } from "./core/engine";
+import { Engine } from "./core/engine";
 import { isIngestBody, type PlanResponse } from "./core/ingest";
 import { OpenSkyClient } from "./core/opensky";
 import { initialSched, planNext, replaceTile, TICK_MS, type Sched } from "./core/sched";
@@ -44,10 +44,11 @@ export class SkyState extends DurableObject<Env> {
       log: (m) => console.log(m),
     });
     ctx.blockConcurrencyWhile(async () => {
-      const stored = await ctx.storage.get(["sched", "tracked"]);
-      const sched = stored.get("sched") as Sched | undefined;
+      const sched = await ctx.storage.get<Sched>("sched");
       if (sched) this.sched = sched;
-      this.engine.importTracked((stored.get("tracked") as Known[] | undefined) ?? []);
+      // The object is evicted whenever it is idle, often between two 30 s alarms, so everything
+      // that isn't in SQLite is gone by the next event. The engine keeps its aircraft there.
+      this.engine.restore();
     });
   }
 
@@ -69,12 +70,16 @@ export class SkyState extends DurableObject<Env> {
     if ((await this.ctx.storage.getAlarm()) == null) await this.ctx.storage.setAlarm(Date.now());
   }
 
-  /** What the external poller should fetch now. Marks it issued, so it is never handed out twice. */
-  async plan(): Promise<PlanResponse> {
+  /**
+   * What the external poller should fetch now. Marks it issued, so it is never handed out twice.
+   * `restart` begins a fresh sweep from the first box at first-sweep pace (after a long outage).
+   */
+  async plan(restart = false): Promise<PlanResponse> {
     const creditsRemaining = this.engine.getSnapshot()?.meta.creditsRemaining ?? null;
     const tracked = this.engine.trackedIds();
     const now = Date.now();
     this.sched.lastPlanAt = now;
+    if (restart) Object.assign(this.sched, { sweeps: 0, tileIdx: 0, lastTileAt: 0 });
     const p = planNext(this.sched, { now, hasTracked: tracked.length > 0, creditsRemaining, empty: this.engine.knownCount() === 0, maxTiles: MAX_TILES_PER_PLAN });
     await this.ctx.storage.put("sched", this.sched);
     return { tracked: p.track ? tracked : null, tiles: p.tileIdxs.map((i) => this.sched.tiles[i]!), creditsRemaining };
@@ -117,11 +122,10 @@ export class SkyState extends DurableObject<Env> {
       const changed = step !== "enrich" || stats.routeHits > 0 || stats.weatherAirports > 0 || this.dirty;
       this.dirty = false;
       const snap = changed ? this.engine.rebuild(Date.now() - now) : this.engine.getSnapshot();
+      if (step !== "enrich") this.engine.saveKnown();
       if (now - s.lastPersistAt >= PERSIST_MS) {
         s.lastPersistAt = now;
-        // Last fixes for the shown flights (~40 KB), not the 118 KB snapshot: on wake the engine
-        // rebuilds from these plus the routes and weather already in SQLite.
-        await this.ctx.storage.put({ sched: s, tracked: this.engine.exportTracked() });
+        await this.ctx.storage.put("sched", s);
       }
       console.log(
         JSON.stringify({ step, rebuilt: changed, flights: snap?.flights.length, known: snap?.meta.known, ...stats, queues: this.engine.queueSizes() }),
@@ -141,11 +145,12 @@ export class SkyState extends DurableObject<Env> {
 
     if (path === "/api/_plan" || path === "/api/_ingest") {
       if (!(await this.authorized(req))) return json({ error: "unauthorized" }, 401);
-      if (path === "/api/_plan") return json(await this.plan());
+      if (path === "/api/_plan") return json(await this.plan(url.searchParams.has("restart")));
       if (req.method !== "POST") return json({ error: "POST" }, 405);
       const body: unknown = await req.json().catch(() => null);
       if (!isIngestBody(body)) return json({ error: "bad body" }, 400);
       const { aircraft, next } = this.engine.ingest(body);
+      this.engine.saveKnown();
       if (body.tile && replaceTile(this.sched, body.tile, next)) await this.ctx.storage.put("sched", this.sched);
       this.dirty = true;
       console.log(JSON.stringify({ step: body.tile ? `ingest tile ${body.tile.join(",")}` : "ingest tracked", aircraft, kept: body.states.length, known: this.engine.knownCount() }));

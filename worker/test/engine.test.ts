@@ -233,12 +233,17 @@ describe("Engine", () => {
     expect(await engine.search("ZZ999")).toBeNull();
   });
 
-  it("restores tracked fixes after an eviction", async () => {
+  it("restores the known set, credits and curation after an eviction from the store alone", async () => {
     const world = fakeWorld();
-    world.states = [sv("aa9300", "UAL880", interpolate(IAH, LHR, 0.4), 11000)];
+    world.states = [sv("aa9300", "UAL880", interpolate(IAH, LHR, 0.4), 11000), sv("cccccc", "DLH400", IAH, 11000)];
     const a = makeEngine(world);
     const snap = await warm(a.engine);
-    const saved = JSON.parse(JSON.stringify(a.engine.exportTracked()));
+    a.engine.saveKnown();
+    const blob = JSON.parse(a.store.blobs.get("known")!) as { credits: number; rows: unknown[][] };
+    expect(blob.credits).toBe(3000);
+    // DLH400's route is unknown (404) and so can never be curated: not worth saving.
+    expect(blob.rows.map((r) => r[1])).toEqual(["UAL880"]);
+    expect(a.store.blobs.get("curated")).toBe(JSON.stringify(["aa9300:UAL880"]));
 
     // A new object shares the SQLite caches (same store here) but starts with empty memory.
     const b = new Engine({
@@ -248,9 +253,11 @@ describe("Engine", () => {
       fetchFn: world.fetch,
       now: () => world.time * 1000,
     });
-    b.importTracked(saved);
+    b.restore();
     expect(b.getSnapshot()!.flights.map((f) => f.callsign)).toEqual(snap.flights.map((f) => f.callsign));
+    expect(b.getSnapshot()!.meta.creditsRemaining).toBe(3000);
     expect(b.trackedIds()).toEqual(["aa9300"]);
+    expect(b.knownCount()).toBe(1);
   });
 
   it("does not spend more requests than the budget", async () => {
