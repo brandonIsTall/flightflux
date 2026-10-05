@@ -80,7 +80,10 @@ export class OpenSkyClient {
     });
     if (!res.ok) {
       const detail = (await res.text().catch(() => "")).slice(0, 200);
-      throw new OpenSkyError(`token request failed: ${res.status} ${detail}`, res.status);
+      // cf-ray names the Cloudflare data centre the answer came through: useful when OpenSky's
+      // own Cloudflare front returns 52x for some paths and not others.
+      const ray = res.headers.get("cf-ray") ?? "";
+      throw new OpenSkyError(`token request failed: ${res.status} ${detail} ${ray}`.trim(), res.status);
     }
     const j = (await res.json()) as { access_token: string; expires_in: number };
     this.token = { value: j.access_token, expiresAt: this.now() + j.expires_in * 1000 };

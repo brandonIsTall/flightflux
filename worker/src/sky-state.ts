@@ -5,6 +5,7 @@ import { AdsbdbClient } from "./core/adsbdb";
 import { Engine, type Known } from "./core/engine";
 import { OpenSkyClient, type Bbox } from "./core/opensky";
 import { INITIAL_TILES } from "./core/tiles";
+import { probeUpstreams } from "./probe";
 import { SqlStore } from "./sql-store";
 
 export interface Env {
@@ -39,6 +40,7 @@ export class SkyState extends DurableObject<Env> {
   private engine: Engine;
   private sched: Sched = { lastTrackAt: 0, lastTileAt: 0, lastPersistAt: 0, tileIdx: 0, sweeps: 0, tiles: INITIAL_TILES };
   private searchHits = new Map<string, { minute: number; count: number }>();
+  private retired = false;
 
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
@@ -56,12 +58,26 @@ export class SkyState extends DurableObject<Env> {
     });
   }
 
+  /** Reachability of every upstream from this object's data centre. */
+  async probe(): Promise<Record<string, string>> {
+    return probeUpstreams();
+  }
+
+  /** Stop polling for good and drop everything stored. For an instance that has been replaced. */
+  async retire(): Promise<void> {
+    await this.ctx.storage.deleteAlarm();
+    await this.ctx.storage.deleteAll();
+    this.retired = true;
+  }
+
   /** Start the alarm loop if it isn't running. Called by the cron trigger and on requests. */
   async ensureRunning(): Promise<void> {
+    if (this.retired) return;
     if ((await this.ctx.storage.getAlarm()) == null) await this.ctx.storage.setAlarm(Date.now());
   }
 
   async alarm(): Promise<void> {
+    if (this.retired) return;
     // Schedule the next run first so an exception can't stop the loop.
     await this.ctx.storage.setAlarm(Date.now() + TICK_MS);
     const now = Date.now();
