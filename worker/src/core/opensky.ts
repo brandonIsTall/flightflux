@@ -24,15 +24,24 @@ export interface StateVector {
 /** [lamin, lomin, lamax, lomax] in degrees. */
 export type Bbox = [number, number, number, number];
 
+export type StatesFilter = { bbox: Bbox } | { icao24: string[] };
+
 export interface StatesResult {
   time: number;
   states: StateVector[];
   creditsRemaining: number | null;
 }
 
-type Raw = (string | number | boolean | null | number[])[];
+export interface RawStatesResult {
+  time: number;
+  rows: RawState[];
+  creditsRemaining: number | null;
+}
 
-export function parseState(r: Raw): StateVector {
+/** One compact OpenSky row (see the states API docs for field order). */
+export type RawState = (string | number | boolean | null | number[])[];
+
+export function parseState(r: RawState): StateVector {
   return {
     icao24: r[0] as string,
     callsign: ((r[1] as string | null) ?? "").trim(),
@@ -109,7 +118,13 @@ export class OpenSkyClient {
    * <= 400 sq deg is 3 credits, anything larger or an icao24 list is 4. Always filter: the
    * unfiltered worldwide response (~800 KB) takes longer to parse than the free plan's 10 ms.
    */
-  async states(filter: { bbox: Bbox } | { icao24: string[] }): Promise<StatesResult> {
+  async states(filter: StatesFilter): Promise<StatesResult> {
+    const r = await this.statesRaw(filter);
+    return { time: r.time, states: r.rows.map(parseState), creditsRemaining: r.creditsRemaining };
+  }
+
+  /** Same call, rows left compact: what an external poller forwards to the Worker. */
+  async statesRaw(filter: StatesFilter): Promise<RawStatesResult> {
     const q =
       "bbox" in filter
         ? `lamin=${filter.bbox[0]}&lomin=${filter.bbox[1]}&lamax=${filter.bbox[2]}&lomax=${filter.bbox[3]}`
@@ -117,11 +132,7 @@ export class OpenSkyClient {
     const res = await this.get(`/states/all?${q}`);
     if (!res.ok) throw new OpenSkyError(`states failed: ${res.status}`, res.status);
     const remaining = res.headers.get("x-rate-limit-remaining");
-    const j = (await res.json()) as { time: number; states: Raw[] | null };
-    return {
-      time: j.time,
-      states: (j.states ?? []).map(parseState),
-      creditsRemaining: remaining === null ? null : Number(remaining),
-    };
+    const j = (await res.json()) as { time: number; states: RawState[] | null };
+    return { time: j.time, rows: j.states ?? [], creditsRemaining: remaining === null ? null : Number(remaining) };
   }
 }

@@ -1,10 +1,14 @@
-// One Durable Object instance ("global") owns the poller and serves every API request.
+// One Durable Object instance owns the schedule, the caches and the snapshot, and serves every
+// API request. Positions arrive from an external poller (see core/ingest.ts); the object itself
+// only calls OpenSky as a fallback when none has reported for a while, since Cloudflare's
+// network cannot reach OpenSky today.
 
 import { DurableObject } from "cloudflare:workers";
 import { AdsbdbClient } from "./core/adsbdb";
 import { Engine, type Known } from "./core/engine";
-import { OpenSkyClient, type Bbox } from "./core/opensky";
-import { INITIAL_TILES } from "./core/tiles";
+import { isIngestBody, type PlanResponse } from "./core/ingest";
+import { OpenSkyClient } from "./core/opensky";
+import { initialSched, planNext, replaceTile, TICK_MS, type Sched } from "./core/sched";
 import { probeUpstreams } from "./probe";
 import { SqlStore } from "./sql-store";
 
@@ -12,33 +16,22 @@ export interface Env {
   SKY: DurableObjectNamespace<SkyState>;
   OPENSKY_CLIENT_ID: string;
   OPENSKY_CLIENT_SECRET: string;
+  /** Shared with the external poller; required for /api/_plan and /api/_ingest. */
+  INGEST_SECRET?: string;
 }
 
-export const TICK_MS = 30_000;
-/** Positions for the flights on the globe: 288 calls x 4 credits = ~1,150 credits/day. */
-export const TRACK_INTERVAL_MS = 5 * 60_000;
-/** One discovery sweep of every region box: ~108 credits each, ~19 a day = ~2,100 credits/day. */
-export const SWEEP_MS = 75 * 60_000;
-/** Below this many OpenSky credits, slow everything down 3x rather than run dry. */
-const LOW_CREDITS = 800;
 const PERSIST_MS = 5 * 60_000;
 /** Workers free plan allows 50 subrequests per invocation; leave headroom. */
 const REQUESTS_PER_TICK = 44;
 const SEARCHES_PER_MIN = 10;
-
-/** Scheduler state, persisted so a recreated object can never call OpenSky faster than planned. */
-interface Sched {
-  lastTrackAt: number;
-  lastTileAt: number;
-  lastPersistAt: number;
-  tileIdx: number;
-  sweeps: number;
-  tiles: Bbox[];
-}
+/** Poll OpenSky directly only when no external poller has asked for a plan for this long. */
+export const FALLBACK_AFTER_MS = 20 * 60_000;
+/** A poller catching up may take this many region boxes in one plan (~0.5 s each). */
+export const MAX_TILES_PER_PLAN = 12;
 
 export class SkyState extends DurableObject<Env> {
   private engine: Engine;
-  private sched: Sched = { lastTrackAt: 0, lastTileAt: 0, lastPersistAt: 0, tileIdx: 0, sweeps: 0, tiles: INITIAL_TILES };
+  private sched: Sched = initialSched();
   private searchHits = new Map<string, { minute: number; count: number }>();
   private retired = false;
 
@@ -76,48 +69,53 @@ export class SkyState extends DurableObject<Env> {
     if ((await this.ctx.storage.getAlarm()) == null) await this.ctx.storage.setAlarm(Date.now());
   }
 
+  /** What the external poller should fetch now. Marks it issued, so it is never handed out twice. */
+  async plan(): Promise<PlanResponse> {
+    const creditsRemaining = this.engine.getSnapshot()?.meta.creditsRemaining ?? null;
+    const tracked = this.engine.trackedIds();
+    const now = Date.now();
+    this.sched.lastPlanAt = now;
+    const p = planNext(this.sched, { now, hasTracked: tracked.length > 0, creditsRemaining, empty: this.engine.knownCount() === 0, maxTiles: MAX_TILES_PER_PLAN });
+    await this.ctx.storage.put("sched", this.sched);
+    return { tracked: p.track ? tracked : null, tiles: p.tileIdxs.map((i) => this.sched.tiles[i]!), creditsRemaining };
+  }
+
   async alarm(): Promise<void> {
     if (this.retired) return;
     // Schedule the next run first so an exception can't stop the loop.
     await this.ctx.storage.setAlarm(Date.now() + TICK_MS);
     const now = Date.now();
     const s = this.sched;
-    const slow = (this.engine.getSnapshot()?.meta.creditsRemaining ?? Infinity) < LOW_CREDITS ? 3 : 1;
-    // First sweep runs one box per tick so a fresh deploy fills the globe in ~15 min.
-    const tileEvery = s.sweeps === 0 ? TICK_MS - 2_000 : (SWEEP_MS / s.tiles.length) * slow;
     let step = "enrich";
     let budget = REQUESTS_PER_TICK;
     try {
-      // At most one OpenSky call per run, recorded before the call so failures can't retry hot.
-      if (this.engine.trackedIds().length > 0 && now - s.lastTrackAt >= TRACK_INTERVAL_MS * slow) {
-        s.lastTrackAt = now;
-        await this.ctx.storage.put("sched", s);
-        step = "track";
-        step = `track ${await this.engine.refreshTracked()}`;
-        budget -= 2;
-      } else if (now - s.lastTileAt >= tileEvery) {
-        const idx = s.tileIdx % s.tiles.length;
-        const tile = s.tiles[idx]!;
-        s.lastTileAt = now;
-        s.tileIdx = idx + 1;
-        if (s.tileIdx >= s.tiles.length) {
-          s.tileIdx = 0;
-          s.sweeps++;
-        }
-        await this.ctx.storage.put("sched", s);
-        step = `tile ${idx}`;
-        const { aircraft, next } = await this.engine.pollTile(tile);
-        if (next.length > 1) {
-          s.tiles = [...s.tiles.slice(0, idx), ...next, ...s.tiles.slice(idx + 1)];
-          if (s.tileIdx > idx) s.tileIdx += next.length - 1;
+      // Fallback only: the poller normally owns OpenSky. At most one call per run, recorded before
+      // the call so failures can't retry hot.
+      if (now - (s.lastPlanAt ?? 0) >= FALLBACK_AFTER_MS) {
+        const creditsRemaining = this.engine.getSnapshot()?.meta.creditsRemaining ?? null;
+        const p = planNext(s, { now, hasTracked: this.engine.trackedIds().length > 0, creditsRemaining, empty: this.engine.knownCount() === 0, maxTiles: 1 });
+        if (p.track) {
+          // Both due: give the box back; it goes next tick.
+          if (p.tileIdxs.length > 0) rewindTile(s);
           await this.ctx.storage.put("sched", s);
+          step = "track";
+          step = `track ${await this.engine.refreshTracked()}`;
+          budget -= 2;
+        } else if (p.tileIdxs.length > 0) {
+          const idx = p.tileIdxs[0]!;
+          const tile = s.tiles[idx]!;
+          await this.ctx.storage.put("sched", s);
+          step = `tile ${idx}`;
+          const { aircraft, next } = await this.engine.pollTile(tile);
+          if (replaceTile(s, tile, next)) await this.ctx.storage.put("sched", s);
+          step = `tile ${idx}/${s.tiles.length} (${aircraft})`;
+          budget -= 2;
         }
-        step = `tile ${idx}/${s.tiles.length} (${aircraft})`;
-        budget -= 2;
       }
       const stats = await this.engine.enrich({ requests: budget });
       // Rebuilding costs ~2 ms of the 10 ms CPU budget; skip it when nothing new arrived.
-      const changed = step !== "enrich" || stats.routeHits > 0 || stats.weatherAirports > 0;
+      const changed = step !== "enrich" || stats.routeHits > 0 || stats.weatherAirports > 0 || this.dirty;
+      this.dirty = false;
       const snap = changed ? this.engine.rebuild(Date.now() - now) : this.engine.getSnapshot();
       if (now - s.lastPersistAt >= PERSIST_MS) {
         s.lastPersistAt = now;
@@ -133,10 +131,26 @@ export class SkyState extends DurableObject<Env> {
     }
   }
 
+  /** Positions arrived since the last rebuild. */
+  private dirty = false;
+
   async fetch(req: Request): Promise<Response> {
     await this.ensureRunning();
     const url = new URL(req.url);
     const path = url.pathname;
+
+    if (path === "/api/_plan" || path === "/api/_ingest") {
+      if (!(await this.authorized(req))) return json({ error: "unauthorized" }, 401);
+      if (path === "/api/_plan") return json(await this.plan());
+      if (req.method !== "POST") return json({ error: "POST" }, 405);
+      const body: unknown = await req.json().catch(() => null);
+      if (!isIngestBody(body)) return json({ error: "bad body" }, 400);
+      const { aircraft, next } = this.engine.ingest(body);
+      if (body.tile && replaceTile(this.sched, body.tile, next)) await this.ctx.storage.put("sched", this.sched);
+      this.dirty = true;
+      console.log(JSON.stringify({ step: body.tile ? `ingest tile ${body.tile.join(",")}` : "ingest tracked", aircraft, kept: body.states.length, known: this.engine.knownCount() }));
+      return json({ ok: true, known: this.engine.knownCount(), tiles: this.sched.tiles.length });
+    }
 
     if (path === "/api/snapshot") {
       const snap = this.engine.getSnapshot();
@@ -165,6 +179,17 @@ export class SkyState extends DurableObject<Env> {
     return json({ error: "not found" }, 404);
   }
 
+  /** Bearer token equal to INGEST_SECRET, compared in constant time. No secret configured: nothing is authorized. */
+  private async authorized(req: Request): Promise<boolean> {
+    const secret = this.env.INGEST_SECRET;
+    const given = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? "";
+    if (!secret || given.length === 0) return false;
+    const enc = new TextEncoder();
+    const [a, b] = [enc.encode(secret), enc.encode(given)];
+    if (a.byteLength !== b.byteLength) return false;
+    return crypto.subtle.timingSafeEqual(a, b);
+  }
+
   private allowSearch(ip: string): boolean {
     const minute = Math.floor(Date.now() / 60_000);
     const e = this.searchHits.get(ip);
@@ -174,6 +199,16 @@ export class SkyState extends DurableObject<Env> {
       return true;
     }
     return ++e.count <= SEARCHES_PER_MIN;
+  }
+}
+
+/** Undo the last box planNext() issued (the fallback path does one OpenSky call per tick). */
+function rewindTile(s: Sched) {
+  if (s.tileIdx === 0) {
+    s.tileIdx = s.tiles.length - 1;
+    s.sweeps = Math.max(0, s.sweeps - 1);
+  } else {
+    s.tileIdx--;
   }
 }
 

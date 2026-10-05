@@ -1,4 +1,4 @@
-// Worker entry: forwards /api/* to the single SkyState Durable Object and keeps it polling.
+// Worker entry: forwards /api/* to the single SkyState Durable Object and keeps its loop running.
 
 import { probeUpstreams } from "./probe";
 import { SkyState, type Env } from "./sky-state";
@@ -10,9 +10,13 @@ const CORS = {
   "Access-Control-Allow-Methods": "GET, OPTIONS",
 };
 
+/** Poller endpoints (core/ingest.ts): authenticated, never cached, POST allowed. */
+const isPollerPath = (p: string) => p === "/api/_plan" || p === "/api/_ingest";
+
 /**
- * The poller lives in Western Europe: OpenSky's origin is in Switzerland and, from some Cloudflare
- * data centres (Ashburn, for one), its Cloudflare front answers every request with 522.
+ * The object lives in Western Europe, near OpenSky's origin in Switzerland. It turned out not to
+ * matter: OpenSky's Cloudflare front answers 522 to Workers from every data centre tried, which is
+ * why positions come from an external poller (core/ingest.ts). Kept so the stored state stays put.
  */
 const sky = (env: Env) => env.SKY.get(env.SKY.idFromName("global-weur"), { locationHint: "weur" });
 /** The first instance, created in Ashburn before the hint existed. Retired once; kept so it can be again. */
@@ -22,9 +26,10 @@ export default {
   async fetch(req, env, ctx): Promise<Response> {
     const url = new URL(req.url);
     if (req.method === "OPTIONS") return new Response(null, { headers: CORS });
-    if (req.method !== "GET" || !url.pathname.startsWith("/api/")) {
+    if (!url.pathname.startsWith("/api/") || (req.method !== "GET" && !(req.method === "POST" && isPollerPath(url.pathname)))) {
       return new Response("Not found", { status: 404 });
     }
+    if (isPollerPath(url.pathname)) return sky(env).fetch(req);
 
     // Diagnostic: can this Worker (or the poller's Durable Object, with ?do=1) reach each upstream?
     if (url.pathname === "/api/_probe") {

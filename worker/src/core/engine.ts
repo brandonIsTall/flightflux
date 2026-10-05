@@ -15,7 +15,8 @@ import { AdsbdbClient, type Aircraft, type Route } from "./adsbdb";
 import { curate, checkPlausible, hysteresisKey, isAirlineCallsign, MIN_ROUTE_KM } from "./curate";
 import { distanceKm, interpolate, trackOffsets } from "./geo";
 import { globalFetch } from "./http";
-import { OpenSkyClient, type Bbox, type StateVector } from "./opensky";
+import type { IngestBody } from "./ingest";
+import { OpenSkyClient, parseState, type Bbox, type StateVector, type StatesResult } from "./opensky";
 import { ROUTE_TTL_S, type Store } from "./store";
 import { SPLIT_AT, splitTile } from "./tiles";
 import { estimateDeparture, estimateEta, utcDay } from "./timing";
@@ -101,6 +102,7 @@ export class Engine {
   private neverCurated = new Map<string, number>();
   private adsbdbBackoffUntil = 0;
   private creditsRemaining: number | null = null;
+  private lastFixAt = 0;
 
   private readonly fetchFn: typeof fetch;
   private readonly now: () => number;
@@ -147,9 +149,7 @@ export class Engine {
     const ids = this.trackedIds();
     if (ids.length === 0) return 0;
     const res = await this.deps.opensky.states({ icao24: ids });
-    this.creditsRemaining = res.creditsRemaining;
-    for (const s of res.states) this.merge(s, res.time);
-    return res.states.length;
+    return this.applyStates(res).aircraft;
   }
 
   /**
@@ -157,14 +157,35 @@ export class Engine {
    * two halves when it came back too full to parse comfortably within the CPU limit.
    */
   async pollTile(tile: Bbox): Promise<{ aircraft: number; next: Bbox[] }> {
-    const res = await this.deps.opensky.states({ bbox: tile });
+    return this.applyStates(await this.deps.opensky.states({ bbox: tile }), tile);
+  }
+
+  /**
+   * Take in a states response, from our own call or an external poller. `total` is the size of
+   * the unfiltered response when the poller pre-filtered the rows. Returns how many aircraft were
+   * in the response and, for a region box, the boxes to use in its place next sweep.
+   */
+  applyStates(res: StatesResult, tile?: Bbox, total = res.states.length): { aircraft: number; next: Bbox[] } {
     this.creditsRemaining = res.creditsRemaining;
+    this.lastFixAt = this.now();
     for (const s of res.states) this.merge(s, res.time);
+    if (!tile) return { aircraft: total, next: [] };
     this.expireKnown();
     this.deps.store.prune(this.nowS());
-    const next = res.states.length > SPLIT_AT ? splitTile(tile) : [tile];
-    if (next.length > 1) this.log(`tile ${tile.join(",")} had ${res.states.length} aircraft; splitting`);
-    return { aircraft: res.states.length, next };
+    const next = total > SPLIT_AT ? splitTile(tile) : [tile];
+    if (next.length > 1) this.log(`tile ${tile.join(",")} had ${total} aircraft; splitting`);
+    return { aircraft: total, next };
+  }
+
+  /** Compact rows from an external poller (see core/ingest.ts). */
+  ingest(body: IngestBody): { aircraft: number; next: Bbox[] } {
+    const res: StatesResult = { time: body.time, states: body.states.map(parseState), creditsRemaining: body.creditsRemaining };
+    return this.applyStates(res, body.tile, body.total);
+  }
+
+  /** When positions last arrived from OpenSky, by any path (ms). 0 before the first. */
+  lastPositionsAt(): number {
+    return this.lastFixAt;
   }
 
   private merge(s: StateVector, responseTime: number) {

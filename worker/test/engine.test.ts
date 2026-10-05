@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { AdsbdbClient } from "../src/core/adsbdb";
 import { Engine } from "../src/core/engine";
+import { prefilter } from "../src/core/ingest";
 import { distanceKm, interpolate } from "../src/core/geo";
 import { OpenSkyClient, type Bbox } from "../src/core/opensky";
 import { MemoryStore } from "../src/core/store";
@@ -261,5 +262,31 @@ describe("Engine", () => {
     const before = world.calls.length;
     await engine.enrich({ requests: 20 });
     expect(world.calls.length - before).toBeLessThanOrEqual(20);
+  });
+
+  it("ingests pre-filtered rows from an external poller exactly like its own call", async () => {
+    const world = fakeWorld();
+    const rows = [sv("aa9300", "UAL880", interpolate(IAH, LHR, 0.4), 11000), sv("bbbbbb", "N1", IAH, 11000)];
+    const { engine } = makeEngine(world);
+    const before = world.calls.length;
+    const r = engine.ingest({ time: T0, creditsRemaining: 2500, states: prefilter(rows), total: rows.length, tile: WORLD });
+    expect(r).toEqual({ aircraft: 2, next: [WORLD] });
+    expect(engine.lastPositionsAt()).toBe(T0 * 1000);
+    engine.rebuild();
+    await engine.enrich({ requests: 40 });
+    engine.rebuild();
+    await engine.enrich({ requests: 40 });
+    const snap = engine.rebuild();
+    expect(snap.flights.map((f) => f.callsign)).toEqual(["UAL880"]);
+    expect(snap.meta.creditsRemaining).toBe(2500);
+    // The engine itself never called OpenSky.
+    expect(world.calls.slice(before).some((u) => u.includes("opensky"))).toBe(false);
+  });
+
+  it("splits an ingested box by the unfiltered count, not the rows kept", () => {
+    const world = fakeWorld();
+    const { engine } = makeEngine(world);
+    const r = engine.ingest({ time: T0, creditsRemaining: null, states: [], total: SPLIT_AT + 1, tile: [0, 0, 40, 40] });
+    expect(r.next).toHaveLength(2);
   });
 });

@@ -7,7 +7,8 @@
     "deploy": "wrangler deploy",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "live": "NODE_USE_ENV_PROXY=1 tsx scripts/live-poll.ts"
+    "live": "NODE_USE_ENV_PROXY=1 tsx scripts/live-poll.ts",
+    "poll": "NODE_USE_ENV_PROXY=1 tsx scripts/poll-once.ts"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20261004.1",
