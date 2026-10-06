@@ -6,6 +6,8 @@ import { distanceKm, interpolate } from "../src/core/geo";
 import { OpenSkyClient, type Bbox } from "../src/core/opensky";
 import { MemoryStore } from "../src/core/store";
 import { SPLIT_AT } from "../src/core/tiles";
+import { SqlStore } from "../src/sql-store";
+import { fakeSql } from "./fake-sql";
 
 const IAH = { lat: 29.9844, lon: -95.3414 };
 const LHR = { lat: 51.4706, lon: -0.461941 };
@@ -295,5 +297,39 @@ describe("Engine", () => {
     const { engine } = makeEngine(world);
     const r = engine.ingest({ time: T0, creditsRemaining: null, states: [], total: SPLIT_AT + 1, tile: [0, 0, 40, 40] });
     expect(r.next).toHaveLength(2);
+  });
+
+  it("restores from SQLite after a cold wake in a fixed few rows, whatever the cache size", async () => {
+    const world = fakeWorld();
+    // One long-haul flight among 300 aircraft whose routes are unknown (cached as misses).
+    world.states = [
+      sv("aa9300", "UAL880", interpolate(IAH, LHR, 0.4), 11000),
+      ...Array.from({ length: 300 }, (_, i) => sv(`d${i}`, `ABC${i}`, { lat: 10, lon: i / 2 }, 11000)),
+    ];
+    const f = fakeSql();
+    const mk = (store: SqlStore) =>
+      new Engine({
+        opensky: new OpenSkyClient("id", "secret", world.fetch, () => world.time * 1000),
+        adsbdb: new AdsbdbClient(world.fetch),
+        store,
+        fetchFn: world.fetch,
+        now: () => world.time * 1000,
+      });
+    const a = mk(new SqlStore(f.sql));
+    await a.pollTile(WORLD);
+    a.rebuild();
+    await a.enrich({ requests: 400 });
+    a.rebuild();
+    await a.enrich({ requests: 40 });
+    expect(a.rebuild().flights.map((x) => x.callsign)).toEqual(["UAL880"]);
+    expect((f.db.prepare("SELECT COUNT(*) AS n FROM route_cache").get() as { n: number }).n).toBeGreaterThan(300);
+    a.saveKnown();
+
+    const store = new SqlStore(f.sql); // the next wake
+    const b = mk(store);
+    b.restore();
+    expect(b.getSnapshot()!.flights.map((x) => x.callsign)).toEqual(["UAL880"]);
+    // The known-set document carries the route and weather it needs; plus the curation keys.
+    expect(store.rowsRead).toBe(2);
   });
 });

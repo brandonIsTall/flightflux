@@ -58,7 +58,7 @@ export default {
     return res;
   },
 
-  // Cron safety net: restarts the alarm loop if it ever stops (e.g. after a deploy).
+  // Cron safety net (hourly): replaces the alarm if it is missing or long overdue.
   async scheduled(_event, env): Promise<void> {
     await sky(env).ensureRunning();
   },

@@ -8,23 +8,27 @@
 import type { Bbox } from "./opensky";
 import { INITIAL_TILES } from "./tiles";
 
-export const TICK_MS = 30_000;
 /** Positions for the flights on the globe: 288 calls x 4 credits = ~1,150 credits/day. */
 export const TRACK_INTERVAL_MS = 5 * 60_000;
 /** One discovery sweep of every region box: ~108 credits each, ~19 a day = ~2,100 credits/day. */
 export const SWEEP_MS = 75 * 60_000;
 /** Below this many OpenSky credits, slow everything down 3x rather than run dry. */
 export const LOW_CREDITS = 800;
-/** During the first sweep, boxes are due this often (one per Durable Object tick). */
-export const FIRST_SWEEP_TILE_MS = TICK_MS - 2_000;
+/** During the first sweep (or with nothing known), boxes are due this often. */
+export const FIRST_SWEEP_TILE_MS = 28_000;
 
 /** Scheduler state, persisted so a recreated object can never call OpenSky faster than planned. */
 export interface Sched {
   lastTrackAt: number;
   lastTileAt: number;
-  lastPersistAt: number;
   /** When an external poller last asked for a plan; the object polls itself only when none does. */
   lastPlanAt: number;
+  /** When expired cache rows were last deleted (a full scan, so daily). */
+  lastPruneAt: number;
+  /** Storage layout version (2: WITHOUT ROWID cache tables). */
+  schema: number;
+  /** SQLite rows read and written today (UTC), against the free plan's daily caps. */
+  usage: Usage;
   tileIdx: number;
   sweeps: number;
   tiles: Bbox[];
@@ -33,8 +37,10 @@ export interface Sched {
 export const initialSched = (): Sched => ({
   lastTrackAt: 0,
   lastTileAt: 0,
-  lastPersistAt: 0,
   lastPlanAt: 0,
+  lastPruneAt: 0,
+  schema: 0,
+  usage: { day: "", read: 0, written: 0 },
   tileIdx: 0,
   sweeps: 0,
   tiles: INITIAL_TILES,
@@ -47,7 +53,7 @@ export interface PlanInput {
   creditsRemaining: number | null;
   /** No aircraft known at all (fresh object, or one whose polling failed for a long time): sweep fast. */
   empty?: boolean;
-  /** At most this many region boxes. The object polls one per tick; a poller catching up on a 5 min cadence takes several. */
+  /** At most this many region boxes. The object's fallback takes one; a poller catching up takes several. */
   maxTiles: number;
 }
 
@@ -95,4 +101,33 @@ export function replaceTile(s: Sched, tile: Bbox, next: Bbox[]): boolean {
   s.tiles = [...s.tiles.slice(0, idx), ...next, ...s.tiles.slice(idx + 1)];
   if (s.tileIdx > idx) s.tileIdx += next.length - 1;
   return true;
+}
+
+/** Durable Objects free plan: 5M rows read and 100k rows written a day, reset at 00:00 UTC. */
+export const READ_BUDGET = 4_000_000;
+export const WRITE_BUDGET = 80_000;
+export const PRUNE_EVERY_MS = 24 * 3600_000;
+
+export interface Usage {
+  /** UTC date, YYYY-MM-DD. */
+  day: string;
+  read: number;
+  written: number;
+}
+
+/** Add rows to today's tally, starting a new one at UTC midnight. */
+export function recordUsage(s: Sched, now: number, read: number, written: number) {
+  const day = new Date(now).toISOString().slice(0, 10);
+  if (!s.usage || s.usage.day !== day) s.usage = { day, read: 0, written: 0 };
+  s.usage.read += read;
+  s.usage.written += written;
+}
+
+/**
+ * Past our share of a daily cap: stop optional work (ingests, lookups) until UTC midnight, so the
+ * snapshot keeps being served from the rows left rather than every request failing.
+ */
+export function overBudget(s: Sched, now: number): boolean {
+  const day = new Date(now).toISOString().slice(0, 10);
+  return !!s.usage && s.usage.day === day && (s.usage.read >= READ_BUDGET || s.usage.written >= WRITE_BUDGET);
 }

@@ -17,7 +17,7 @@ import { distanceKm, interpolate, trackOffsets } from "./geo";
 import { globalFetch } from "./http";
 import type { IngestBody } from "./ingest";
 import { OpenSkyClient, parseState, toRaw, type Bbox, type RawState, type StateVector, type StatesResult } from "./opensky";
-import { ROUTE_TTL_S, type Store } from "./store";
+import { ROUTE_TTL_S, type RouteEntry, type Store } from "./store";
 import { SPLIT_AT, splitTile } from "./tiles";
 import { estimateDeparture, estimateEta, utcDay } from "./timing";
 import { fetchTempSeries, tempAt, WEATHER_TTL_S, type LatLonKey, type TempSeries } from "./weather";
@@ -39,7 +39,23 @@ export const MAX_TRACKED = 160;
 /** Known aircraft saved across evictions, newest fixes first: ~130 bytes each as compact rows. */
 export const MAX_SAVED_KNOWN = 2500;
 const KNOWN_BLOB = "known";
+/** Durable Object SQLite rows hold at most 2 MB; stay well clear. */
+export const MAX_DOC_BYTES = 1_500_000;
 const CURATED_BLOB = "curated";
+
+/** The known-set document (see saveKnown). */
+interface SavedKnown {
+  credits: number | null;
+  /** When positions last arrived (ms). */
+  at: number;
+  /** Compact OpenSky rows with the fix time appended (index 14). */
+  rows: RawState[];
+  /** Cached route of each saved callsign that had one. */
+  routes?: Record<string, RouteEntry>;
+  /** Every airport those routes use, and the cached weather of those that had it. */
+  airports?: string[];
+  weather?: Record<string, TempSeries>;
+}
 
 /** Last fix for an aircraft. Only cruise-phase airline flights are kept. */
 export interface Known {
@@ -124,41 +140,87 @@ export class Engine {
     return this.snapshot;
   }
 
+  /** Serve a stored snapshot without restoring anything else: what a cold read-only request needs. */
+  adoptSnapshot(snap: Snapshot) {
+    this.snapshot = snap;
+    this.creditsRemaining = snap.meta.creditsRemaining;
+  }
+
   knownCount(): number {
     return this.known.size;
   }
 
   /**
-   * Save what an eviction would lose: the known aircraft (compact rows, newest first, minus the
-   * ones whose cached route can never be curated) and the credit count. One store row.
+   * Save what an eviction would lose, in one store row: the known aircraft (compact rows, newest
+   * first, minus the ones whose cached route can never be curated), the credit count, and the
+   * cached route and weather each saved aircraft needs, so a cold restore reads this row instead
+   * of one row per aircraft. Call after anything that changes them. Returns the document's size.
    */
-  saveKnown() {
-    const rows = [...this.known.values()]
+  saveKnown(): number {
+    const { store } = this.deps;
+    const saved = [...this.known.values()]
       .filter((k) => {
         const nc = this.neverCurated.get(k.s.callsign);
-        return nc === undefined || nc !== this.deps.store.getRoute(k.s.callsign)?.at;
+        return nc === undefined || nc !== store.getRoute(k.s.callsign)?.at;
       })
       .sort((a, b) => b.t - a.t)
-      .slice(0, MAX_SAVED_KNOWN)
-      .map((k) => [...toRaw(k.s), k.t]);
-    this.deps.store.putBlob(KNOWN_BLOB, JSON.stringify({ credits: this.creditsRemaining, at: this.now(), rows }));
+      .slice(0, MAX_SAVED_KNOWN);
+    const routes: Record<string, RouteEntry> = {};
+    const weather: Record<string, TempSeries> = {};
+    const airports = new Set<string>();
+    for (const k of saved) {
+      const e = store.getRoute(k.s.callsign);
+      if (!e) continue;
+      routes[k.s.callsign] = e;
+      for (const a of e.route ? [e.route.origin.icao, e.route.dest.icao] : []) {
+        if (airports.has(a)) continue;
+        airports.add(a);
+        const w = store.getWeather(a);
+        if (w) weather[a] = w;
+      }
+    }
+    const doc: SavedKnown = {
+      credits: this.creditsRemaining,
+      at: this.lastFixAt,
+      rows: saved.map((k) => [...toRaw(k.s), k.t]),
+      routes,
+      airports: [...airports],
+      weather,
+    };
+    // A row holds at most 2 MB. Shed the optional parts first: without them a cold restore just
+    // looks the routes and weather up one row each, as it would for new aircraft.
+    let json = JSON.stringify(doc);
+    if (json.length > MAX_DOC_BYTES) json = JSON.stringify({ ...doc, weather: {}, airports: [] });
+    if (json.length > MAX_DOC_BYTES) json = JSON.stringify({ ...doc, weather: {}, airports: [], routes: {} });
+    if (json.length > MAX_DOC_BYTES) json = JSON.stringify({ ...doc, weather: {}, airports: [], routes: {}, rows: doc.rows.slice(0, 1000) });
+    store.putBlob(KNOWN_BLOB, json);
+    return json.length;
   }
 
-  /** Reload saved aircraft and curation keys, then rebuild from the cached routes and weather. */
+  /** Reload saved aircraft, their routes and weather, and curation keys; then rebuild. */
   restore() {
-    const raw = this.deps.store.getBlob(KNOWN_BLOB);
+    const { store } = this.deps;
+    const raw = store.getBlob(KNOWN_BLOB);
     if (raw) {
-      const saved = JSON.parse(raw) as { credits: number | null; at: number; rows: (RawState | number)[][] };
+      const saved = JSON.parse(raw) as SavedKnown;
       this.creditsRemaining = saved.credits;
       this.lastFixAt = saved.at;
       for (const r of saved.rows) {
-        const s = parseState(r as RawState);
+        const s = parseState(r);
         if (!this.known.has(s.icao24)) this.known.set(s.icao24, { s, t: r[14] as number });
+        // Absent from the document means no route was cached when it was saved.
+        store.primeRoute(s.callsign, saved.routes?.[s.callsign]);
       }
+      for (const a of saved.airports ?? []) store.primeWeather(a, saved.weather?.[a]);
     }
-    const curated = this.deps.store.getBlob(CURATED_BLOB);
+    const curated = store.getBlob(CURATED_BLOB);
     if (curated) for (const k of JSON.parse(curated) as string[]) this.curatedKeys.add(k);
     this.rebuild();
+  }
+
+  /** When route lookups may resume after adsbdb throttled us (ms), or 0. */
+  routesPausedUntil(): number {
+    return this.adsbdbBackoffUntil;
   }
 
   /** icao24s whose positions refreshTracked() updates: the curated set plus pinned searches. */

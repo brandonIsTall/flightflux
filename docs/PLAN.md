@@ -49,7 +49,7 @@ flowchart LR
   end
 
   subgraph Edge["Cloudflare (free tier)"]
-    CRON["Alarm every 30 s<br/>(cron restarts it)"]
+    CRON["Alarm: 30 s while lookups queued,<br/>else 15 min (hourly cron backstop)"]
     DO["Durable Object<br/>'SkyState'<br/>schedule + snapshot + caches"]
     API["Worker API<br/>/snapshot  /flight/:id  /search"]
   end
@@ -476,7 +476,9 @@ gantt
 | Departure times | Durable Object, keyed by flight id | Until landing | One track call per flight |
 | `/snapshot` response | Cloudflare edge cache, `s-maxage=30` | Shared across users | Worker CPU stays tiny |
 
-**Durable Object, not KV:** the Workers KV free tier allows about 1,000 writes/day. A single SQLite-backed Durable Object holds routes and weather in SQLite (loaded lazily, so a cold start doesn't burn CPU) and persists only its scheduler state and the shown flights' last fixes (~40 KB) every 5 min, staying well under the free tier's 100k rows written/day.
+**Durable Object, not KV:** the Workers KV free tier allows about 1,000 writes/day. A single SQLite-backed Durable Object holds routes and weather in SQLite, one row each, plus three one-row documents: the known aircraft, the curation keys and the latest snapshot.
+
+**Rows read are the binding limit (found in production, 2026-10-05).** The free tier allows 5M rows read a day, and Cloudflare evicts the object between events, often between two alarms. The first version loaded the whole routes and weather tables on every wake (~3,400 rows × 120 wakes/hour ≈ 9.8M/day), hit the cap at 20:40 UTC, and the API returned errors until midnight. Now every event is treated as a cold start: lookups are by primary key and cached in memory, a cold restore reads one document carrying the routes and weather it needs, read-only requests read 2 rows, cache tables carry no extra indexes (each costs a written row per insert), and the alarm runs every 30 s only while lookups are queued (else every 15 min). A per-day tally pauses ingests and lookups near either cap rather than letting the API fail. See `worker/README.md`, "Storage budget".
 
 ---
 
@@ -518,7 +520,8 @@ flowchart LR
 | **Workers free plan: 10 ms CPU per run.** The unfiltered worldwide response takes ~11 ms just to parse | Poll runs cut off in production | **Solved by design** (§2.5): only filtered calls, ≤ 1.6 ms to parse; rebuild ~2 ms; boxes auto-split if traffic grows; the poller pre-filters rows before ingest |
 | **Cloudflare cannot reach OpenSky** (522/timeouts from every Worker data centre; community feeds 403) | No positions at all from the Worker | **Found at deploy; solved** (§1): positions fetched by a GitHub Actions cron and pushed to `/api/_ingest`. Any host that reaches OpenSky can run the same script |
 | **GitHub Actions minutes** (private repo: 2,000 free/month; a 5 min cron uses ~8,600) | Poller stops when minutes run out | Public repo (free), or `*/30` cadence (fits; same credits, positions 30 min stale between dead-reckoned fixes), or run `poll-once.ts` from any other scheduler |
-| **Free-plan request limit: ~50 outbound requests per run** | Can't resolve thousands of routes at once | Work runs in 30 s ticks with ≤ 44 requests and at most one OpenSky call each. Route lookups fill in over the first hour; curation shows the best 150 among what's resolved |
+| **Durable Objects free tier: 5M SQLite rows read/day** | API errors until midnight UTC once exceeded | **Hit once; solved** (§8): point lookups instead of table loads, one restore document, alarms only while work is queued, daily tally that pauses work near the cap; measured 2-5 rows per cold alarm |
+| **Free-plan request limit: ~50 outbound requests per run** | Can't resolve thousands of routes at once | Enrichment runs in 30 s alarms with ≤ 44 requests each while lookups are queued. Route lookups fill in over the first hour; curation shows the best 150 among what's resolved |
 | **GPU load on low-end phones** | Jank | Adaptive quality: drop bloom, halve line segments, cap at 75 flights when frame time > 20 ms |
 
 ---

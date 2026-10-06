@@ -8,7 +8,7 @@ cannot reach OpenSky (`docs/PLAN.md` §1). Design: `docs/PLAN.md` §1-§4.
 
 | Route | Returns |
 |---|---|
-| `GET /api/snapshot` | `Snapshot`: up to 150 curated flights with positions, routes, departure/arrival temps. Edge-cached 30 s. |
+| `GET /api/snapshot` | `Snapshot`: up to 150 curated flights with positions, routes, departure/arrival temps. Edge-cached 60 s. |
 | `GET /api/flight/:id` | `FlightDetail`: one flight plus aircraft type, registration and photo. `:id` is a flight id or icao24. |
 | `GET /api/search?q=BA117` | `Flight` for any airborne flight by flight number or callsign. 10 searches/min per IP. |
 | `GET /api/_plan` | Poller only (bearer `INGEST_SECRET`): the tracked icao24s if due, and the region boxes due now. Marks them issued. `?restart` begins a fresh sweep at first-sweep pace. |
@@ -30,22 +30,41 @@ every 5 min: it asks `/api/_plan` what is due, fetches it from OpenSky, keeps on
 engine uses (cruising and climbing-out airliners) and POSTs them to `/api/_ingest`, one request
 per box. The cadence only sets freshness; the plan paces the credit spend, so a slower cron just
 gets more boxes per run. If no poller has asked for a plan in 20 min, the object falls back to
-calling OpenSky itself, one call per tick (which fails from Cloudflare today, harmlessly).
+calling OpenSky itself, one call per alarm (which fails from Cloudflare today, harmlessly).
 
-The object's own alarm runs every 30 s, within the Workers free plan (10 ms CPU, ~50 outbound
-requests):
+The object's alarm does the rest, with at most ~44 outbound requests per run:
 
-- **enrich** (every run): fills caches a batch at a time (Open-Meteo weather, adsbdb routes)
-- **rebuild** (when something changed): projects every known flight along its route to now,
-  curates the best 150 and builds the snapshot. No network, ~2 ms
+- **enrich**: fills caches a batch at a time (Open-Meteo weather, adsbdb routes)
+- **rebuild**: projects every known flight along its route to now, curates the best 150, builds
+  the snapshot and stores it. No network, ~2 ms
+
+It fires 5 s after an ingest, then every 30 s while route or weather lookups are queued, then
+every 15 min (`src/core/wake.ts`). An hourly cron replaces the alarm if it is missing or stuck.
 
 Between fixes, positions are extrapolated along each flight's great circle at its last ground
 speed (`pos.t` is the projected time, `pos.fixT` the last real fix). Scheduler timestamps are
-persisted, so an evicted object can never hand out OpenSky calls faster than planned. A cron
-trigger every 5 minutes restarts the alarm loop if it ever stops.
+persisted, so an evicted object can never hand out OpenSky calls faster than planned.
 
-OpenSky budget: ~1,150 credits/day tracking + ~2,100 discovery, of 4,000. Below 800 remaining,
-everything slows 3x.
+### Storage budget
+
+The free plan allows 5M SQLite rows read and 100k rows written a day, and Cloudflare evicts the
+object between events (often between two alarms), so every event is treated as a cold start
+(`src/sql-store.ts`):
+
+- No table is ever loaded whole. A route or weather series is a primary-key lookup (1 row) the
+  first time it is needed, then held in memory, misses included.
+- A read-only request (snapshot, flight detail, plan) reads 2 rows: scheduler and stored snapshot.
+- Work (alarm, ingest, search) also restores one document: the known aircraft plus the cached
+  routes and weather they need (~0.9 MB). New aircraft cost 1 lookup each.
+- Cache tables are `WITHOUT ROWID` with no secondary index, since Cloudflare counts a written row
+  per index entry. Expired rows are deleted in one scan a day.
+- Rows read and written are tallied per UTC day in the scheduler state. Past 4M read or 80k
+  written, ingests and lookups pause until midnight; the stored snapshot keeps being served.
+
+Each alarm and ingest logs `rowsRead`, the document size and the day's tally. Measured: 2-5 rows
+read per cold alarm, ~1.1 rows written per route lookup.
+
+The first version loaded both tables on every wake and read ~10M rows a day, twice the limit.
 
 ## Develop
 

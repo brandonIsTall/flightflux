@@ -7,7 +7,8 @@
     "bindings": [{ "name": "SKY", "class_name": "SkyState" }]
   },
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["SkyState"] }],
-  "triggers": { "crons": ["*/5 * * * *"] },
+  // Safety net only: replaces a missing or stuck alarm. Hourly, since every run wakes the object.
+  "triggers": { "crons": ["0 * * * *"] },
   "observability": { "enabled": true }
   // Secrets (not in this file): OPENSKY_CLIENT_ID, OPENSKY_CLIENT_SECRET, INGEST_SECRET.
   // Local: copy ../.dev.vars.example to .dev.vars. Production: `npx wrangler secret put <NAME>`.
