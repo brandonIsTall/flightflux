@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { FIRST_SWEEP_TILE_MS, initialSched, planNext, replaceTile, SWEEP_MS, TRACK_INTERVAL_MS } from "../src/core/sched";
+import { FIRST_SWEEP_TILE_MS, initialSched, overBudget, planNext, READ_BUDGET, recordUsage, replaceTile, SWEEP_MS, TRACK_INTERVAL_MS, WRITE_BUDGET } from "../src/core/sched";
 import { INITIAL_TILES } from "../src/core/tiles";
 
 const T = 1_791_080_000_000;
@@ -80,5 +80,36 @@ describe("replaceTile", () => {
     expect(s.tileIdx).toBe(6);
     expect(replaceTile(s, [9, 9, 9, 9], [[0, 0, 1, 1], [1, 1, 2, 2]])).toBe(false);
     expect(replaceTile(s, s.tiles[0]!, [s.tiles[0]!])).toBe(false);
+  });
+});
+
+describe("daily storage budget", () => {
+  const noon = Date.UTC(2026, 9, 6, 12);
+  it("tallies rows per UTC day and starts over at midnight", () => {
+    const s = initialSched();
+    recordUsage(s, noon, 10, 2);
+    recordUsage(s, noon + 60_000, 5, 1);
+    expect(s.usage).toEqual({ day: "2026-10-06", read: 15, written: 3 });
+    recordUsage(s, Date.UTC(2026, 9, 7, 0, 1), 1, 1);
+    expect(s.usage).toEqual({ day: "2026-10-07", read: 1, written: 1 });
+  });
+
+  it("trips on either cap, and only for today", () => {
+    const s = initialSched();
+    expect(overBudget(s, noon)).toBe(false);
+    recordUsage(s, noon, READ_BUDGET, 0);
+    expect(overBudget(s, noon)).toBe(true);
+    expect(overBudget(s, Date.UTC(2026, 9, 7, 0, 1))).toBe(false);
+    const w = initialSched();
+    recordUsage(w, noon, 0, WRITE_BUDGET);
+    expect(overBudget(w, noon)).toBe(true);
+  });
+
+  it("works with scheduler state saved before the tally existed", () => {
+    const old = { ...initialSched() } as Partial<ReturnType<typeof initialSched>>;
+    delete old.usage;
+    const s = { ...initialSched(), ...old };
+    recordUsage(s, noon, 1, 1);
+    expect(s.usage.read).toBe(1);
   });
 });

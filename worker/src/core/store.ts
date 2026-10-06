@@ -25,6 +25,12 @@ export interface Store {
   putWeather(icao: string, s: TempSeries): void;
   getDep(icao24: string): DepEntry | undefined;
   putDep(icao24: string, e: DepEntry): void;
+  /**
+   * Seed the in-memory cache from a saved document without touching storage: `undefined` records a
+   * known miss. Lets a cold wake skip one lookup per aircraft. Overwrites nothing already cached.
+   */
+  primeRoute(callsign: string, e: RouteEntry | undefined): void;
+  primeWeather(icao: string, s: TempSeries | undefined): void;
   /** Small named documents (the known-aircraft set, curation keys) that must outlive an eviction. */
   getBlob(key: string): string | undefined;
   putBlob(key: string, value: string): void;
@@ -59,6 +65,12 @@ export class MemoryStore implements Store {
   }
   putDep(k: string, e: DepEntry) {
     this.deps.set(k, e);
+  }
+  primeRoute(k: string, e: RouteEntry | undefined) {
+    if (e && !this.routes.has(k)) this.routes.set(k, e);
+  }
+  primeWeather(k: string, s: TempSeries | undefined) {
+    if (s && !this.weather.has(k)) this.weather.set(k, s);
   }
   getBlob(k: string) {
     return this.blobs.get(k);
