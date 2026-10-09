@@ -36,8 +36,10 @@ export interface Env {
 const REQUESTS_PER_TICK = 44;
 /** Poll OpenSky directly only when no external poller has asked for a plan for this long. */
 export const FALLBACK_AFTER_MS = 20 * 60_000;
-/** A poller catching up may take this many region boxes in one plan (~0.5 s each). */
-export const MAX_TILES_PER_PLAN = 12;
+/**
+ * A poller may take up to a full sweep in one plan: after a long gap (GitHub's cron, for one,
+ * often runs hours late) one run then refills the globe (~110 credits) instead of a third of it.
+ */
 const SNAPSHOT_BLOB = "snapshot";
 
 export class SkyState extends DurableObject<Env> {
@@ -117,7 +119,7 @@ export class SkyState extends DurableObject<Env> {
       hasTracked: tracked.length > 0,
       creditsRemaining,
       empty: (snap?.meta.known ?? 0) === 0,
-      maxTiles: MAX_TILES_PER_PLAN,
+      maxTiles: this.sched.tiles.length,
     });
     await this.settle(now);
     return { tracked: p.track ? tracked : null, tiles: p.tileIdxs.map((i) => this.sched.tiles[i]!), creditsRemaining };

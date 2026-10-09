@@ -29,8 +29,8 @@ VITE_API_BASE=http://localhost:8787 npm run dev -w web
 
 ## Deploy
 
-Both halves run on Cloudflare's free tier. Flight positions are fetched by a GitHub Actions cron,
-because Cloudflare's network cannot reach OpenSky (`docs/PLAN.md` §1).
+Both halves run on Cloudflare's free tier. Flight positions are fetched by a Netlify scheduled
+function, because Cloudflare's network cannot reach OpenSky (`docs/PLAN.md` §1).
 
 ```sh
 # API
@@ -46,12 +46,11 @@ npm run build
 npx wrangler deploy
 ```
 
-Then, in the GitHub repository settings, add Actions secrets `OPENSKY_CLIENT_ID`,
-`OPENSKY_CLIENT_SECRET` and `INGEST_SECRET` (same values as the Worker's) and the variable
-`FLIGHTFLUX_API` (the API URL). The "Poll positions" workflow (`.github/workflows/poll.yml`) runs
-every 5 minutes and fills the globe within a few runs. Note the Actions minutes: a 5 minute cron
-is free on a public repository but exceeds a private repository's 2,000 free minutes a month;
-there, use `*/30` (same OpenSky credits, positions dead-reckoned between fixes).
+Then connect the repository to a Netlify site (it reads `netlify.toml`: no build, one scheduled
+function) and add environment variables `OPENSKY_CLIENT_ID`, `OPENSKY_CLIENT_SECRET`,
+`INGEST_SECRET` (same values as the Worker's) and `FLIGHTFLUX_API` (the API URL), scoped to
+Functions. The `poll` function runs every 5 minutes; one run fills the globe. To poll by hand:
+`npm run poll -w worker`, or the "Poll positions" GitHub workflow.
 
 ## Data and licenses
 

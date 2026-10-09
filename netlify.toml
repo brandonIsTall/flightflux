@@ -1,0 +1,16 @@
+# Netlify hosts only the position poller (netlify/functions/poll.mts), a scheduled function.
+# The app itself is on Cloudflare. See docs/PLAN.md §1.
+
+[build]
+  # Nothing to build: the function bundles itself (esbuild) and has no npm dependencies.
+  command = "echo 'poller only'"
+  publish = "netlify/public"
+  functions = "netlify/functions"
+
+[build.environment]
+  # The function needs no npm packages; skip install scripts (wrangler's runtime download) to
+  # keep builds short.
+  NPM_FLAGS = "--ignore-scripts --no-audit --no-fund"
+
+[functions]
+  node_bundler = "esbuild"
