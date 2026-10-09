@@ -38,3 +38,8 @@ export async function dispatchPoll(env: DispatchEnv, fetchFn: typeof fetch = (i,
     return `failed: ${(e as Error).message}`;
   }
 }
+
+/** The 5-minute cron's first run of each hour (minute 0-4), when the hourly safety net runs too. */
+export function isHourlySlot(scheduledTime: number): boolean {
+  return new Date(scheduledTime).getUTCMinutes() < 5;
+}
