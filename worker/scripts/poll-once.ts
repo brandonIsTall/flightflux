@@ -22,7 +22,9 @@ if (existsSync(devVars)) {
   }
 }
 const need = (k: string) => {
-  const v = env[k];
+  // Trim: a secret pasted into GitHub from a phone often carries a trailing space or newline,
+  // which would make the bearer token silently mismatch.
+  const v = env[k]?.trim();
   if (!v) throw new Error(`missing ${k}`);
   return v;
 };
