@@ -41,7 +41,7 @@ The object's alarm does the rest, with at most ~44 outbound requests per run:
   the snapshot and stores it. No network, ~2 ms
 
 It fires 5 s after an ingest, then every 30 s while route or weather lookups are queued, then
-every 15 min (`src/core/wake.ts`). An hourly cron replaces the alarm if it is missing or stuck.
+every 15 min (`src/core/wake.ts`). The first run each hour of the Worker's 5-minute cron also replaces the alarm if it is missing or stuck.
 
 Between fixes, positions are extrapolated along each flight's great circle at its last ground
 speed (`pos.t` is the projected time, `pos.fixT` the last real fix). Scheduler timestamps are

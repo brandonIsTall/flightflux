@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dispatchPoll } from "../src/dispatch";
+import { dispatchPoll, isHourlySlot } from "../src/dispatch";
 
 describe("dispatchPoll", () => {
   it("starts poll.yml on main with the token, and reports success on 204", async () => {
@@ -31,5 +31,14 @@ describe("dispatchPoll", () => {
       throw new TypeError("fetch failed");
     }) as typeof fetch;
     expect(await dispatchPoll({ GITHUB_DISPATCH_TOKEN: "t", GITHUB_REPO: "o/r" }, down)).toBe("failed: fetch failed");
+  });
+});
+
+describe("isHourlySlot", () => {
+  it("is true only for the 5-minute cron's first run of each hour", () => {
+    expect(isHourlySlot(Date.UTC(2026, 9, 9, 7, 0, 0))).toBe(true);
+    expect(isHourlySlot(Date.UTC(2026, 9, 9, 7, 0, 40))).toBe(true); // cron runs can start late
+    expect(isHourlySlot(Date.UTC(2026, 9, 9, 7, 5, 0))).toBe(false);
+    expect(isHourlySlot(Date.UTC(2026, 9, 9, 7, 55, 0))).toBe(false);
   });
 });
