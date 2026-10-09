@@ -30,6 +30,9 @@ export interface Env {
   INGEST_SECRET?: string;
   /** Per-visitor search limit (wrangler.jsonc "ratelimits"). */
   SEARCH_LIMITER?: RateLimit;
+  /** Starts the GitHub poller (src/dispatch.ts): a fine-grained token, Actions read & write. */
+  GITHUB_DISPATCH_TOKEN?: string;
+  GITHUB_REPO?: string;
 }
 
 /** Workers free plan allows 50 subrequests per invocation; leave headroom. */

@@ -29,7 +29,7 @@ Decisions already made (from the planning Q&A):
 | Auto-spin | Pauses on drag/zoom, resumes after 30 s idle |
 | Units | °C or °F from browser locale, with a remembered toggle |
 | Mobile | Desktop-first; mobile layout in P6 |
-| Hosting | Cloudflare (Workers + static assets + Durable Objects, free tier); position polling on a Netlify scheduled function (§1) |
+| Hosting | Cloudflare (Workers + static assets + Durable Objects, free tier); position polling on GitHub Actions, started every 5 min by the Worker (§1) |
 
 ---
 
@@ -44,7 +44,7 @@ flowchart LR
     OM["Open-Meteo<br/>hourly temperature_2m<br/>(10k calls/day)"]
   end
 
-  subgraph Poller["Netlify scheduled function (every 5 min)"]
+  subgraph Poller["GitHub Actions, started by the Worker every 5 min"]
     GH["poller.ts<br/>asks /_plan, fetches OpenSky,<br/>POSTs rows to /_ingest"]
   end
 
@@ -83,8 +83,9 @@ Cloudflare's network cannot reach OpenSky. Its API and auth hosts sit behind Ope
 
 - The Durable Object keeps the schedule and the credit budget. `GET /api/_plan` (bearer `INGEST_SECRET`) returns what is due now: the tracked icao24 list if its 5 min are up, and however many region boxes the sweep interval has earned (up to a full sweep, so one late run refills the globe), marking them issued so they are never handed out twice.
 - The poller (`worker/src/poller.ts`, stateless, only `fetch`) fetches each from OpenSky, drops rows the engine can't use (keeps cruising airliners and climbing-out airliners, about a third of a box), and `POST`s the compact rows to `/api/_ingest`, one request per box so the object parses ≤ ~1,000 rows per invocation. It fetches 4 boxes at a time and starts no new box after 20 s.
-- A Netlify scheduled function (`netlify/functions/poll.mts`) runs it every 5 min on Netlify's free tier (30 s limit; a run takes ~5 s). The cadence sets freshness only; the plan sets credit spend.
-- **GitHub Actions was tried first and dropped (2026-10-09).** Its scheduler is best-effort: a `*/5` workflow ran 16 times in 3½ days, every 3½–7 hours. GitHub's terms also discourage Actions for work unrelated to building or deploying the project. `.github/workflows/poll.yml` and `npm run poll` remain for manual runs.
+- It runs as the GitHub workflow `.github/workflows/poll.yml`, which the Worker's 5-minute cron starts through GitHub's API (`worker/src/dispatch.ts`, a fine-grained token with Actions read & write on this repo only). A run takes ~35 s. The cadence sets freshness only; the plan sets credit spend.
+- **Hosts tried (2026-10-09).** GitHub's own `schedule:` trigger is best-effort: a `*/5` workflow ran 16 times in 3½ days, every 3½–7 hours; runs started through the API begin within seconds. Netlify (AWS) can't reach OpenSky: every request failed after ~10 s, like Cloudflare. Deno Deploy never got past its own deploy steps on an unverified account, so it is untested. OpenSky accepts GitHub's runners (Azure) and home connections. The poller checks it can reach OpenSky before taking a plan, so a blocked host can't use up the schedule.
+- **Caveat.** GitHub's terms discourage using Actions for work unrelated to building or deploying the project. A ~35 s job every 5 minutes is modest, but if GitHub objects, the same poller runs on any always-on machine with `npm run poll -w worker` in cron.
 - Fallback: if no poller has asked for a plan in 20 min, the object polls OpenSky itself, one call per tick as before. It fails today, but costs nothing and will work if OpenSky's front ever lets Cloudflare through.
 
 ---
@@ -520,7 +521,7 @@ flowchart LR
 | **Quota exhaustion** from search traffic | Snapshot gaps | Search reads from the in-memory global snapshot, which needs no extra OpenSky call; per-visitor rate limit on `/search` (Workers rate-limit binding) plus a 1,000/day global cap, so scripted searches can't exhaust the storage budget |
 | **Workers free plan: 10 ms CPU per run.** The unfiltered worldwide response takes ~11 ms just to parse | Poll runs cut off in production | **Solved by design** (§2.5): only filtered calls, ≤ 1.6 ms to parse; rebuild ~2 ms; boxes auto-split if traffic grows; the poller pre-filters rows before ingest |
 | **Cloudflare cannot reach OpenSky** (522/timeouts from every Worker data centre; community feeds 403) | No positions at all from the Worker | **Found at deploy; solved** (§1): positions fetched by a GitHub Actions cron and pushed to `/api/_ingest`. Any host that reaches OpenSky can run the same script |
-| **Poller host unreliable** (GitHub's cron ran every 3½–7 h instead of 5 min) | Globe thins out between runs | Moved to a Netlify scheduled function; any run after a long gap gets a full sweep and refills the globe; `poller.ts` runs on any host that reaches OpenSky |
+| **Poller host unreliable** (GitHub's cron ran every 3½–7 h instead of 5 min) | Globe thins out between runs | The Worker starts the workflow through GitHub's API every 5 min (runs begin within seconds); any run after a long gap gets a full sweep and refills the globe; `poller.ts` runs on any host that reaches OpenSky |
 | **Durable Objects free tier: 5M SQLite rows read/day** | API errors until midnight UTC once exceeded | **Hit once; solved** (§8): point lookups instead of table loads, one restore document, alarms only while work is queued, daily tally that pauses work near the cap; measured 2-5 rows per cold alarm |
 | **Free-plan request limit: ~50 outbound requests per run** | Can't resolve thousands of routes at once | Enrichment runs in 30 s alarms with ≤ 44 requests each while lookups are queued. Route lookups fill in over the first hour; curation shows the best 150 among what's resolved |
 | **GPU load on low-end phones** | Jank | Adaptive quality: drop bloom, halve line segments, cap at 75 flights when frame time > 20 ms |
@@ -531,8 +532,9 @@ flowchart LR
 
 All planning questions are answered (see the decisions table at the top), and the OpenSky API client has been created.
 
-- **OpenSky credentials:** stored as Worker secrets `OPENSKY_CLIENT_ID` and `OPENSKY_CLIENT_SECRET` (`wrangler secret put`), as Netlify environment variables of the same names for the poller (and GitHub Actions secrets for manual runs), and in a git-ignored `.dev.vars` for local dev (template: `worker/.dev.vars.example`). They are never committed and never sent to the browser.
-- **Ingest secret:** `INGEST_SECRET`, a random string set as a Worker secret and in the poller's environment (Netlify, GitHub); the poller sends it as a bearer token to `/api/_plan` and `/api/_ingest`.
+- **OpenSky credentials:** stored as Worker secrets `OPENSKY_CLIENT_ID` and `OPENSKY_CLIENT_SECRET` (`wrangler secret put`), as GitHub Actions secrets of the same names for the poller, and in a git-ignored `.dev.vars` for local dev (template: `worker/.dev.vars.example`). They are never committed and never sent to the browser.
+- **Dispatch token:** `GITHUB_DISPATCH_TOKEN`, a fine-grained GitHub token (this repository only, Actions read & write, with an expiry) stored as a Worker secret; it lets the Worker start the poll workflow.
+- **Ingest secret:** `INGEST_SECRET`, a random string set as a Worker secret and as a GitHub Actions secret; the poller sends it as a bearer token to `/api/_plan` and `/api/_ingest`.
 - **Token flow:** `POST https://auth.opensky-network.org/auth/realms/opensky-network/protocol/openid-connect/token` with `grant_type=client_credentials`, `client_id`, `client_secret` (form-encoded). Send the returned `access_token` as `Authorization: Bearer …` to `https://opensky-network.org/api/…`. The Worker caches the token and refreshes it about 1 minute before its ~30 min expiry, or on any 401.
 - **P0 check, done 2026-10-04:** credentials verified.
 

@@ -7,11 +7,14 @@
     "bindings": [{ "name": "SKY", "class_name": "SkyState" }]
   },
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["SkyState"] }],
-  // Safety net only: replaces a missing or stuck alarm. Hourly, since every run wakes the object.
-  "triggers": { "crons": ["0 * * * *"] },
+  // Every 5 min: start the GitHub poller (src/dispatch.ts; doesn't wake the object).
+  // Hourly: replace a missing or stuck alarm (wakes the object, so not more often).
+  "triggers": { "crons": ["*/5 * * * *", "0 * * * *"] },
+  "vars": { "GITHUB_REPO": "brandonIsTall/flightflux" },
   "observability": { "enabled": true },
   // 10 searches a minute per visitor IP, counted per Cloudflare location.
   "ratelimits": [{ "name": "SEARCH_LIMITER", "namespace_id": "1001", "simple": { "limit": 10, "period": 60 } }]
-  // Secrets (not in this file): OPENSKY_CLIENT_ID, OPENSKY_CLIENT_SECRET, INGEST_SECRET.
+  // Secrets (not in this file): OPENSKY_CLIENT_ID, OPENSKY_CLIENT_SECRET, INGEST_SECRET,
+  // GITHUB_DISPATCH_TOKEN (optional; starts the GitHub poller).
   // Local: copy ../.dev.vars.example to .dev.vars. Production: `npx wrangler secret put <NAME>`.
 }

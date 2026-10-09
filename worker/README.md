@@ -25,12 +25,13 @@ One Durable Object (`SkyState`, name `global-weur`) owns the OpenSky schedule (`
   new long-haul flights; boxes that come back with more than 900 aircraft split in two
   (`src/core/tiles.ts`)
 
-The calls are made by the poller, `src/poller.ts`, which a Netlify scheduled function
-(`../netlify/functions/poll.mts`) runs every 5 min: it asks `/api/_plan` what is due, fetches it
+The calls are made by the poller, `src/poller.ts`, run by the GitHub workflow "Poll positions",
+which this Worker's 5-minute cron starts through GitHub's API (`src/dispatch.ts`; GitHub's own
+schedule ran it only every few hours). It checks it can reach OpenSky, asks `/api/_plan` what is due, fetches it
 from OpenSky 4 boxes at a time, keeps only the rows the engine uses (cruising and climbing-out
 airliners) and POSTs them to `/api/_ingest`, one request per box. The cadence only sets
 freshness; the plan paces the credit spend, and a run after a long gap gets a full sweep.
-`npm run poll` and the "Poll positions" GitHub workflow run the same code by hand. If no poller has asked for a plan in 20 min, the object falls back to
+`npm run poll` runs the same code by hand. If no poller has asked for a plan in 20 min, the object falls back to
 calling OpenSky itself, one call per alarm (which fails from Cloudflare today, harmlessly).
 
 The object's alarm does the rest, with at most ~44 outbound requests per run:
@@ -89,6 +90,8 @@ npx wrangler secret put INGEST_SECRET          # any long random string, e.g. `o
 npx wrangler deploy
 ```
 
-Then give the poller the same values: in Netlify, environment variables `OPENSKY_CLIENT_ID`,
-`OPENSKY_CLIENT_SECRET`, `INGEST_SECRET` and `FLIGHTFLUX_API` (the Worker URL), scoped to
-Functions. Use "Run now" on the `poll` function to check; one run fills the globe.
+Then give the poller the same values as GitHub Actions secrets (`OPENSKY_CLIENT_ID`,
+`OPENSKY_CLIENT_SECRET`, `INGEST_SECRET`), and let the Worker start it: create a fine-grained
+GitHub token for this repository only with Actions read & write, and store it as the Worker
+secret `GITHUB_DISPATCH_TOKEN` (`GITHUB_REPO` in wrangler.jsonc names the repository). Without the
+token the 5-minute cron does nothing and only GitHub's own schedule runs the poller.

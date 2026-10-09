@@ -1,7 +1,7 @@
 // One poller run: ask the Worker what positions are due, fetch them from OpenSky, post them back.
-// Stateless and runtime-agnostic (only `fetch`), so the same code runs as a Netlify scheduled
-// function (netlify/functions/poll.mts), from GitHub Actions or a laptop (scripts/poll-once.ts).
-// Cloudflare Workers can't run it: OpenSky's front refuses Cloudflare's network.
+// Stateless and runtime-agnostic (only `fetch`); runs from GitHub Actions or a laptop
+// (scripts/poll-once.ts). OpenSky refuses Cloudflare's and AWS's networks, so not from a Worker
+// or Netlify; it accepts GitHub's runners and home connections.
 
 import { prefilter, type IngestBody, type PlanResponse } from "./core/ingest";
 import { OpenSkyClient, type RawStatesResult, type StatesFilter } from "./core/opensky";
@@ -16,7 +16,7 @@ export interface PollConfig {
   restart?: boolean;
   /** Region boxes fetched at once. */
   concurrency?: number;
-  /** Start no new box after this long (ms): hosts cap a run (Netlify scheduled functions: 30 s). */
+  /** Start no new box after this long (ms), for hosts that cap a run's length. */
   deadlineMs?: number;
   log?: (line: string) => void;
   fetchFn?: typeof fetch;

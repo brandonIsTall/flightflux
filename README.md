@@ -29,8 +29,9 @@ VITE_API_BASE=http://localhost:8787 npm run dev -w web
 
 ## Deploy
 
-Both halves run on Cloudflare's free tier. Flight positions are fetched by a Netlify scheduled
-function, because Cloudflare's network cannot reach OpenSky (`docs/PLAN.md` §1).
+Both halves run on Cloudflare's free tier. Flight positions are fetched by a GitHub Actions
+workflow that the Worker starts every 5 minutes, because Cloudflare's network cannot reach
+OpenSky (`docs/PLAN.md` §1).
 
 ```sh
 # API
@@ -38,6 +39,7 @@ cd worker
 npx wrangler secret put OPENSKY_CLIENT_ID
 npx wrangler secret put OPENSKY_CLIENT_SECRET
 npx wrangler secret put INGEST_SECRET            # any long random string
+npx wrangler secret put GITHUB_DISPATCH_TOKEN    # fine-grained token: this repo, Actions read & write
 npx wrangler deploy                              # prints https://flightflux-api.<account>.workers.dev
 
 # Globe (Workers static assets; web/.env.production holds the API URL)
@@ -46,11 +48,10 @@ npm run build
 npx wrangler deploy
 ```
 
-Then connect the repository to a Netlify site (it reads `netlify.toml`: no build, one scheduled
-function) and add environment variables `OPENSKY_CLIENT_ID`, `OPENSKY_CLIENT_SECRET`,
-`INGEST_SECRET` (same values as the Worker's) and `FLIGHTFLUX_API` (the API URL), scoped to
-Functions. The `poll` function runs every 5 minutes; one run fills the globe. To poll by hand:
-`npm run poll -w worker`, or the "Poll positions" GitHub workflow.
+Then, in the GitHub repository settings, add Actions secrets `OPENSKY_CLIENT_ID`,
+`OPENSKY_CLIENT_SECRET` and `INGEST_SECRET` (same values as the Worker's). The Worker starts the
+"Poll positions" workflow every 5 minutes; one run fills the globe. To poll by hand:
+`npm run poll -w worker`, or run the workflow from the Actions tab.
 
 ## Data and licenses
 
