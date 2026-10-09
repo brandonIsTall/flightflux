@@ -83,6 +83,11 @@ export class OpenSkyClient {
     private readonly now: () => number = Date.now,
   ) {}
 
+  /** Throws unless an access token can be obtained: proves OpenSky is reachable from this host. */
+  async ready(): Promise<void> {
+    await this.getToken();
+  }
+
   private async getToken(): Promise<string> {
     // Refresh a minute early so a token never expires mid-request.
     if (this.token && this.token.expiresAt - 60_000 > this.now()) return this.token.value;

@@ -82,6 +82,18 @@ export async function runPoll(c: PollConfig): Promise<PollResult> {
     );
   };
 
+  // Reach OpenSky before asking for a plan: the Worker marks what it hands out as issued, so a
+  // host OpenSky refuses (Cloudflare's and AWS's networks, so far) would otherwise use up the
+  // schedule every run without fetching anything.
+  try {
+    await opensky.ready();
+  } catch (e) {
+    result.failed = 1;
+    result.ms = Date.now() - t0;
+    log(`opensky unreachable from this host (${(e as Error).message}); not asking the Worker for a plan`);
+    return result;
+  }
+
   const plan = await call<PlanResponse>(c.restart ? "/api/_plan?restart" : "/api/_plan");
   result.tracked = plan.tracked?.length ?? null;
   result.boxes = plan.tiles.length;
