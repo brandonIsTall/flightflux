@@ -1,14 +1,13 @@
-// A top-down airliner silhouette per flight, advanced along its route every frame and tinted with
-// the blended temperature at that point. One instanced mesh per silhouette class (narrow-body
-// twin, wide-body twin, quad, A380), so 150 planes cost four draw calls.
+// A top-down airliner silhouette per flight, advanced along its route every frame. White against
+// the dark globe so the routes carry all the color. One instanced mesh per silhouette class
+// (narrow-body twin, wide-body twin, quad, A380), so 150 planes cost four draw calls.
 
 import { useFrame } from "@react-three/fiber";
 import { useMemo, useRef } from "react";
 import { Color, DoubleSide, InstancedMesh, Matrix4, MeshBasicMaterial, Vector3 } from "three";
 import type { Flight } from "../../../shared/types";
-import { progressAt, tempAtProgress } from "../data/snapshot";
+import { progressAt } from "../data/snapshot";
 import { AIRCRAFT_CLASSES, aircraftClass, type AircraftClass } from "../lib/aircraft";
-import { tempToRgb } from "../lib/color";
 import { arcLift, centralAngle, interpolate, toVec3 } from "../lib/geo";
 import { beats } from "../boot";
 import { useStore } from "../store";
@@ -20,6 +19,7 @@ const MAX = 512;
 const LENGTH = 0.042;
 /** Planes ride just above their route line so the line doesn't cut through them. */
 const ABOVE_LINE = 0.002;
+const WHITE = 0.9;
 
 const tmpColor = new Color();
 const pos = new Vector3();
@@ -76,11 +76,10 @@ function PlaneClass({ cls, entries, material }: { cls: AircraftClass; entries: E
         ((seated && f.id === selectedId) || tooClose ? 0 : seated ? 0.2 : active === f.id ? 1.6 : active === null ? 1 : 0.8);
       m.makeBasis(right, fwd, up).scale(scale.setScalar(s)).setPosition(pos);
       im.setMatrixAt(j, m);
-      const [r, g, b] = tempToRgb(tempAtProgress(f, p));
-      // Only the focused plane is pushed into the bloom: a filled silhouette glowing at full size
-      // washes its temperature color out to white.
-      const k = active === f.id ? 1.15 : active === null ? 1 : 0.5;
-      im.setColorAt(j, tmpColor.setRGB(r * k, g * k, b * k));
+      // Just under full white so a crowd of silhouettes doesn't bloom into a blob; the focused
+      // plane is pushed over to glow, the rest dim while something else is focused.
+      const k = active === f.id ? 1.15 : active === null ? WHITE : 0.45;
+      im.setColorAt(j, tmpColor.setRGB(k, k, k));
     }
     im.count = n;
     im.instanceMatrix.needsUpdate = true;

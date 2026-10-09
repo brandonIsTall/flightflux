@@ -193,7 +193,7 @@ As decided, this is a **straight two-stop blend**: `color(t) = scale(lerp(depTem
 - **Color scale:** one global, fixed **diverging** scale (blue → neutral gray at 15°C → red-orange) so colors mean the same thing on every flight. It is interpolated in OKLab and validated for colorblind viewers and for contrast on the globe. Full hex values and validation are in §6.4.
 
 - **Path geometry:** a great circle from origin to destination, drawn as a slightly raised arc. The **flown portion** is bright and solid. The **remaining portion** is the same colors drawn translucent, so the split reads at a glance.
-- **Plane marker:** a top-down airliner silhouette at the current position (FR24-style: narrow-body twin, wide-body twin, quad, A380, picked from the ICAO aircraft type), tinted with the interpolated temperature at its progress point.
+- **Plane marker:** a white top-down airliner silhouette at the current position (FR24-style: narrow-body twin, wide-body twin, quad, A380, picked from the ICAO aircraft type). White keeps the color for the routes.
 - **Legend:** a thin color bar at the bottom-left with numeric ticks, and a °C/°F toggle that defaults from the browser locale (§6.6).
 
 ---
@@ -306,9 +306,9 @@ A **diverging** scale: a cool blue arm and a warm red-orange arm meeting at a **
 
 | °C | ≤ −25 | −10 | 3 | 12 | **15** | 18 | 26 | 35 | ≥ 44 |
 |---|---|---|---|---|---|---|---|---|---|
-| Hex | `#3A6CEB` | `#4C86EC` | `#76A8F5` | `#A9C4EE` | **`#C9C8C2`** | `#DCC3AE` | `#F0B48C` | `#EC7A50` | `#D9412B` |
+| Hex | `#3D66FF` | `#2F86FF` | `#4FA6FF` | `#8CC4FF` | **`#C9C8C2`** | `#F7B784` | `#FF9A52` | `#FF5A2E` | `#E8251F` |
 
-The 12 and 18 °C shoulders keep the gray band narrow. With the first version's wide band and pale blues, the cool flights most routes actually see (5–15 °C) read as white on the globe.
+The 12 and 18 °C shoulders keep the gray band narrow, and every stop sits near the edge of the sRGB gamut for its lightness: temperature is the point of the app, so the color is as rich as the lightness ramp allows. With the first version's wide band and pale blues, the cool flights most routes actually see (5–15 °C) read as white on the globe.
 
 **Validation** (dataviz skill validator plus a WCAG contrast check):
 - Cold and hot ends are distinct for colorblind viewers: worst-case ΔE 26 in the protan simulation, 33 with normal vision, against a target of 8 or more.

@@ -1,11 +1,14 @@
 // The sphere with its stylized land texture, a day/night terminator, a horizon glow that works
 // from orbit (limb) and from the cockpit (horizon), and a soft halo for the orbit view.
 
-import { useFrame, type ThreeEvent } from "@react-three/fiber";
+import { useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
+import { LineMaterial } from "three/examples/jsm/lines/LineMaterial.js";
+import { LineSegments2 } from "three/examples/jsm/lines/LineSegments2.js";
+import { LineSegmentsGeometry } from "three/examples/jsm/lines/LineSegmentsGeometry.js";
 import { useMemo, useRef } from "react";
 import { AdditiveBlending, BackSide, Color, ShaderMaterial, Vector3, type CanvasTexture } from "three";
 import { beats } from "../boot";
-import { OCEAN } from "../lib/earthTexture";
+import { COAST, OCEAN } from "../lib/earthTexture";
 import { useEarthAssets } from "./earthAssets";
 import { toVec3 } from "../lib/geo";
 import { subsolarPoint } from "../lib/sun";
@@ -106,6 +109,31 @@ function Earth({ texture }: { texture: CanvasTexture }) {
 
 const UP = new Vector3(0, 1, 0);
 
+/** Coastline opacity and width (CSS px). Matches the old texture stroke's weight from orbit. */
+const COAST_OPACITY = 0.17;
+const COAST_WIDTH = 1.1;
+
+/**
+ * Coastlines as screen-space lines on the sphere: a constant ~1 px wherever the camera is, so
+ * they stay sharp at any zoom with no texture levels to switch between.
+ */
+function Coastline({ segments }: { segments: Float32Array }) {
+  const dpr = useThree((s) => s.viewport.dpr);
+  const line = useMemo(() => {
+    const geometry = new LineSegmentsGeometry().setPositions(segments);
+    const material = new LineMaterial({ color: COAST, transparent: true, opacity: 0, depthWrite: false });
+    const l = new LineSegments2(geometry, material);
+    l.renderOrder = 2;
+    l.frustumCulled = false;
+    return l;
+  }, [segments]);
+  useFrame(() => {
+    line.material.linewidth = COAST_WIDTH * dpr; // the material measures in device pixels
+    line.material.opacity = COAST_OPACITY * beats.texture; // fades in with the textured earth
+  });
+  return <primitive object={line} />;
+}
+
 const stop = (e: ThreeEvent<PointerEvent>) => e.stopPropagation();
 /** A click on bare globe clears the selection (onPointerMissed no longer fires: the globe is a hit). */
 const onGlobeClick = (e: ThreeEvent<MouseEvent>) => {
@@ -128,6 +156,7 @@ export function Globe() {
         <meshBasicMaterial color={OCEAN} />
       </mesh>
       {assets && <Earth texture={assets.texture} />}
+      {assets && <Coastline segments={assets.coast} />}
       {/* The outer halo only makes sense from outside; from the cockpit the surface rim takes over. */}
       <mesh scale={1.09} visible={inOrbit}>
         <sphereGeometry args={[GLOBE_RADIUS, 96, 64]} />

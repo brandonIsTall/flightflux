@@ -53,6 +53,20 @@ Then, in the GitHub repository settings, add Actions secrets `OPENSKY_CLIENT_ID`
 "Poll positions" workflow every 5 minutes; one run fills the globe. To poll by hand:
 `npm run poll -w worker`, or run the workflow from the Actions tab.
 
+### Automatic deploys
+
+The "Deploy" workflow (`.github/workflows/deploy.yml`) typechecks, tests and deploys both halves
+on every push to `main`, so merging a pull request ships it. One-time setup:
+
+1. Cloudflare dashboard → My Profile → API Tokens → Create Token → the **Edit Cloudflare Workers**
+   template → your account → Create. Copy the token.
+2. Your account ID is on the Workers & Pages overview page (right-hand side).
+3. GitHub → Settings → Secrets and variables → Actions → add `CLOUDFLARE_API_TOKEN` and
+   `CLOUDFLARE_ACCOUNT_ID`.
+
+Until both secrets exist the workflow just posts a notice. You can re-run a deploy from the Actions
+tab ("Deploy" → Run workflow); the manual commands above still work too.
+
 ## Data and licenses
 
 OpenSky Network (non-commercial), adsbdb, Open-Meteo (CC BY 4.0, non-commercial), Natural Earth
