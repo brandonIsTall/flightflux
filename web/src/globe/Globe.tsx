@@ -1,7 +1,7 @@
 // The sphere with its stylized land texture, a day/night terminator, a horizon glow that works
 // from orbit (limb) and from the cockpit (horizon), and a soft halo for the orbit view.
 
-import { useFrame } from "@react-three/fiber";
+import { useFrame, type ThreeEvent } from "@react-three/fiber";
 import { useMemo, useRef } from "react";
 import { AdditiveBlending, BackSide, Color, ShaderMaterial, Vector3, type CanvasTexture } from "three";
 import { beats } from "../boot";
@@ -106,6 +106,14 @@ function Earth({ texture }: { texture: CanvasTexture }) {
 
 const UP = new Vector3(0, 1, 0);
 
+const stop = (e: ThreeEvent<PointerEvent>) => e.stopPropagation();
+/** A click on bare globe clears the selection (onPointerMissed no longer fires: the globe is a hit). */
+const onGlobeClick = (e: ThreeEvent<MouseEvent>) => {
+  e.stopPropagation();
+  const { cameraMode, select } = useStore.getState();
+  if (cameraMode === "orbit") select(null);
+};
+
 export function Globe() {
   const assets = useEarthAssets();
   const halo = useRef<ShaderMaterial>(null);
@@ -113,8 +121,9 @@ export function Globe() {
 
   return (
     <group>
-      {/* The plain sphere stays underneath: it occludes the far side while the textured one fades in. */}
-      <mesh>
+      {/* The plain sphere stays underneath: it occludes the far side while the textured one fades in.
+          Its handlers make it occlude pointer events too, so routes behind the Earth can't be hovered. */}
+      <mesh onPointerOver={stop} onPointerMove={stop} onPointerDown={stop} onClick={onGlobeClick}>
         <sphereGeometry args={[GLOBE_RADIUS, 96, 64]} />
         <meshBasicMaterial color={OCEAN} />
       </mesh>

@@ -12,6 +12,7 @@
     "icao": "ARG",
     "iata": "AR"
    },
+   "aircraftType": "A21N",
    "origin": {
     "icao": "SPJC",
     "iata": "LIM",
@@ -64,6 +65,7 @@
     "icao": "ARG",
     "iata": "AR"
    },
+   "aircraftType": "B38M",
    "origin": {
     "icao": "SKBO",
     "iata": "BOG",
@@ -116,6 +118,7 @@
     "icao": "LAN",
     "iata": "LA"
    },
+   "aircraftType": "A20N",
    "origin": {
     "icao": "SBGL",
     "iata": "GIG",
@@ -168,6 +171,7 @@
     "icao": "LPE",
     "iata": "LP"
    },
+   "aircraftType": "B739",
    "origin": {
     "icao": "MDPC",
     "iata": "PUJ",
@@ -220,6 +224,7 @@
     "icao": "UAL",
     "iata": "UA"
    },
+   "aircraftType": "B788",
    "origin": {
     "icao": "KIAH",
     "iata": "IAH",
@@ -272,6 +277,7 @@
     "icao": "FDX",
     "iata": "FX"
    },
+   "aircraftType": null,
    "origin": {
     "icao": "KOAK",
     "iata": "OAK",
@@ -324,6 +330,7 @@
     "icao": "CPA",
     "iata": "CX"
    },
+   "aircraftType": "B763",
    "origin": {
     "icao": "VHHH",
     "iata": "HKG",
@@ -376,6 +383,7 @@
     "icao": "BAW",
     "iata": "BA"
    },
+   "aircraftType": "B748",
    "origin": {
     "icao": "KSFO",
     "iata": "SFO",
@@ -428,6 +436,7 @@
     "icao": "UAL",
     "iata": "UA"
    },
+   "aircraftType": "B789",
    "origin": {
     "icao": "KSFO",
     "iata": "SFO",
@@ -480,6 +489,7 @@
     "icao": "SIA",
     "iata": "SQ"
    },
+   "aircraftType": "A388",
    "origin": {
     "icao": "WSSS",
     "iata": "SIN",
@@ -532,6 +542,7 @@
     "icao": "AAL",
     "iata": "AA"
    },
+   "aircraftType": "A321",
    "origin": {
     "icao": "PHLI",
     "iata": "LIH",
@@ -584,6 +595,7 @@
     "icao": "SWR",
     "iata": "LX"
    },
+   "aircraftType": "A333",
    "origin": {
     "icao": "KSFO",
     "iata": "SFO",
@@ -636,6 +648,7 @@
     "icao": "UPS",
     "iata": "5X"
    },
+   "aircraftType": "B788",
    "origin": {
     "icao": "KSDF",
     "iata": "SDF",
@@ -688,6 +701,7 @@
     "icao": "DAL",
     "iata": "DL"
    },
+   "aircraftType": "A35K",
    "origin": {
     "icao": "KSEA",
     "iata": "SEA",
@@ -740,6 +754,7 @@
     "icao": "ACA",
     "iata": "AC"
    },
+   "aircraftType": "A20N",
    "origin": {
     "icao": "KEWR",
     "iata": "EWR",
@@ -792,6 +807,7 @@
     "icao": "CPA",
     "iata": "CX"
    },
+   "aircraftType": "A339",
    "origin": {
     "icao": "VHHH",
     "iata": "HKG",
@@ -844,6 +860,7 @@
     "icao": "THY",
     "iata": "TK"
    },
+   "aircraftType": "B789",
    "origin": {
     "icao": "KSEA",
     "iata": "SEA",
@@ -896,6 +913,7 @@
     "icao": "ASA",
     "iata": "AS"
    },
+   "aircraftType": "B752",
    "origin": {
     "icao": "PANC",
     "iata": "ANC",
@@ -948,6 +966,7 @@
     "icao": "DAL",
     "iata": "DL"
    },
+   "aircraftType": null,
    "origin": {
     "icao": "KSEA",
     "iata": "SEA",
@@ -1000,6 +1019,7 @@
     "icao": "KYE",
     "iata": null
    },
+   "aircraftType": "A333",
    "origin": {
     "icao": "PANC",
     "iata": "ANC",
@@ -1052,6 +1072,7 @@
     "icao": "JAL",
     "iata": "JL"
    },
+   "aircraftType": "B788",
    "origin": {
     "icao": "KORD",
     "iata": "ORD",
@@ -1104,6 +1125,7 @@
     "icao": "UPS",
     "iata": "5X"
    },
+   "aircraftType": "A35K",
    "origin": {
     "icao": "RCTP",
     "iata": "TPE",
@@ -1156,6 +1178,7 @@
     "icao": "FDX",
     "iata": "FX"
    },
+   "aircraftType": "B744",
    "origin": {
     "icao": "PANC",
     "iata": "ANC",
@@ -1208,6 +1231,7 @@
     "icao": "UAL",
     "iata": "UA"
    },
+   "aircraftType": "B752",
    "origin": {
     "icao": "KIAH",
     "iata": "IAH",
@@ -1260,6 +1284,7 @@
     "icao": "JBU",
     "iata": "B6"
    },
+   "aircraftType": "A21N",
    "origin": {
     "icao": "KJFK",
     "iata": "JFK",
@@ -1312,6 +1337,7 @@
     "icao": "VOI",
     "iata": "Y4"
    },
+   "aircraftType": "B38M",
    "origin": {
     "icao": "MMMX",
     "iata": "MEX",
@@ -1364,6 +1390,7 @@
     "icao": "AMX",
     "iata": "AM"
    },
+   "aircraftType": "A20N",
    "origin": {
     "icao": "MMMX",
     "iata": "MEX",
@@ -1416,6 +1443,7 @@
     "icao": "VOI",
     "iata": "Y4"
    },
+   "aircraftType": "B739",
    "origin": {
     "icao": "MMOX",
     "iata": "OAX",
@@ -1468,6 +1496,7 @@
     "icao": "VOI",
     "iata": "Y4"
    },
+   "aircraftType": "A321",
    "origin": {
     "icao": "MMGL",
     "iata": "GDL",
@@ -1520,6 +1549,7 @@
     "icao": "FLE",
     "iata": null
    },
+   "aircraftType": "B752",
    "origin": {
     "icao": "MMLO",
     "iata": "BJX",
@@ -1572,6 +1602,7 @@
     "icao": "VOI",
     "iata": "Y4"
    },
+   "aircraftType": "A21N",
    "origin": {
     "icao": "MMGL",
     "iata": "GDL",
@@ -1624,6 +1655,7 @@
     "icao": "VOI",
     "iata": "Y4"
    },
+   "aircraftType": null,
    "origin": {
     "icao": "MMMM",
     "iata": "MLM",
@@ -1676,6 +1708,7 @@
     "icao": "AAL",
     "iata": "AA"
    },
+   "aircraftType": "A20N",
    "origin": {
     "icao": "KLAX",
     "iata": "LAX",
@@ -1728,6 +1761,7 @@
     "icao": "TAI",
     "iata": "TA"
    },
+   "aircraftType": "B739",
    "origin": {
     "icao": "MSLP",
     "iata": "SAL",
@@ -1780,6 +1814,7 @@
     "icao": "SAS",
     "iata": "SK"
    },
+   "aircraftType": "A359",
    "origin": {
     "icao": "KLAX",
     "iata": "LAX",
@@ -1832,6 +1867,7 @@
     "icao": "SCX",
     "iata": "SY"
    },
+   "aircraftType": "B752",
    "origin": {
     "icao": "KSFO",
     "iata": "SFO",
@@ -1884,6 +1920,7 @@
     "icao": "EDW",
     "iata": "WK"
    },
+   "aircraftType": "B788",
    "origin": {
     "icao": "KLAS",
     "iata": "LAS",
@@ -1936,6 +1973,7 @@
     "icao": "SWA",
     "iata": "WN"
    },
+   "aircraftType": "B38M",
    "origin": {
     "icao": "KPHX",
     "iata": "PHX",
@@ -1988,6 +2026,7 @@
     "icao": "UAL",
     "iata": "UA"
    },
+   "aircraftType": "A20N",
    "origin": {
     "icao": "KSFO",
     "iata": "SFO",
@@ -2040,6 +2079,7 @@
     "icao": "ASA",
     "iata": "AS"
    },
+   "aircraftType": "B739",
    "origin": {
     "icao": "KATL",
     "iata": "ATL",
@@ -2092,6 +2132,7 @@
     "icao": "AFR",
     "iata": "AF"
    },
+   "aircraftType": "B789",
    "origin": {
     "icao": "LFPG",
     "iata": "CDG",
@@ -2144,6 +2185,7 @@
     "icao": "AFR",
     "iata": "AF"
    },
+   "aircraftType": "B77W",
    "origin": {
     "icao": "MMMX",
     "iata": "MEX",
@@ -2196,6 +2238,7 @@
     "icao": "VOI",
     "iata": "Y4"
    },
+   "aircraftType": "A21N",
    "origin": {
     "icao": "MMGL",
     "iata": "GDL",
@@ -2248,6 +2291,7 @@
     "icao": "AMX",
     "iata": "AM"
    },
+   "aircraftType": "B38M",
    "origin": {
     "icao": "KJFK",
     "iata": "JFK",
@@ -2300,6 +2344,7 @@
     "icao": "CKS",
     "iata": "K4"
    },
+   "aircraftType": null,
    "origin": {
     "icao": "PANC",
     "iata": "ANC",
@@ -2352,6 +2397,7 @@
     "icao": "DAL",
     "iata": "DL"
    },
+   "aircraftType": "B739",
    "origin": {
     "icao": "KLAS",
     "iata": "LAS",
@@ -2404,6 +2450,7 @@
     "icao": "KAL",
     "iata": "KE"
    },
+   "aircraftType": "B744",
    "origin": {
     "icao": "PANC",
     "iata": "ANC",
@@ -2456,6 +2503,7 @@
     "icao": "AVA",
     "iata": "AV"
    },
+   "aircraftType": "B752",
    "origin": {
     "icao": "SKBO",
     "iata": "BOG",
@@ -2508,6 +2556,7 @@
     "icao": "AZU",
     "iata": "AD"
    },
+   "aircraftType": "B789",
    "origin": {
     "icao": "KMCO",
     "iata": "MCO",
@@ -2560,6 +2609,7 @@
     "icao": "TAM",
     "iata": "JJ"
    },
+   "aircraftType": "B77W",
    "origin": {
     "icao": "KLAX",
     "iata": "LAX",
@@ -2612,6 +2662,7 @@
     "icao": "TAM",
     "iata": "JJ"
    },
+   "aircraftType": "A359",
    "origin": {
     "icao": "MMMX",
     "iata": "MEX",
@@ -2664,6 +2715,7 @@
     "icao": "AVA",
     "iata": "AV"
    },
+   "aircraftType": "B739",
    "origin": {
     "icao": "SKBO",
     "iata": "BOG",
@@ -2716,6 +2768,7 @@
     "icao": "AEA",
     "iata": "UX"
    },
+   "aircraftType": "B788",
    "origin": {
     "icao": "SVMI",
     "iata": "CCS",
@@ -2768,6 +2821,7 @@
     "icao": "UAL",
     "iata": "UA"
    },
+   "aircraftType": "A35K",
    "origin": {
     "icao": "KIAH",
     "iata": "IAH",
@@ -2820,6 +2874,7 @@
     "icao": "AMX",
     "iata": "AM"
    },
+   "aircraftType": "B763",
    "origin": {
     "icao": "MMMX",
     "iata": "MEX",
@@ -2872,6 +2927,7 @@
     "icao": "CMP",
     "iata": "CM"
    },
+   "aircraftType": "B38M",
    "origin": {
     "icao": "MPTO",
     "iata": "PTY",
@@ -2924,6 +2980,7 @@
     "icao": "UAL",
     "iata": "UA"
    },
+   "aircraftType": "A20N",
    "origin": {
     "icao": "KEWR",
     "iata": "EWR",
@@ -2976,6 +3033,7 @@
     "icao": "BOV",
     "iata": "OB"
    },
+   "aircraftType": null,
    "origin": {
     "icao": "KMIA",
     "iata": "MIA",
@@ -3028,6 +3086,7 @@
     "icao": "THY",
     "iata": "TK"
    },
+   "aircraftType": "A359",
    "origin": {
     "icao": "KMIA",
     "iata": "MIA",
@@ -3080,6 +3139,7 @@
     "icao": "TAM",
     "iata": "JJ"
    },
+   "aircraftType": "A333",
    "origin": {
     "icao": "KMCO",
     "iata": "MCO",
@@ -3132,6 +3192,7 @@
     "icao": "ROU",
     "iata": null
    },
+   "aircraftType": "A21N",
    "origin": {
     "icao": "MMUN",
     "iata": "CUN",
@@ -3184,6 +3245,7 @@
     "icao": "DAL",
     "iata": "DL"
    },
+   "aircraftType": "A35K",
    "origin": {
     "icao": "KATL",
     "iata": "ATL",
@@ -3236,6 +3298,7 @@
     "icao": "ICE",
     "iata": "FI"
    },
+   "aircraftType": "B763",
    "origin": {
     "icao": "KMCO",
     "iata": "MCO",
@@ -3288,6 +3351,7 @@
     "icao": "DAL",
     "iata": "DL"
    },
+   "aircraftType": "A339",
    "origin": {
     "icao": "KATL",
     "iata": "ATL",
@@ -3340,6 +3404,7 @@
     "icao": "LRC",
     "iata": "LR"
    },
+   "aircraftType": "A321",
    "origin": {
     "icao": "MSLP",
     "iata": "SAL",
@@ -3392,6 +3457,7 @@
     "icao": "ACA",
     "iata": "AC"
    },
+   "aircraftType": "B752",
    "origin": {
     "icao": "KLAX",
     "iata": "LAX",
@@ -3444,6 +3510,7 @@
     "icao": "JBU",
     "iata": "B6"
    },
+   "aircraftType": "A21N",
    "origin": {
     "icao": "KLAS",
     "iata": "LAS",
@@ -3496,6 +3563,7 @@
     "icao": "LAN",
     "iata": "LA"
    },
+   "aircraftType": "A333",
    "origin": {
     "icao": "SBGR",
     "iata": "GRU",
@@ -3548,6 +3616,7 @@
     "icao": "TAM",
     "iata": "JJ"
    },
+   "aircraftType": "B788",
    "origin": {
     "icao": "SBGR",
     "iata": "GRU",
@@ -3600,6 +3669,7 @@
     "icao": "TAP",
     "iata": "TP"
    },
+   "aircraftType": "A35K",
    "origin": {
     "icao": "LPPR",
     "iata": "OPO",
@@ -3652,6 +3722,7 @@
     "icao": "AVA",
     "iata": "AV"
    },
+   "aircraftType": null,
    "origin": {
     "icao": "SKBO",
     "iata": "BOG",
@@ -3704,6 +3775,7 @@
     "icao": "TAM",
     "iata": "JJ"
    },
+   "aircraftType": "A339",
    "origin": {
     "icao": "SBGR",
     "iata": "GRU",
@@ -3756,6 +3828,7 @@
     "icao": "AFR",
     "iata": "AF"
    },
+   "aircraftType": "A21N",
    "origin": {
     "icao": "GOBD",
     "iata": "DSS",
@@ -3808,6 +3881,7 @@
     "icao": "AFR",
     "iata": "AF"
    },
+   "aircraftType": "B77W",
    "origin": {
     "icao": "SBGR",
     "iata": "GRU",
@@ -3860,6 +3934,7 @@
     "icao": "AFR",
     "iata": "AF"
    },
+   "aircraftType": "A359",
    "origin": {
     "icao": "SBSV",
     "iata": "SSA",
@@ -3912,6 +3987,7 @@
     "icao": "BAW",
     "iata": "BA"
    },
+   "aircraftType": "A388",
    "origin": {
     "icao": "SBGR",
     "iata": "GRU",
@@ -3964,6 +4040,7 @@
     "icao": "TAP",
     "iata": "TP"
    },
+   "aircraftType": "B788",
    "origin": {
     "icao": "SBGR",
     "iata": "GRU",
@@ -4016,6 +4093,7 @@
     "icao": "AVA",
     "iata": "AV"
    },
+   "aircraftType": "A35K",
    "origin": {
     "icao": "SKBO",
     "iata": "BOG",
@@ -4068,6 +4146,7 @@
     "icao": "OCN",
     "iata": null
    },
+   "aircraftType": "B763",
    "origin": {
     "icao": "KRSW",
     "iata": "RSW",
@@ -4120,6 +4199,7 @@
     "icao": "DLH",
     "iata": "LH"
    },
+   "aircraftType": "B748",
    "origin": {
     "icao": "CYUL",
     "iata": "YUL",
@@ -4172,6 +4252,7 @@
     "icao": "AUA",
     "iata": "OS"
    },
+   "aircraftType": "B789",
    "origin": {
     "icao": "KEWR",
     "iata": "EWR",
@@ -4224,6 +4305,7 @@
     "icao": "AUA",
     "iata": "OS"
    },
+   "aircraftType": "B77W",
    "origin": {
     "icao": "KIAD",
     "iata": "IAD",
@@ -4276,6 +4358,7 @@
     "icao": "AUA",
     "iata": "OS"
    },
+   "aircraftType": "A359",
    "origin": {
     "icao": "KORD",
     "iata": "ORD",
@@ -4328,6 +4411,7 @@
     "icao": "RAM",
     "iata": "AT"
    },
+   "aircraftType": null,
    "origin": {
     "icao": "CYUL",
     "iata": "YUL",
@@ -4380,6 +4464,7 @@
     "icao": "AFR",
     "iata": "AF"
    },
+   "aircraftType": "A21N",
    "origin": {
     "icao": "DIAP",
     "iata": "ABJ",
@@ -4432,6 +4517,7 @@
     "icao": "ACA",
     "iata": "AC"
    },
+   "aircraftType": "A35K",
    "origin": {
     "icao": "CYUL",
     "iata": "YUL",
@@ -4484,6 +4570,7 @@
     "icao": "BEL",
     "iata": "SN"
    },
+   "aircraftType": "B763",
    "origin": {
     "icao": "KJFK",
     "iata": "JFK",
@@ -4536,6 +4623,7 @@
     "icao": "AAL",
     "iata": "AA"
    },
+   "aircraftType": "A339",
    "origin": {
     "icao": "KDFW",
     "iata": "DFW",
@@ -4588,6 +4676,7 @@
     "icao": "UAL",
     "iata": "UA"
    },
+   "aircraftType": "B789",
    "origin": {
     "icao": "KEWR",
     "iata": "EWR",
@@ -4640,6 +4729,7 @@
     "icao": "DAL",
     "iata": "DL"
    },
+   "aircraftType": "B77W",
    "origin": {
     "icao": "KATL",
     "iata": "ATL",
@@ -4692,6 +4782,7 @@
     "icao": "DAL",
     "iata": "DL"
    },
+   "aircraftType": "A359",
    "origin": {
     "icao": "KATL",
     "iata": "ATL",
@@ -4744,6 +4835,7 @@
     "icao": "AFR",
     "iata": "AF"
    },
+   "aircraftType": "A333",
    "origin": {
     "icao": "CYYZ",
     "iata": "YYZ",
@@ -4796,6 +4888,7 @@
     "icao": "AAL",
     "iata": "AA"
    },
+   "aircraftType": "B788",
    "origin": {
     "icao": "KJFK",
     "iata": "JFK",
@@ -4848,6 +4941,7 @@
     "icao": "UAL",
     "iata": "UA"
    },
+   "aircraftType": "A35K",
    "origin": {
     "icao": "KEWR",
     "iata": "EWR",
@@ -4900,6 +4994,7 @@
     "icao": "SWR",
     "iata": "LX"
    },
+   "aircraftType": "B763",
    "origin": {
     "icao": "KBOS",
     "iata": "BOS",
@@ -4952,6 +5047,7 @@
     "icao": "AAL",
     "iata": "AA"
    },
+   "aircraftType": "A339",
    "origin": {
     "icao": "KPHL",
     "iata": "PHL",
@@ -5004,6 +5100,7 @@
     "icao": "BAW",
     "iata": "BA"
    },
+   "aircraftType": null,
    "origin": {
     "icao": "KEWR",
     "iata": "EWR",
@@ -5056,6 +5153,7 @@
     "icao": "SAS",
     "iata": "SK"
    },
+   "aircraftType": "B77W",
    "origin": {
     "icao": "CYYZ",
     "iata": "YYZ",
@@ -5108,6 +5206,7 @@
     "icao": "BAW",
     "iata": "BA"
    },
+   "aircraftType": "A359",
    "origin": {
     "icao": "KIAD",
     "iata": "IAD",
@@ -5160,6 +5259,7 @@
     "icao": "UAL",
     "iata": "UA"
    },
+   "aircraftType": "A333",
    "origin": {
     "icao": "KIAD",
     "iata": "IAD",
@@ -5212,6 +5312,7 @@
     "icao": "LOT",
     "iata": "LO"
    },
+   "aircraftType": "B788",
    "origin": {
     "icao": "KJFK",
     "iata": "JFK",
@@ -5264,6 +5365,7 @@
     "icao": "ITY",
     "iata": "AZ"
    },
+   "aircraftType": "A35K",
    "origin": {
     "icao": "KJFK",
     "iata": "JFK",
@@ -5316,6 +5418,7 @@
     "icao": "AAL",
     "iata": "AA"
    },
+   "aircraftType": "B763",
    "origin": {
     "icao": "KCLT",
     "iata": "CLT",
@@ -5368,6 +5471,7 @@
     "icao": "AFR",
     "iata": "AF"
    },
+   "aircraftType": "A339",
    "origin": {
     "icao": "KATL",
     "iata": "ATL",
@@ -5420,6 +5524,7 @@
     "icao": "WJA",
     "iata": "WS"
    },
+   "aircraftType": "A20N",
    "origin": {
     "icao": "CYHZ",
     "iata": "YHZ",
@@ -5472,6 +5577,7 @@
     "icao": "ETD",
     "iata": "EY"
    },
+   "aircraftType": "B77W",
    "origin": {
     "icao": "OMAA",
     "iata": "AUH",
@@ -5524,6 +5630,7 @@
     "icao": "UAE",
     "iata": "EK"
    },
+   "aircraftType": "A359",
    "origin": {
     "icao": "OMDB",
     "iata": "DXB",
@@ -5576,6 +5683,7 @@
     "icao": "ETH",
     "iata": "ET"
    },
+   "aircraftType": "A333",
    "origin": {
     "icao": "HAAB",
     "iata": "ADD",
@@ -5628,6 +5736,7 @@
     "icao": "QTR",
     "iata": "QR"
    },
+   "aircraftType": "A388",
    "origin": {
     "icao": "OTHH",
     "iata": "DOH",
@@ -5680,6 +5789,7 @@
     "icao": "TAP",
     "iata": "TP"
    },
+   "aircraftType": null,
    "origin": {
     "icao": "LGAV",
     "iata": "ATH",
@@ -5732,6 +5842,7 @@
     "icao": "DLH",
     "iata": "LH"
    },
+   "aircraftType": "A20N",
    "origin": {
     "icao": "UDYZ",
     "iata": "EVN",
@@ -5784,6 +5895,7 @@
     "icao": "BAW",
     "iata": "BA"
    },
+   "aircraftType": "A388",
    "origin": {
     "icao": "DGAA",
     "iata": "ACC",
@@ -5836,6 +5948,7 @@
     "icao": "GTI",
     "iata": "5Y"
    },
+   "aircraftType": "B744",
    "origin": {
     "icao": "LEZG",
     "iata": "ZAZ",
@@ -5888,6 +6001,7 @@
     "icao": "MSR",
     "iata": "MS"
    },
+   "aircraftType": "B752",
    "origin": {
     "icao": "GMMN",
     "iata": "CMN",
@@ -5940,6 +6054,7 @@
     "icao": "UBT",
     "iata": "Z0"
    },
+   "aircraftType": "A359",
    "origin": {
     "icao": "FACT",
     "iata": "CPT",
@@ -5992,6 +6107,7 @@
     "icao": "AFR",
     "iata": "AF"
    },
+   "aircraftType": "B38M",
    "origin": {
     "icao": "HECA",
     "iata": "CAI",
@@ -6044,6 +6160,7 @@
     "icao": "SVA",
     "iata": "SV"
    },
+   "aircraftType": "A20N",
    "origin": {
     "icao": "OERK",
     "iata": "RUH",
@@ -6096,6 +6213,7 @@
     "icao": "UAE",
     "iata": "EK"
    },
+   "aircraftType": "A388",
    "origin": {
     "icao": "OMDB",
     "iata": "DXB",
@@ -6148,6 +6266,7 @@
     "icao": "UAE",
     "iata": "EK"
    },
+   "aircraftType": "B763",
    "origin": {
     "icao": "KIAD",
     "iata": "IAD",
@@ -6200,6 +6319,7 @@
     "icao": "UAE",
     "iata": "EK"
    },
+   "aircraftType": "A339",
    "origin": {
     "icao": "LPPT",
     "iata": "LIS",
@@ -6252,6 +6372,7 @@
     "icao": "QTR",
     "iata": "QR"
    },
+   "aircraftType": "A388",
    "origin": {
     "icao": "EIDW",
     "iata": "DUB",
@@ -6304,6 +6425,7 @@
     "icao": "QTR",
     "iata": "QR"
    },
+   "aircraftType": "B38M",
    "origin": {
     "icao": "OTHH",
     "iata": "DOH",
@@ -6356,6 +6478,7 @@
     "icao": "QTR",
     "iata": "QR"
    },
+   "aircraftType": null,
    "origin": {
     "icao": "OTHH",
     "iata": "DOH",
@@ -6408,6 +6531,7 @@
     "icao": "QTR",
     "iata": "QR"
    },
+   "aircraftType": "A388",
    "origin": {
     "icao": "LDZA",
     "iata": "ZAG",
@@ -6460,6 +6584,7 @@
     "icao": "QTR",
     "iata": "QR"
    },
+   "aircraftType": "B788",
    "origin": {
     "icao": "RJTT",
     "iata": "HND",
@@ -6512,6 +6637,7 @@
     "icao": "DLH",
     "iata": "LH"
    },
+   "aircraftType": "A35K",
    "origin": {
     "icao": "VABB",
     "iata": "BOM",
@@ -6564,6 +6690,7 @@
     "icao": "SVA",
     "iata": "SV"
    },
+   "aircraftType": "A21N",
    "origin": {
     "icao": "OERK",
     "iata": "RUH",
@@ -6616,6 +6743,7 @@
     "icao": "UAL",
     "iata": "UA"
    },
+   "aircraftType": "A339",
    "origin": {
     "icao": "KEWR",
     "iata": "EWR",
@@ -6668,6 +6796,7 @@
     "icao": "AAL",
     "iata": "AA"
    },
+   "aircraftType": "B789",
    "origin": {
     "icao": "KCLT",
     "iata": "CLT",
@@ -6720,6 +6849,7 @@
     "icao": "AAL",
     "iata": "AA"
    },
+   "aircraftType": "B77W",
    "origin": {
     "icao": "KPHL",
     "iata": "PHL",
@@ -6772,6 +6902,7 @@
     "icao": "AAL",
     "iata": "AA"
    },
+   "aircraftType": "A359",
    "origin": {
     "icao": "KPHL",
     "iata": "PHL",
@@ -6824,6 +6955,7 @@
     "icao": "ETD",
     "iata": "EY"
    },
+   "aircraftType": "B752",
    "origin": {
     "icao": "EDDF",
     "iata": "FRA",
@@ -6876,6 +7008,7 @@
     "icao": "ETD",
     "iata": "EY"
    },
+   "aircraftType": "B788",
    "origin": {
     "icao": "KBOS",
     "iata": "BOS",
@@ -6928,6 +7061,7 @@
     "icao": "LOT",
     "iata": "LO"
    },
+   "aircraftType": "B38M",
    "origin": {
     "icao": "BIKF",
     "iata": "KEF",
@@ -6980,6 +7114,7 @@
     "icao": "DAL",
     "iata": "DL"
    },
+   "aircraftType": "B763",
    "origin": {
     "icao": "KJFK",
     "iata": "JFK",
@@ -7032,6 +7167,7 @@
     "icao": "ACA",
     "iata": "AC"
    },
+   "aircraftType": null,
    "origin": {
     "icao": "CYYZ",
     "iata": "YYZ",
@@ -7084,6 +7220,7 @@
     "icao": "UPS",
     "iata": "5X"
    },
+   "aircraftType": "B744",
    "origin": {
     "icao": "EDDK",
     "iata": "CGN",
@@ -7136,6 +7273,7 @@
     "icao": "UAL",
     "iata": "UA"
    },
+   "aircraftType": "B77W",
    "origin": {
     "icao": "KORD",
     "iata": "ORD",
@@ -7188,6 +7326,7 @@
     "icao": "DAL",
     "iata": "DL"
    },
+   "aircraftType": "A359",
    "origin": {
     "icao": "KDTW",
     "iata": "DTW",
@@ -7240,6 +7379,7 @@
     "icao": "OCN",
     "iata": null
    },
+   "aircraftType": "B38M",
    "origin": {
     "icao": "BIKF",
     "iata": "KEF",
@@ -7292,6 +7432,7 @@
     "icao": "SIA",
     "iata": "SQ"
    },
+   "aircraftType": "B788",
    "origin": {
     "icao": "YMML",
     "iata": "MEL",
@@ -7344,6 +7485,7 @@
     "icao": "CHH",
     "iata": "HU"
    },
+   "aircraftType": "A35K",
    "origin": {
     "icao": "ZJHK",
     "iata": "HAK",
@@ -7396,6 +7538,7 @@
     "icao": "QFA",
     "iata": "QF"
    },
+   "aircraftType": "A321",
    "origin": {
     "icao": "YPPH",
     "iata": "PER",
@@ -7448,6 +7591,7 @@
     "icao": "ALK",
     "iata": "UL"
    },
+   "aircraftType": "A339",
    "origin": {
     "icao": "VCBI",
     "iata": "CMB",
@@ -7500,6 +7644,7 @@
     "icao": "DLH",
     "iata": "LH"
    },
+   "aircraftType": "A388",
    "origin": {
     "icao": "EDDF",
     "iata": "FRA",
@@ -7552,6 +7697,7 @@
     "icao": "SIA",
     "iata": "SQ"
    },
+   "aircraftType": "B77W",
    "origin": {
     "icao": "EGLL",
     "iata": "LHR",
@@ -7604,6 +7750,7 @@
     "icao": "DLH",
     "iata": "LH"
    },
+   "aircraftType": "A359",
    "origin": {
     "icao": "EDDM",
     "iata": "MUC",
@@ -7656,6 +7803,7 @@
     "icao": "SIA",
     "iata": "SQ"
    },
+   "aircraftType": "A388",
    "origin": {
     "icao": "LFPG",
     "iata": "CDG",
@@ -7708,6 +7856,7 @@
     "icao": "SWR",
     "iata": "LX"
    },
+   "aircraftType": null,
    "origin": {
     "icao": "LSZH",
     "iata": "ZRH",
@@ -7760,6 +7909,7 @@
     "icao": "AFL",
     "iata": "SU"
    },
+   "aircraftType": "A35K",
    "origin": {
     "icao": "UUEE",
     "iata": "SVO",

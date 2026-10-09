@@ -1,5 +1,5 @@
-// One gradient line per flight: the flown part solid and bright, the part ahead dimmer with a
-// dash flowing toward the destination.
+// One gradient line per flight: the flown part solid and bright, the part ahead the same colors
+// but translucent.
 
 import { Line } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
@@ -13,14 +13,10 @@ import { beats, useBoot } from "../boot";
 import { useStore } from "../store";
 
 const SEGMENTS = 64;
-/** The part of the route still ahead is drawn at this fraction of full brightness. */
-const AHEAD_DIM = 0.45;
+/** The part of the route still ahead is drawn at this opacity (times the focus opacity). */
+const AHEAD_OPACITY = 0.3;
 /** Non-hovered lines drop to this while something is hovered. */
 const UNFOCUSED_OPACITY = 0.3;
-/** Dash flow speed in world units per second (globe radius = 1). */
-const DASH_SPEED = 0.035;
-
-const reducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 /** The grey the routes trace in with, before they warm into their temperature colors. */
 const TRACE_GREY: RGB = [0.33, 0.36, 0.4];
 
@@ -42,8 +38,6 @@ function buildPolyline(f: Flight): Polyline {
   }
   return { points, colors };
 }
-
-const dim = ([r, g, b]: RGB, k: number): RGB => [r * k, g * k, b * k];
 
 /** Re-renders every few seconds so the flown/ahead split tracks the plane. Frozen during the boot. */
 function useCoarseClock(periodMs: number, running: boolean) {
@@ -80,15 +74,14 @@ const Route = memo(function Route({ f, nowS, focus }: { f: Flight; nowS: number;
     return { points, colors: poly.colors.slice(0, split + 1), length: polylineLength(points) };
   }, [poly, split]);
   const rest = useMemo(
-    () => ({ points: poly.points.slice(split), colors: poly.colors.slice(split).map((c) => dim(c, AHEAD_DIM)) }),
+    () => ({ points: poly.points.slice(split), colors: poly.colors.slice(split) }),
     [poly, split],
   );
 
-  useFrame((_, dt) => {
+  useFrame(() => {
     if (ahead.current) {
-      if (!reducedMotion()) ahead.current.material.dashOffset -= DASH_SPEED * dt;
       // The part ahead only shows once the line has warmed up.
-      ahead.current.material.opacity = opacity * beats.warm;
+      ahead.current.material.opacity = AHEAD_OPACITY * opacity * beats.warm;
       ahead.current.visible = beats.warm > 0.01;
     }
     const line = flownRef.current;
@@ -114,7 +107,7 @@ const Route = memo(function Route({ f, nowS, focus }: { f: Flight; nowS: number;
   });
 
   const opacity = focus === "unfocused" ? UNFOCUSED_OPACITY : 1;
-  const width = focus === "focused" ? 2.6 : 1.6;
+  const width = focus === "focused" ? 3.6 : 2.4;
   const handlers = {
     onPointerOver: (e: { stopPropagation: () => void }) => {
       if (useStore.getState().cameraMode !== "orbit") return;
@@ -123,7 +116,8 @@ const Route = memo(function Route({ f, nowS, focus }: { f: Flight; nowS: number;
       document.body.style.cursor = "pointer";
     },
     onPointerOut: () => {
-      setHovered(null);
+      // Only clear our own hover: leaving this line mustn't wipe a neighbour's.
+      if (useStore.getState().hoveredId === f.id) setHovered(null);
       document.body.style.cursor = "";
     },
     onClick: (e: { stopPropagation: () => void }) => {
@@ -152,12 +146,10 @@ const Route = memo(function Route({ f, nowS, focus }: { f: Flight; nowS: number;
         ref={ahead}
         points={rest.points}
         vertexColors={rest.colors}
-        lineWidth={width * 0.8}
+        lineWidth={width}
         transparent
-        opacity={opacity}
-        dashed
-        dashSize={0.03}
-        gapSize={0.02}
+        opacity={AHEAD_OPACITY * opacity}
+        depthWrite={false}
         toneMapped={false}
         {...handlers}
       />

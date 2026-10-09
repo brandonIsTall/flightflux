@@ -1,15 +1,18 @@
 // The temperature scale: the only saturated color in the app. See docs/PLAN.md §6.4.
-// Diverging, blue -> neutral gray at 15 C -> red-orange, interpolated in OKLab.
+// Diverging, blue -> neutral gray at 15 C -> red-orange, interpolated in OKLab. The gray band is
+// narrow (12-18 C) so cool flights read as blue, not white.
 
 export const SCALE_MIN_C = -25;
 export const SCALE_MAX_C = 44;
 
 /** [degC, hex] stops, validated for CVD separation and >= 4:1 contrast on --space. */
 export const STOPS: [number, string][] = [
-  [-25, "#3B6FD9"],
-  [-10, "#6E9BEA"],
-  [3, "#A9C3EE"],
+  [-25, "#3A6CEB"],
+  [-10, "#4C86EC"],
+  [3, "#76A8F5"],
+  [12, "#A9C4EE"],
   [15, "#C9C8C2"],
+  [18, "#DCC3AE"],
   [26, "#F0B48C"],
   [35, "#EC7A50"],
   [44, "#D9412B"],

@@ -59,6 +59,8 @@ function fakeWorld() {
           },
         });
       if (url.includes("/callsign/")) return json({ response: "unknown callsign" }, 404);
+      if (url.includes("/aircraft/aa9300"))
+        return json({ response: { aircraft: { type: "787 9", manufacturer: "Boeing", icao_type: "B789", registration: "N1" } } });
       if (url.includes("open-meteo")) {
         const lats = new URL(url).searchParams.get("latitude")!.split(",");
         const times = Array.from({ length: 72 }, (_, i) => T0 - 24 * 3600 + i * 3600);
@@ -260,6 +262,30 @@ describe("Engine", () => {
     expect(b.getSnapshot()!.meta.creditsRemaining).toBe(3000);
     expect(b.trackedIds()).toEqual(["aa9300"]);
     expect(b.knownCount()).toBe(1);
+  });
+
+  it("looks up the aircraft type of curated flights once and keeps it across an eviction", async () => {
+    const world = fakeWorld();
+    world.states = [sv("aa9300", "UAL880", interpolate(IAH, LHR, 0.4), 11000)];
+    const a = makeEngine(world);
+    expect((await warm(a.engine)).flights[0]!.aircraftType).toBeNull(); // curated, type not looked up yet
+    const stats = await a.engine.enrich({ requests: 40 });
+    expect(stats.typeLookups).toBe(1);
+    expect(a.engine.rebuild().flights[0]!.aircraftType).toBe("B789");
+
+    const b = new Engine({
+      opensky: new OpenSkyClient("id", "secret", world.fetch, () => world.time * 1000),
+      adsbdb: new AdsbdbClient(world.fetch),
+      store: a.store,
+      fetchFn: world.fetch,
+      now: () => world.time * 1000,
+    });
+    a.engine.saveKnown();
+    b.restore();
+    expect(b.getSnapshot()!.flights[0]!.aircraftType).toBe("B789");
+    const before = world.calls.length;
+    expect((await b.enrich({ requests: 40 })).typeLookups).toBe(0);
+    expect(world.calls.slice(before).some((u) => u.includes("/aircraft/"))).toBe(false);
   });
 
   it("does not spend more requests than the budget", async () => {

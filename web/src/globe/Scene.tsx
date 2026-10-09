@@ -121,7 +121,7 @@ export function Scene({ flights, failed }: { flights: Flight[]; failed: boolean 
       {effects && (
         <EffectComposer multisampling={0}>
           {/* Threshold keeps the dark globe and chrome out; only the data glows. */}
-          <Bloom luminanceThreshold={0.7} luminanceSmoothing={0.25} intensity={0.35} mipmapBlur radius={0.5} />
+          <Bloom luminanceThreshold={0.8} luminanceSmoothing={0.25} intensity={0.35} mipmapBlur radius={0.5} />
           <Vignette eskil={false} offset={0.25} darkness={0.45} />
         </EffectComposer>
       )}

@@ -4,7 +4,8 @@
 // requests, so work is split into small steps, at most one OpenSky call per run:
 //   refreshTracked()  positions for the flights on the globe, one small icao24-filtered call.
 //   pollTile()        discovery: one region box of the world per call, swept over ~75 min.
-//   enrich()          fills caches a batch at a time: Open-Meteo weather, adsbdb routes.
+//   enrich()          fills caches a batch at a time: Open-Meteo weather, adsbdb routes and
+//                     aircraft types.
 //   rebuild()         no network: projects each flight along its route to "now" and curates.
 //
 // Long-haul flights move predictably, so between fixes each plane is advanced along its
@@ -42,6 +43,10 @@ const KNOWN_BLOB = "known";
 /** Durable Object SQLite rows hold at most 2 MB; stay well clear. */
 export const MAX_DOC_BYTES = 1_500_000;
 const CURATED_BLOB = "curated";
+/** icao24 -> ICAO type designator (or null: adsbdb doesn't know it). Airframes don't change type. */
+const TYPES_BLOB = "aircraft-types";
+/** Saved aircraft types, oldest dropped first: ~20 bytes each. */
+export const MAX_SAVED_TYPES = 5000;
 
 /** The known-set document (see saveKnown). */
 interface SavedKnown {
@@ -106,6 +111,7 @@ export interface EngineDeps {
 export interface StepStats {
   routeLookups: number;
   routeHits: number;
+  typeLookups: number;
   weatherAirports: number;
   errors: string[];
 }
@@ -117,6 +123,10 @@ export class Engine {
   private routeQueue = new Map<string, number>(); // callsign -> priority
   private weatherQueue = new Map<string, LatLonKey>(); // icao -> coords
   private aircraftCache = new Map<string, Aircraft | null>();
+  /** icao24 -> ICAO aircraft type, for the plane silhouettes. Insertion order is age. */
+  private types = new Map<string, string | null>();
+  /** Curated icao24s whose type isn't known yet. */
+  private typeQueue = new Set<string>();
   /** icao24 -> pinned-until (unix s), for searched flights. */
   private pinned = new Map<string, number>();
   private searched = new Map<string, Flight>();
@@ -221,6 +231,8 @@ export class Engine {
     }
     const curated = store.getBlob(CURATED_BLOB);
     if (curated) for (const k of JSON.parse(curated) as string[]) this.curatedKeys.add(k);
+    const types = store.getBlob(TYPES_BLOB);
+    if (types) for (const [id, t] of JSON.parse(types) as [string, string | null][]) if (!this.types.has(id)) this.types.set(id, t);
     this.rebuild();
   }
 
@@ -314,7 +326,7 @@ export class Engine {
 
   /** Spend up to `budget.requests` outbound requests filling caches. */
   async enrich(budget: EnrichBudget): Promise<StepStats> {
-    const stats: StepStats = { routeLookups: 0, routeHits: 0, weatherAirports: 0, errors: [] };
+    const stats: StepStats = { routeLookups: 0, routeHits: 0, typeLookups: 0, weatherAirports: 0, errors: [] };
     let left = budget.requests;
 
     // 1. Weather: one request per 50 airports, so it's the cheapest way to unlock flights.
@@ -339,6 +351,7 @@ export class Engine {
         .sort((a, b) => b[1] - a[1])
         .slice(0, left)
         .map(([cs]) => cs);
+      left -= batch.length;
       for (let i = 0; i < batch.length; i += ROUTE_CONCURRENCY) {
         const chunk = batch.slice(i, i + ROUTE_CONCURRENCY);
         const results = await Promise.allSettled(chunk.map((cs) => this.deps.adsbdb.route(cs)));
@@ -363,7 +376,52 @@ export class Engine {
         }
       }
     }
+
+    // 3. Aircraft types of curated flights, with whatever budget is left: cosmetic (the plane
+    // silhouette), so it never competes with what unlocks flights.
+    if (left > 0 && this.typeQueue.size > 0 && this.now() >= this.adsbdbBackoffUntil) {
+      const batch = [...this.typeQueue].slice(0, left);
+      let learned = false;
+      for (let i = 0; i < batch.length; i += ROUTE_CONCURRENCY) {
+        const chunk = batch.slice(i, i + ROUTE_CONCURRENCY);
+        const results = await Promise.allSettled(chunk.map((id) => this.deps.adsbdb.aircraft(id)));
+        let throttled = false;
+        results.forEach((r, j) => {
+          const id = chunk[j]!;
+          stats.typeLookups++;
+          if (r.status === "fulfilled") {
+            this.aircraftCache.set(id, r.value);
+            this.rememberType(id, r.value?.icaoType ?? null);
+            this.typeQueue.delete(id);
+            learned = true;
+          } else {
+            const status = (r.reason as { status?: number }).status;
+            if (status === 429 || (status != null && status >= 500)) throttled = true;
+            stats.errors.push(`aircraft ${id}: ${(r.reason as Error).message}`);
+          }
+        });
+        if (throttled) {
+          this.adsbdbBackoffUntil = this.now() + 5 * 60_000;
+          this.log("adsbdb throttled; pausing lookups for 5 min");
+          break;
+        }
+      }
+      if (learned) this.saveTypes();
+    }
     return stats;
+  }
+
+  private rememberType(icao24: string, type: string | null) {
+    this.types.delete(icao24); // re-insert as newest
+    this.types.set(icao24, type);
+    for (const id of this.types.keys()) {
+      if (this.types.size <= MAX_SAVED_TYPES) break;
+      this.types.delete(id);
+    }
+  }
+
+  private saveTypes() {
+    this.deps.store.putBlob(TYPES_BLOB, JSON.stringify([...this.types]));
   }
 
   /** Join known aircraft with cached routes, weather and departures. No network. */
@@ -401,6 +459,8 @@ export class Engine {
       this.deps.store.putBlob(CURATED_BLOB, JSON.stringify(keys)); // hysteresis survives an eviction
     }
     this.curatedKeys = new Set(keys);
+    this.typeQueue.clear();
+    for (const c of chosen) if (!this.types.has(c.k.s.icao24)) this.typeQueue.add(c.k.s.icao24);
     this.snapshot = {
       v: 1,
       generatedAt: nowS,
@@ -470,6 +530,7 @@ export class Engine {
       callsign: s.callsign,
       flightNo: route.callsignIata,
       airline: route.airline,
+      aircraftType: this.types.get(s.icao24) ?? null,
       origin: { ...route.origin, tz: ow.tz, utcOffsetS: ow.utcOffsetS },
       dest: { ...route.dest, tz: dw.tz, utcOffsetS: dw.utcOffsetS },
       pos: {
@@ -549,7 +610,12 @@ export class Engine {
     if (!f) return null;
     if (!this.aircraftCache.has(f.icao24)) {
       try {
-        this.aircraftCache.set(f.icao24, await this.deps.adsbdb.aircraft(f.icao24));
+        const a = await this.deps.adsbdb.aircraft(f.icao24);
+        this.aircraftCache.set(f.icao24, a);
+        if (!this.types.has(f.icao24)) {
+          this.rememberType(f.icao24, a?.icaoType ?? null);
+          this.saveTypes();
+        }
       } catch {
         return { ...f, aircraft: null }; // transient: don't cache the miss
       }
