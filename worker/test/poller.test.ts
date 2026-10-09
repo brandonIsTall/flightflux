@@ -5,7 +5,7 @@ import { requireEnv, runPoll } from "../src/poller";
 const TILES: Bbox[] = Array.from({ length: 10 }, (_, i) => [0, i * 10, 10, i * 10 + 10]);
 
 /** Fake Worker + OpenSky. `delayMs` slows each OpenSky call; `failBox` makes one box fail. */
-function fakeUpstreams(opts: { delayMs?: number; failBox?: number; tracked?: string[] | null } = {}) {
+function fakeUpstreams(opts: { delayMs?: number; failBox?: number; tracked?: string[] | null; openskyDown?: boolean } = {}) {
   const seen = { plan: [] as string[], ingested: [] as unknown[], inFlight: 0, maxInFlight: 0, auth: [] as string[] };
   const json = (b: unknown, status = 200, headers: Record<string, string> = {}) => new Response(JSON.stringify(b), { status, headers });
   const fetchFn = (async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -19,6 +19,7 @@ function fakeUpstreams(opts: { delayMs?: number; failBox?: number; tracked?: str
       seen.ingested.push(JSON.parse(String(init?.body)));
       return json({ ok: true, known: seen.ingested.length });
     }
+    if (url.includes("opensky") && opts.openskyDown) throw new TypeError("fetch failed");
     if (url.includes("/token")) return json({ access_token: "t", expires_in: 1800 });
     if (url.includes("/states/all")) {
       seen.inFlight++;
@@ -58,6 +59,16 @@ describe("runPoll", () => {
     const { fetchFn } = fakeUpstreams({ failBox: 3, tracked: null });
     const r = await runPoll({ ...base, fetchFn, concurrency: 3 });
     expect(r).toMatchObject({ fetched: 9, failed: 1 });
+  });
+
+  it("never asks for a plan when OpenSky is unreachable, so nothing is marked issued", async () => {
+    const { seen, fetchFn } = fakeUpstreams({ openskyDown: true });
+    const lines: string[] = [];
+    const r = await runPoll({ ...base, fetchFn, log: (l) => lines.push(l) });
+    expect(seen.plan).toEqual([]);
+    expect(seen.ingested).toEqual([]);
+    expect(r).toMatchObject({ failed: 1, fetched: 0, boxes: 0 });
+    expect(lines[0]).toMatch(/opensky unreachable from this host \(fetch failed\)/);
   });
 
   it("asks for a restarted sweep when told to", async () => {
