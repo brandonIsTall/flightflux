@@ -1,7 +1,6 @@
 // Worker entry: forwards /api/* to the single SkyState Durable Object and keeps its loop running.
 
 import { normalizeQuery } from "./core/engine";
-import { dispatchPoll, isHourlySlot } from "./dispatch";
 import { SkyState, type Env } from "./sky-state";
 
 export { SkyState };
@@ -59,13 +58,10 @@ export default {
     return res;
   },
 
-  // One cron, every 5 min (wrangler.jsonc): start the GitHub poller without waking the Durable
-  // Object; in the first slot of each hour also run the safety net that replaces the object's
-  // alarm if it is missing or overdue. (A second "*/5" cron next to an hourly one was registered
-  // but never fired, while a lone "*/5" fired reliably, so the two jobs share one cron.)
-  async scheduled(event, env): Promise<void> {
-    if (isHourlySlot(event.scheduledTime)) await sky(env).ensureRunning();
-    const r = await dispatchPoll(env);
-    console.log(`poll dispatch: ${r}`);
+  // Safety net only: replace the object's alarm if it is missing or overdue. The alarm (not this
+  // cron) starts the GitHub poller: Cloudflare left this Worker's "*/5" cron registered but never
+  // fired it, while it kept firing a deleted hourly one, so cron timing can't be relied on here.
+  async scheduled(_event, env): Promise<void> {
+    await sky(env).ensureRunning();
   },
 } satisfies ExportedHandler<Env>;

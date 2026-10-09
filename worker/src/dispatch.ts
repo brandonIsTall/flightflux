@@ -1,4 +1,5 @@
-// Starts the GitHub "Poll positions" workflow through GitHub's API, from the Worker's 5-minute cron.
+// Starts the GitHub "Poll positions" workflow through GitHub's API, from the Durable Object's alarm
+// every 5 minutes (sky-state.ts).
 //
 // Why: OpenSky refuses Cloudflare's network (and AWS's, so Netlify too), but accepts GitHub's
 // runners. GitHub's own `schedule:` trigger is best-effort and ran a */5 workflow only every
@@ -39,7 +40,3 @@ export async function dispatchPoll(env: DispatchEnv, fetchFn: typeof fetch = (i,
   }
 }
 
-/** The 5-minute cron's first run of each hour (minute 0-4), when the hourly safety net runs too. */
-export function isHourlySlot(scheduledTime: number): boolean {
-  return new Date(scheduledTime).getUTCMinutes() < 5;
-}

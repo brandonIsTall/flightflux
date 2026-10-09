@@ -26,7 +26,7 @@ One Durable Object (`SkyState`, name `global-weur`) owns the OpenSky schedule (`
   (`src/core/tiles.ts`)
 
 The calls are made by the poller, `src/poller.ts`, run by the GitHub workflow "Poll positions",
-which this Worker's 5-minute cron starts through GitHub's API (`src/dispatch.ts`; GitHub's own
+which the Durable Object's alarm starts every 5 minutes through GitHub's API (`src/dispatch.ts`; GitHub's own
 schedule ran it only every few hours). It checks it can reach OpenSky, asks `/api/_plan` what is due, fetches it
 from OpenSky 4 boxes at a time, keeps only the rows the engine uses (cruising and climbing-out
 airliners) and POSTs them to `/api/_ingest`, one request per box. The cadence only sets
@@ -41,7 +41,7 @@ The object's alarm does the rest, with at most ~44 outbound requests per run:
   the snapshot and stores it. No network, ~2 ms
 
 It fires 5 s after an ingest, then every 30 s while route or weather lookups are queued, then
-every 15 min (`src/core/wake.ts`). The first run each hour of the Worker's 5-minute cron also replaces the alarm if it is missing or stuck.
+every 5 min, when it also starts the poller unless one asked for a plan in the last 4 minutes (`src/core/wake.ts`). An hourly cron replaces the alarm if it is missing or stuck. (Cloudflare never fired this Worker's `*/5` cron, so cron timing isn't relied on.)
 
 Between fixes, positions are extrapolated along each flight's great circle at its last ground
 speed (`pos.t` is the projected time, `pos.fixT` the last real fix). Scheduler timestamps are
@@ -94,4 +94,4 @@ Then give the poller the same values as GitHub Actions secrets (`OPENSKY_CLIENT_
 `OPENSKY_CLIENT_SECRET`, `INGEST_SECRET`), and let the Worker start it: create a fine-grained
 GitHub token for this repository only with Actions read & write, and store it as the Worker
 secret `GITHUB_DISPATCH_TOKEN` (`GITHUB_REPO` in wrangler.jsonc names the repository). Without the
-token the 5-minute cron does nothing and only GitHub's own schedule runs the poller.
+token the alarm doesn't start it and only GitHub's own schedule runs the poller.

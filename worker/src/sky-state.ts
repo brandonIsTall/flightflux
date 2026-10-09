@@ -19,7 +19,8 @@ import { Engine } from "./core/engine";
 import { isIngestBody, type PlanResponse } from "./core/ingest";
 import { OpenSkyClient } from "./core/opensky";
 import { initialSched, overBudget, planNext, PRUNE_EVERY_MS, recordUsage, replaceTile, takeSearch, type Sched } from "./core/sched";
-import { AFTER_INGEST_MS, nextAlarmDelay, STUCK_MS } from "./core/wake";
+import { AFTER_INGEST_MS, dispatchDue, nextAlarmDelay, STUCK_MS } from "./core/wake";
+import { dispatchPoll } from "./dispatch";
 import { SqlStore } from "./sql-store";
 
 export interface Env {
@@ -139,6 +140,15 @@ export class SkyState extends DurableObject<Env> {
       console.log(JSON.stringify({ step: "over daily storage budget", usage: s.usage }));
       await this.ctx.storage.setAlarm(nextUtcMidnight(now) + 60_000);
       return;
+    }
+    // Start the GitHub poller (it fetches from OpenSky, which refuses Cloudflare). Done here, not
+    // by a Worker cron: Cloudflare left this Worker's 5-minute cron registered but never fired it.
+    // Recorded before the call so a slow or failing GitHub can't be asked twice in a row.
+    if (this.env.GITHUB_DISPATCH_TOKEN && dispatchDue(now, s.lastDispatchAt ?? 0, s.lastPlanAt ?? 0)) {
+      s.lastDispatchAt = now;
+      await this.ctx.storage.put("sched", s);
+      const r = await dispatchPoll(this.env);
+      console.log(`poll dispatch: ${r}`);
     }
     try {
       this.restore();

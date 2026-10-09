@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { dispatchPoll, isHourlySlot } from "../src/dispatch";
+import { dispatchPoll } from "../src/dispatch";
+import { dispatchDue } from "../src/core/wake";
 
 describe("dispatchPoll", () => {
   it("starts poll.yml on main with the token, and reports success on 204", async () => {
@@ -34,11 +35,17 @@ describe("dispatchPoll", () => {
   });
 });
 
-describe("isHourlySlot", () => {
-  it("is true only for the 5-minute cron's first run of each hour", () => {
-    expect(isHourlySlot(Date.UTC(2026, 9, 9, 7, 0, 0))).toBe(true);
-    expect(isHourlySlot(Date.UTC(2026, 9, 9, 7, 0, 40))).toBe(true); // cron runs can start late
-    expect(isHourlySlot(Date.UTC(2026, 9, 9, 7, 5, 0))).toBe(false);
-    expect(isHourlySlot(Date.UTC(2026, 9, 9, 7, 55, 0))).toBe(false);
+describe("dispatchDue", () => {
+  const T = 1_791_080_000_000;
+  const min = 60_000;
+  it("starts the poller about every 5 minutes", () => {
+    expect(dispatchDue(T, 0, 0)).toBe(true);
+    expect(dispatchDue(T + 2 * min, T, 0)).toBe(false);
+    expect(dispatchDue(T + 5 * min, T, 0)).toBe(true);
+    expect(dispatchDue(T + 4.6 * min, T, 0)).toBe(true); // alarms can fire a little early
+  });
+  it("skips when a poller asked for a plan in the last 4 minutes", () => {
+    expect(dispatchDue(T + 10 * min, T, T + 8 * min)).toBe(false);
+    expect(dispatchDue(T + 10 * min, T, T + 5 * min)).toBe(true);
   });
 });

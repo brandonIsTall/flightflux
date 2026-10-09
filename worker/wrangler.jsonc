@@ -7,10 +7,9 @@
     "bindings": [{ "name": "SKY", "class_name": "SkyState" }]
   },
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["SkyState"] }],
-  // Every 5 min: start the GitHub poller (src/dispatch.ts; doesn't wake the object). The first
-  // run of each hour also replaces a missing or stuck alarm (that wakes the object). One cron on
-  // purpose: a second "*/5" cron beside an hourly one was registered but never fired.
-  "triggers": { "crons": ["*/5 * * * *"] },
+  // Safety net: replaces a missing or stuck alarm. The alarm, not this cron, starts the poller
+  // (Cloudflare never fired this Worker's "*/5" cron), so an hourly cron is enough.
+  "triggers": { "crons": ["0 * * * *"] },
   "vars": { "GITHUB_REPO": "brandonIsTall/flightflux" },
   "observability": { "enabled": true },
   // 10 searches a minute per visitor IP, counted per Cloudflare location.

@@ -15,7 +15,7 @@ describe("nextAlarmDelay", () => {
     expect(nextAlarmDelay({ routes: 50, weather: 2 }, now, now + 4 * 60_000)).toBe(DRAIN_MS);
   });
 
-  it("keeps an idle day to under 100 wakes", () => {
-    expect((24 * 3600_000) / HEARTBEAT_MS).toBeLessThan(100);
+  it("wakes an idle object every 5 minutes, to start the poller", () => {
+    expect(HEARTBEAT_MS).toBe(5 * 60_000);
   });
 });

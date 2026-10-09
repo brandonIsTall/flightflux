@@ -49,7 +49,7 @@ flowchart LR
   end
 
   subgraph Edge["Cloudflare (free tier)"]
-    CRON["Alarm: 30 s while lookups queued,<br/>else 15 min (hourly cron backstop)"]
+    CRON["Alarm: 30 s while lookups queued,<br/>else 5 min; starts the GitHub poller<br/>(hourly cron backstop)"]
     DO["Durable Object<br/>'SkyState'<br/>schedule + snapshot + caches"]
     API["Worker API<br/>/snapshot  /flight/:id  /search"]
   end
@@ -83,8 +83,9 @@ Cloudflare's network cannot reach OpenSky. Its API and auth hosts sit behind Ope
 
 - The Durable Object keeps the schedule and the credit budget. `GET /api/_plan` (bearer `INGEST_SECRET`) returns what is due now: the tracked icao24 list if its 5 min are up, and however many region boxes the sweep interval has earned (up to a full sweep, so one late run refills the globe), marking them issued so they are never handed out twice.
 - The poller (`worker/src/poller.ts`, stateless, only `fetch`) fetches each from OpenSky, drops rows the engine can't use (keeps cruising airliners and climbing-out airliners, about a third of a box), and `POST`s the compact rows to `/api/_ingest`, one request per box so the object parses ≤ ~1,000 rows per invocation. It fetches 4 boxes at a time and starts no new box after 20 s.
-- It runs as the GitHub workflow `.github/workflows/poll.yml`, which the Worker's 5-minute cron starts through GitHub's API (`worker/src/dispatch.ts`, a fine-grained token with Actions read & write on this repo only). A run takes ~35 s. The cadence sets freshness only; the plan sets credit spend.
+- It runs as the GitHub workflow `.github/workflows/poll.yml`, which the Durable Object's alarm starts every 5 minutes through GitHub's API (`worker/src/dispatch.ts`, a fine-grained token with Actions read & write on this repo only). A run takes ~35 s. The cadence sets freshness only; the plan sets credit spend.
 - **Hosts tried (2026-10-09).** GitHub's own `schedule:` trigger is best-effort: a `*/5` workflow ran 16 times in 3½ days, every 3½–7 hours; runs started through the API begin within seconds. Netlify (AWS) can't reach OpenSky: every request failed after ~10 s, like Cloudflare. Deno Deploy never got past its own deploy steps on an unverified account, so it is untested. OpenSky accepts GitHub's runners (Azure) and home connections. The poller checks it can reach OpenSky before taking a plan, so a blocked host can't use up the schedule.
+- **Why the alarm, not a Worker cron.** Cloudflare registered this Worker's `*/5` cron but never fired it (it kept firing a deleted hourly one instead), so the Durable Object's alarm, which has fired reliably throughout, starts the poller. It skips a run when a poller asked for a plan in the last 4 minutes.
 - **Caveat.** GitHub's terms discourage using Actions for work unrelated to building or deploying the project. A ~35 s job every 5 minutes is modest, but if GitHub objects, the same poller runs on any always-on machine with `npm run poll -w worker` in cron.
 - Fallback: if no poller has asked for a plan in 20 min, the object polls OpenSky itself, one call per tick as before. It fails today, but costs nothing and will work if OpenSky's front ever lets Cloudflare through.
 
@@ -480,7 +481,7 @@ gantt
 
 **Durable Object, not KV:** the Workers KV free tier allows about 1,000 writes/day. A single SQLite-backed Durable Object holds routes and weather in SQLite, one row each, plus three one-row documents: the known aircraft, the curation keys and the latest snapshot.
 
-**Rows read are the binding limit (found in production, 2026-10-05).** The free tier allows 5M rows read a day, and Cloudflare evicts the object between events, often between two alarms. The first version loaded the whole routes and weather tables on every wake (~3,400 rows × 120 wakes/hour ≈ 9.8M/day), hit the cap at 20:40 UTC, and the API returned errors until midnight. Now every event is treated as a cold start: lookups are by primary key and cached in memory, a cold restore reads one document carrying the routes and weather it needs, read-only requests read 2 rows, cache tables carry no extra indexes (each costs a written row per insert), and the alarm runs every 30 s only while lookups are queued (else every 15 min). A per-day tally pauses ingests and lookups near either cap rather than letting the API fail. See `worker/README.md`, "Storage budget".
+**Rows read are the binding limit (found in production, 2026-10-05).** The free tier allows 5M rows read a day, and Cloudflare evicts the object between events, often between two alarms. The first version loaded the whole routes and weather tables on every wake (~3,400 rows × 120 wakes/hour ≈ 9.8M/day), hit the cap at 20:40 UTC, and the API returned errors until midnight. Now every event is treated as a cold start: lookups are by primary key and cached in memory, a cold restore reads one document carrying the routes and weather it needs, read-only requests read 2 rows, cache tables carry no extra indexes (each costs a written row per insert), and the alarm runs every 30 s only while lookups are queued (else every 5 min, when it also starts the poller). A per-day tally pauses ingests and lookups near either cap rather than letting the API fail. See `worker/README.md`, "Storage budget".
 
 ---
 
