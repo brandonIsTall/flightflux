@@ -13,8 +13,10 @@ import { beats, useBoot } from "../boot";
 import { useStore } from "../store";
 
 const SEGMENTS = 64;
-/** The part of the route still ahead is drawn at this opacity (times the focus opacity). */
-const AHEAD_OPACITY = 0.3;
+/** The part of the route still ahead: the same gradient at this opacity. */
+const AHEAD_OPACITY = 0.55;
+/** While another flight is focused, the part ahead fades less than the flown part so it survives. */
+const AHEAD_UNFOCUSED = 0.5;
 /** Non-hovered lines drop to this while something is hovered. */
 const UNFOCUSED_OPACITY = 0.3;
 /** The grey the routes trace in with, before they warm into their temperature colors. */
@@ -81,7 +83,7 @@ const Route = memo(function Route({ f, nowS, focus }: { f: Flight; nowS: number;
   useFrame(() => {
     if (ahead.current) {
       // The part ahead only shows once the line has warmed up.
-      ahead.current.material.opacity = AHEAD_OPACITY * opacity * beats.warm;
+      ahead.current.material.opacity = aheadOpacity * beats.warm;
       ahead.current.visible = beats.warm > 0.01;
     }
     const line = flownRef.current;
@@ -107,6 +109,7 @@ const Route = memo(function Route({ f, nowS, focus }: { f: Flight; nowS: number;
   });
 
   const opacity = focus === "unfocused" ? UNFOCUSED_OPACITY : 1;
+  const aheadOpacity = AHEAD_OPACITY * (focus === "unfocused" ? AHEAD_UNFOCUSED : 1);
   const width = focus === "focused" ? 3.6 : 2.4;
   const handlers = {
     onPointerOver: (e: { stopPropagation: () => void }) => {
@@ -148,7 +151,7 @@ const Route = memo(function Route({ f, nowS, focus }: { f: Flight; nowS: number;
         vertexColors={rest.colors}
         lineWidth={width}
         transparent
-        opacity={AHEAD_OPACITY * opacity}
+        opacity={aheadOpacity}
         depthWrite={false}
         toneMapped={false}
         {...handlers}

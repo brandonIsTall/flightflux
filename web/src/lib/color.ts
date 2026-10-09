@@ -7,15 +7,15 @@ export const SCALE_MAX_C = 44;
 
 /** [degC, hex] stops, validated for CVD separation and >= 4:1 contrast on --space. */
 export const STOPS: [number, string][] = [
-  [-25, "#3A6CEB"],
-  [-10, "#4C86EC"],
-  [3, "#76A8F5"],
-  [12, "#A9C4EE"],
+  [-25, "#3D66FF"],
+  [-10, "#2F86FF"],
+  [3, "#4FA6FF"],
+  [12, "#8CC4FF"],
   [15, "#C9C8C2"],
-  [18, "#DCC3AE"],
-  [26, "#F0B48C"],
-  [35, "#EC7A50"],
-  [44, "#D9412B"],
+  [18, "#F7B784"],
+  [26, "#FF9A52"],
+  [35, "#FF5A2E"],
+  [44, "#E8251F"],
 ];
 
 export type RGB = [number, number, number]; // 0..1 linear-ish sRGB components

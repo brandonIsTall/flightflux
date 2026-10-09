@@ -4,19 +4,23 @@
 import { geoEquirectangular, geoPath } from "d3-geo";
 import { feature } from "topojson-client";
 import type { Topology, GeometryCollection } from "topojson-specification";
-import { CanvasTexture, SRGBColorSpace } from "three";
+import { CanvasTexture, SRGBColorSpace, Vector3 } from "three";
 import { toVec3 } from "./geo";
 
 export const OCEAN = "#0F141B";
 export const LAND = "#1E2633";
-const COAST = "rgba(232, 235, 239, 0.14)";
+/** Coastline color. Drawn as vector lines on the globe (Globe.tsx), not into the texture. */
+export const COAST = "#E8EBEF";
 
 export async function loadLand(): Promise<GeoJSON.FeatureCollection> {
   const topo = (await import("world-atlas/land-50m.json")).default as unknown as Topology;
   return feature(topo, topo.objects.land as GeometryCollection) as GeoJSON.FeatureCollection;
 }
 
-/** Equirectangular texture, `width` x `width/2`. */
+/**
+ * Equirectangular texture, `width` x `width/2`: flat land and ocean fills only. Coastlines are
+ * vector lines (see coastlineSegments) so they stay sharp however far the camera zooms in.
+ */
 export function renderEarthTexture(land: GeoJSON.FeatureCollection, width = 4096): CanvasTexture {
   const height = width / 2;
   const canvas = document.createElement("canvas");
@@ -35,9 +39,6 @@ export function renderEarthTexture(land: GeoJSON.FeatureCollection, width = 4096
   path(land);
   ctx.fillStyle = LAND;
   ctx.fill();
-  ctx.lineWidth = Math.max(1, width / 2048);
-  ctx.strokeStyle = COAST;
-  ctx.stroke();
 
   const tex = new CanvasTexture(canvas);
   tex.colorSpace = SRGBColorSpace;
@@ -69,6 +70,46 @@ export function sampleLand(canvas: HTMLCanvasElement, r = 1): Float32Array {
         out.push(v.x, v.y, v.z);
       }
     }
+  }
+  return new Float32Array(out);
+}
+
+/** Longest coastline edge before it's split, in degrees, so long edges follow the sphere's curve. */
+const MAX_EDGE_DEG = 0.5;
+
+/**
+ * Every coastline edge as a pair of points on a sphere of radius r (xyz, xyz, ...), for line
+ * segments. Edges along the antimeridian and the south pole are polygon seams, not coast: skipped.
+ */
+export function coastlineSegments(land: GeoJSON.FeatureCollection, r = 1): Float32Array {
+  const out: number[] = [];
+  const a = new Vector3();
+  const b = new Vector3();
+  const seam = (p: number[], q: number[]) =>
+    (Math.abs(p[0]!) > 179.99 && Math.abs(q[0]!) > 179.99) || (p[1]! < -89.99 && q[1]! < -89.99);
+  const ring = (pts: number[][]) => {
+    for (let i = 1; i < pts.length; i++) {
+      const p = pts[i - 1]!;
+      const q = pts[i]!;
+      if (seam(p, q)) continue;
+      // An edge across the antimeridian (179.9 -> -180) is short: go the short way round.
+      let dLon = q[0]! - p[0]!;
+      if (dLon > 180) dLon -= 360;
+      else if (dLon < -180) dLon += 360;
+      const steps = Math.max(1, Math.ceil(Math.hypot(dLon, q[1]! - p[1]!) / MAX_EDGE_DEG));
+      toVec3({ lon: p[0]!, lat: p[1]! }, r, a);
+      for (let k = 1; k <= steps; k++) {
+        const t = k / steps;
+        toVec3({ lon: p[0]! + dLon * t, lat: p[1]! + (q[1]! - p[1]!) * t }, r, b);
+        out.push(a.x, a.y, a.z, b.x, b.y, b.z);
+        a.copy(b);
+      }
+    }
+  };
+  for (const f of land.features) {
+    const g = f.geometry;
+    const polys = g.type === "Polygon" ? [g.coordinates] : g.type === "MultiPolygon" ? g.coordinates : [];
+    for (const poly of polys) for (const rings of poly) ring(rings);
   }
   return new Float32Array(out);
 }
