@@ -31,5 +31,14 @@ export function dispatchDue(now: number, lastDispatchAt: number, lastPlanAt: num
   return now - lastDispatchAt >= DISPATCH_EVERY_MS - 30_000 && now - lastPlanAt >= POLLER_FRESH_MS;
 }
 
+/**
+ * Milliseconds until dispatchDue() turns true (at least 30 s), so the idle alarm lands on the
+ * 5-minute mark instead of drifting by however long each run's follow-up alarms took.
+ */
+export function untilDispatch(now: number, lastDispatchAt: number, lastPlanAt: number): number {
+  const due = Math.max(lastDispatchAt + DISPATCH_EVERY_MS - 30_000, lastPlanAt + POLLER_FRESH_MS);
+  return Math.max(DRAIN_MS, due - now);
+}
+
 /** An alarm this far overdue never fired (e.g. it was dropped while storage was blocked). */
 export const STUCK_MS = 2 * 60_000;

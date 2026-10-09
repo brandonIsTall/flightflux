@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { dispatchPoll } from "../src/dispatch";
-import { dispatchDue } from "../src/core/wake";
+import { dispatchDue, untilDispatch } from "../src/core/wake";
 
 describe("dispatchPoll", () => {
   it("starts poll.yml on main with the token, and reports success on 204", async () => {
@@ -47,5 +47,24 @@ describe("dispatchDue", () => {
   it("skips when a poller asked for a plan in the last 4 minutes", () => {
     expect(dispatchDue(T + 10 * min, T, T + 8 * min)).toBe(false);
     expect(dispatchDue(T + 10 * min, T, T + 5 * min)).toBe(true);
+  });
+});
+
+describe("untilDispatch", () => {
+  const T = 1_791_080_000_000;
+  const min = 60_000;
+  it("lands the idle alarm on the next 5-minute start, not 5 minutes after the last alarm", () => {
+    // Dispatched at T, the poller asked for its plan 15 s later, the last follow-up alarm ran at T+2m.
+    const wait = untilDispatch(T + 2 * min, T, T + 15_000);
+    expect(T + 2 * min + wait).toBe(T + 5 * min - 30_000 + 0); // due 30 s early is allowed by dispatchDue
+    expect(dispatchDue(T + 2 * min + wait, T, T + 15_000)).toBe(true);
+  });
+  it("waits for the 4-minute freshness window when a run started late", () => {
+    const wait = untilDispatch(T + 4.5 * min, T, T + 70_000);
+    expect(dispatchDue(T + 4.5 * min + wait, T, T + 70_000)).toBe(true);
+    expect(wait).toBeLessThanOrEqual(60_000);
+  });
+  it("never schedules sooner than 30 s", () => {
+    expect(untilDispatch(T + 20 * min, T, T)).toBe(30_000);
   });
 });
