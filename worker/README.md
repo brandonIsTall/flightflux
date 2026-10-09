@@ -25,11 +25,12 @@ One Durable Object (`SkyState`, name `global-weur`) owns the OpenSky schedule (`
   new long-haul flights; boxes that come back with more than 900 aircraft split in two
   (`src/core/tiles.ts`)
 
-The calls are made by the poller, `scripts/poll-once.ts`, which `.github/workflows/poll.yml` runs
-every 5 min: it asks `/api/_plan` what is due, fetches it from OpenSky, keeps only the rows the
-engine uses (cruising and climbing-out airliners) and POSTs them to `/api/_ingest`, one request
-per box. The cadence only sets freshness; the plan paces the credit spend, so a slower cron just
-gets more boxes per run. If no poller has asked for a plan in 20 min, the object falls back to
+The calls are made by the poller, `src/poller.ts`, which a Netlify scheduled function
+(`../netlify/functions/poll.mts`) runs every 5 min: it asks `/api/_plan` what is due, fetches it
+from OpenSky 4 boxes at a time, keeps only the rows the engine uses (cruising and climbing-out
+airliners) and POSTs them to `/api/_ingest`, one request per box. The cadence only sets
+freshness; the plan paces the credit spend, and a run after a long gap gets a full sweep.
+`npm run poll` and the "Poll positions" GitHub workflow run the same code by hand. If no poller has asked for a plan in 20 min, the object falls back to
 calling OpenSky itself, one call per alarm (which fails from Cloudflare today, harmlessly).
 
 The object's alarm does the rest, with at most ~44 outbound requests per run:
@@ -88,7 +89,6 @@ npx wrangler secret put INGEST_SECRET          # any long random string, e.g. `o
 npx wrangler deploy
 ```
 
-Then give the poller the same values as GitHub Actions secrets (`OPENSKY_CLIENT_ID`,
-`OPENSKY_CLIENT_SECRET`, `INGEST_SECRET`) and the Worker URL as the repository variable
-`FLIGHTFLUX_API`. Run the "Poll positions" workflow once by hand to check; the globe fills within
-a few runs.
+Then give the poller the same values: in Netlify, environment variables `OPENSKY_CLIENT_ID`,
+`OPENSKY_CLIENT_SECRET`, `INGEST_SECRET` and `FLIGHTFLUX_API` (the Worker URL), scoped to
+Functions. Use "Run now" on the `poll` function to check; one run fills the globe.
