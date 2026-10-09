@@ -10,6 +10,7 @@ function flight(i: number, lon: number, swing: number): Flight {
     callsign: `TST${i}`,
     flightNo: null,
     airline: null,
+    aircraftType: null,
     origin: ap,
     dest: ap,
     pos: { lat: 0, lon, altM: 11000, gsMs: 250, trackDeg: 90, vRateMs: 0, t: 0, fixT: 0 },

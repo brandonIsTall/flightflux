@@ -39,6 +39,8 @@ export interface Flight {
   callsign: string;
   flightNo: string | null;
   airline: { name: string; icao: string; iata: string | null } | null;
+  /** ICAO type designator ("B77W", "A388"), or null until (or unless) it's known. */
+  aircraftType: string | null;
   origin: Airport;
   dest: Airport;
   pos: Position;

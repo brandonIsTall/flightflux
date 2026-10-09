@@ -192,8 +192,8 @@ As decided, this is a **straight two-stop blend**: `color(t) = scale(lerp(depTem
 
 - **Color scale:** one global, fixed **diverging** scale (blue → neutral gray at 15°C → red-orange) so colors mean the same thing on every flight. It is interpolated in OKLab and validated for colorblind viewers and for contrast on the globe. Full hex values and validation are in §6.4.
 
-- **Path geometry:** a great circle from origin to destination, drawn as a slightly raised arc. The **flown portion** is bright and solid. The **remaining portion** is dimmer, with an animated dash flowing toward the destination, which gives the motion-graphics feel.
-- **Plane marker:** a small chevron at the current position, tinted with the interpolated temperature at its progress point.
+- **Path geometry:** a great circle from origin to destination, drawn as a slightly raised arc. The **flown portion** is bright and solid. The **remaining portion** is the same colors drawn translucent, so the split reads at a glance.
+- **Plane marker:** a top-down airliner silhouette at the current position (FR24-style: narrow-body twin, wide-body twin, quad, A380, picked from the ICAO aircraft type), tinted with the interpolated temperature at its progress point.
 - **Legend:** a thin color bar at the bottom-left with numeric ticks, and a °C/°F toggle that defaults from the browser locale (§6.6).
 
 ---
@@ -304,9 +304,11 @@ The `design-taste-frontend` skill targets landing pages. Flight Flux is mostly a
 
 A **diverging** scale: a cool blue arm and a warm red-orange arm meeting at a **neutral gray midpoint at 15°C**. 15°C is the comfortable "neither" point, so a mild-to-mild flight reads as calm gray and dramatic swings carry strong color. Stops are interpolated in **OKLab**.
 
-| °C | ≤ −25 | −10 | 3 | **15** | 26 | 35 | ≥ 44 |
-|---|---|---|---|---|---|---|---|
-| Hex | `#3B6FD9` | `#6E9BEA` | `#A9C3EE` | **`#C9C8C2`** | `#F0B48C` | `#EC7A50` | `#D9412B` |
+| °C | ≤ −25 | −10 | 3 | 12 | **15** | 18 | 26 | 35 | ≥ 44 |
+|---|---|---|---|---|---|---|---|---|---|
+| Hex | `#3A6CEB` | `#4C86EC` | `#76A8F5` | `#A9C4EE` | **`#C9C8C2`** | `#DCC3AE` | `#F0B48C` | `#EC7A50` | `#D9412B` |
+
+The 12 and 18 °C shoulders keep the gray band narrow. With the first version's wide band and pale blues, the cool flights most routes actually see (5–15 °C) read as white on the globe.
 
 **Validation** (dataviz skill validator plus a WCAG contrast check):
 - Cold and hot ends are distinct for colorblind viewers: worst-case ΔE 26 in the protan simulation, 33 with normal vision, against a target of 8 or more.
