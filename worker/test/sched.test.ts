@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { FIRST_SWEEP_TILE_MS, initialSched, overBudget, planNext, READ_BUDGET, recordUsage, replaceTile, SWEEP_MS, TRACK_INTERVAL_MS, WRITE_BUDGET } from "../src/core/sched";
+import { FIRST_SWEEP_TILE_MS, initialSched, overBudget, planNext, READ_BUDGET, recordUsage, replaceTile, SEARCH_BUDGET, SWEEP_MS, takeSearch, TRACK_INTERVAL_MS, WRITE_BUDGET } from "../src/core/sched";
 import { INITIAL_TILES } from "../src/core/tiles";
 
 const T = 1_791_080_000_000;
@@ -89,9 +89,9 @@ describe("daily storage budget", () => {
     const s = initialSched();
     recordUsage(s, noon, 10, 2);
     recordUsage(s, noon + 60_000, 5, 1);
-    expect(s.usage).toEqual({ day: "2026-10-06", read: 15, written: 3 });
+    expect(s.usage).toEqual({ day: "2026-10-06", read: 15, written: 3, searches: 0 });
     recordUsage(s, Date.UTC(2026, 9, 7, 0, 1), 1, 1);
-    expect(s.usage).toEqual({ day: "2026-10-07", read: 1, written: 1 });
+    expect(s.usage).toEqual({ day: "2026-10-07", read: 1, written: 1, searches: 0 });
   });
 
   it("trips on either cap, and only for today", () => {
@@ -111,5 +111,23 @@ describe("daily storage budget", () => {
     const s = { ...initialSched(), ...old };
     recordUsage(s, noon, 1, 1);
     expect(s.usage.read).toBe(1);
+  });
+});
+
+describe("daily search cap", () => {
+  const noon = Date.UTC(2026, 9, 9, 12);
+  it("answers SEARCH_BUDGET searches a day, then refuses until UTC midnight", () => {
+    const s = initialSched();
+    for (let i = 0; i < SEARCH_BUDGET; i++) expect(takeSearch(s, noon)).toBe(true);
+    expect(takeSearch(s, noon + 60_000)).toBe(false);
+    expect(takeSearch(s, Date.UTC(2026, 9, 10, 0, 1))).toBe(true);
+    expect(s.usage.searches).toBe(1);
+  });
+
+  it("works with a tally saved before searches were counted", () => {
+    const s = initialSched();
+    s.usage = { day: "2026-10-09", read: 5, written: 5 };
+    expect(takeSearch(s, noon)).toBe(true);
+    expect(s.usage).toEqual({ day: "2026-10-09", read: 5, written: 5, searches: 1 });
   });
 });

@@ -32,7 +32,7 @@ export class SearchError extends Error {
 export async function searchFlight(q: string): Promise<Flight> {
   if (USING_FIXTURE) throw new SearchError("search needs the live API", "none");
   const res = await fetch(`${API_BASE}/api/search?q=${encodeURIComponent(q)}`);
-  if (res.status === 404) throw new SearchError("no match", "none");
+  if (res.status === 404 || res.status === 400) throw new SearchError("no match", "none");
   if (res.status === 429) throw new SearchError("rate limited", "rate");
   if (!res.ok) throw new SearchError(`search ${res.status}`, "down");
   return (await res.json()) as Flight;

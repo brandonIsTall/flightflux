@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { AdsbdbClient } from "../src/core/adsbdb";
-import { Engine } from "../src/core/engine";
+import { Engine, normalizeQuery } from "../src/core/engine";
 import { prefilter } from "../src/core/ingest";
 import { distanceKm, interpolate } from "../src/core/geo";
 import { OpenSkyClient, type Bbox } from "../src/core/opensky";
@@ -331,5 +331,11 @@ describe("Engine", () => {
     expect(b.getSnapshot()!.flights.map((x) => x.callsign)).toEqual(["UAL880"]);
     // The known-set document carries the route and weather it needs; plus the curation keys.
     expect(store.rowsRead).toBe(2);
+  });
+
+  it("only accepts queries that could be a flight number or callsign", () => {
+    expect(normalizeQuery(" ba 117 ")).toBe("BA117");
+    expect(normalizeQuery("BAW117")).toBe("BAW117");
+    for (const bad of ["", "AB", "TOOLONG123", "BA-117", "<script>", "ba 1'7"]) expect(normalizeQuery(bad)).toBeNull();
   });
 });

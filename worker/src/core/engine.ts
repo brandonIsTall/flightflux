@@ -57,6 +57,12 @@ interface SavedKnown {
   weather?: Record<string, TempSeries>;
 }
 
+/** A flight number or callsign ("ba 117" -> "BA117"), or null if it can't be one. */
+export function normalizeQuery(query: string): string | null {
+  const q = query.toUpperCase().replace(/\s+/g, "");
+  return /^[A-Z0-9]{3,8}$/.test(q) ? q : null;
+}
+
 /** Last fix for an aircraft. Only cruise-phase airline flights are kept. */
 export interface Known {
   s: StateVector;
@@ -500,8 +506,8 @@ export class Engine {
    * its position keeps refreshing. Spends at most 1 adsbdb call and 1 Open-Meteo call.
    */
   async search(query: string): Promise<Flight | null> {
-    const q = query.toUpperCase().replace(/\s+/g, "");
-    if (!/^[A-Z0-9]{3,8}$/.test(q)) return null;
+    const q = normalizeQuery(query);
+    if (!q) return null;
     const { store } = this.deps;
 
     let entry = store.getRoute(q);

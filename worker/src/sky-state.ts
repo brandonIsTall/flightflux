@@ -18,9 +18,8 @@ import { AdsbdbClient } from "./core/adsbdb";
 import { Engine } from "./core/engine";
 import { isIngestBody, type PlanResponse } from "./core/ingest";
 import { OpenSkyClient } from "./core/opensky";
-import { initialSched, overBudget, planNext, PRUNE_EVERY_MS, recordUsage, replaceTile, type Sched } from "./core/sched";
+import { initialSched, overBudget, planNext, PRUNE_EVERY_MS, recordUsage, replaceTile, takeSearch, type Sched } from "./core/sched";
 import { AFTER_INGEST_MS, nextAlarmDelay, STUCK_MS } from "./core/wake";
-import { probeUpstreams } from "./probe";
 import { SqlStore } from "./sql-store";
 
 export interface Env {
@@ -29,11 +28,12 @@ export interface Env {
   OPENSKY_CLIENT_SECRET: string;
   /** Shared with the external poller; required for /api/_plan and /api/_ingest. */
   INGEST_SECRET?: string;
+  /** Per-visitor search limit (wrangler.jsonc "ratelimits"). */
+  SEARCH_LIMITER?: RateLimit;
 }
 
 /** Workers free plan allows 50 subrequests per invocation; leave headroom. */
 const REQUESTS_PER_TICK = 44;
-const SEARCHES_PER_MIN = 10;
 /** Poll OpenSky directly only when no external poller has asked for a plan for this long. */
 export const FALLBACK_AFTER_MS = 20 * 60_000;
 /** A poller catching up may take this many region boxes in one plan (~0.5 s each). */
@@ -46,8 +46,6 @@ export class SkyState extends DurableObject<Env> {
   private sched: Sched = initialSched();
   /** Whether the known set and its caches are loaded (only needed for work, not for reads). */
   private restored = false;
-  private searchHits = new Map<string, { minute: number; count: number }>();
-  private retired = false;
   /** Store counters already added to the daily tally. */
   private counted = { read: 0, written: 0 };
 
@@ -89,21 +87,8 @@ export class SkyState extends DurableObject<Env> {
     this.engine.restore();
   }
 
-  /** Reachability of every upstream from this object's data centre. */
-  async probe(): Promise<Record<string, string>> {
-    return probeUpstreams();
-  }
-
-  /** Stop polling for good and drop everything stored. For an instance that has been replaced. */
-  async retire(): Promise<void> {
-    await this.ctx.storage.deleteAlarm();
-    await this.ctx.storage.deleteAll();
-    this.retired = true;
-  }
-
   /** Make sure an alarm is pending, and replace one that is long overdue. Called by the cron. */
   async ensureRunning(): Promise<void> {
-    if (this.retired) return;
     const at = await this.ctx.storage.getAlarm();
     if (at == null || at < Date.now() - STUCK_MS) await this.ctx.storage.setAlarm(Date.now());
   }
@@ -139,7 +124,6 @@ export class SkyState extends DurableObject<Env> {
   }
 
   async alarm(): Promise<void> {
-    if (this.retired) return;
     const now = Date.now();
     const readsBefore = this.store.rowsRead;
     const s = this.sched;
@@ -250,8 +234,10 @@ export class SkyState extends DurableObject<Env> {
     }
 
     if (path === "/api/search") {
-      const ip = req.headers.get("cf-connecting-ip") ?? "local";
-      if (!this.allowSearch(ip)) return json({ error: "too many searches, try again in a minute" }, 429);
+      // Per-visitor limits are applied by the Worker in front (index.ts); this is the global cap.
+      if (overBudget(this.sched, Date.now()) || !takeSearch(this.sched, Date.now())) {
+        return json({ error: "search is resting until 00:00 UTC; the globe still updates" }, 429);
+      }
       const q = url.searchParams.get("q") ?? "";
       try {
         this.restore();
@@ -259,6 +245,8 @@ export class SkyState extends DurableObject<Env> {
         return f ? json(f) : json({ error: "no airborne flight matches", q }, 404);
       } catch (e) {
         return json({ error: (e as Error).message }, 502);
+      } finally {
+        await this.settle().catch(() => {});
       }
     }
 
@@ -276,16 +264,6 @@ export class SkyState extends DurableObject<Env> {
     return crypto.subtle.timingSafeEqual(a, b);
   }
 
-  private allowSearch(ip: string): boolean {
-    const minute = Math.floor(Date.now() / 60_000);
-    const e = this.searchHits.get(ip);
-    if (!e || e.minute !== minute) {
-      if (this.searchHits.size > 5000) this.searchHits.clear();
-      this.searchHits.set(ip, { minute, count: 1 });
-      return true;
-    }
-    return ++e.count <= SEARCHES_PER_MIN;
-  }
 }
 
 function nextUtcMidnight(now: number): number {
