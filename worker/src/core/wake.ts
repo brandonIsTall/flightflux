@@ -4,8 +4,15 @@
 
 /** While routes or weather are queued: drain a batch (≤ 44 requests) every 30 s. */
 export const DRAIN_MS = 30_000;
-/** Otherwise: refresh stale weather, rebuild, and check on the poller. */
-export const HEARTBEAT_MS = 15 * 60_000;
+/**
+ * Otherwise: start the GitHub poller if due, refresh stale weather, rebuild. Every 5 min, since
+ * this alarm is what starts the poller (a cold wake reads ~3 rows, so ~1k rows a day).
+ */
+export const HEARTBEAT_MS = 5 * 60_000;
+/** Start the GitHub poller this often... */
+export const DISPATCH_EVERY_MS = 5 * 60_000;
+/** ...unless a poller asked for a plan this recently (GitHub's own schedule, a manual run). */
+export const POLLER_FRESH_MS = 4 * 60_000;
 /** After an ingest, enrich and rebuild shortly, once the poller's burst of requests is done. */
 export const AFTER_INGEST_MS = 5_000;
 
@@ -17,6 +24,11 @@ export function nextAlarmDelay(queues: { routes: number; weather: number }, now 
   if (queues.weather > 0) return DRAIN_MS;
   if (queues.routes > 0) return Math.min(HEARTBEAT_MS, Math.max(DRAIN_MS, routesPausedUntil - now));
   return HEARTBEAT_MS;
+}
+
+/** Whether the alarm should start the GitHub poller now. */
+export function dispatchDue(now: number, lastDispatchAt: number, lastPlanAt: number): boolean {
+  return now - lastDispatchAt >= DISPATCH_EVERY_MS - 30_000 && now - lastPlanAt >= POLLER_FRESH_MS;
 }
 
 /** An alarm this far overdue never fired (e.g. it was dropped while storage was blocked). */

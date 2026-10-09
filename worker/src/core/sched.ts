@@ -23,6 +23,8 @@ export interface Sched {
   lastTileAt: number;
   /** When an external poller last asked for a plan; the object polls itself only when none does. */
   lastPlanAt: number;
+  /** When the alarm last asked GitHub to start the poller (src/dispatch.ts). */
+  lastDispatchAt?: number;
   /** When expired cache rows were last deleted (a full scan, so daily). */
   lastPruneAt: number;
   /** Storage layout version (2: WITHOUT ROWID cache tables). */
