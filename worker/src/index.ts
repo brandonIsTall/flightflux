@@ -1,6 +1,7 @@
 // Worker entry: forwards /api/* to the single SkyState Durable Object and keeps its loop running.
 
 import { normalizeQuery } from "./core/engine";
+import { dispatchPoll } from "./dispatch";
 import { SkyState, type Env } from "./sky-state";
 
 export { SkyState };
@@ -19,6 +20,9 @@ const isPollerPath = (p: string) => p === "/api/_plan" || p === "/api/_ingest";
  * why positions come from an external poller (core/ingest.ts). Kept so the stored state stays put.
  */
 const sky = (env: Env) => env.SKY.get(env.SKY.idFromName("global-weur"), { locationHint: "weur" });
+
+/** Must match the hourly cron in wrangler.jsonc. */
+const HOURLY = "0 * * * *";
 
 function json(body: unknown, status: number): Response {
   return new Response(JSON.stringify(body), { status, headers: { ...CORS, "Content-Type": "application/json; charset=utf-8" } });
@@ -58,8 +62,14 @@ export default {
     return res;
   },
 
-  // Cron safety net (hourly): replaces the alarm if it is missing or long overdue.
-  async scheduled(_event, env): Promise<void> {
-    await sky(env).ensureRunning();
+  // Two crons (wrangler.jsonc). Every 5 min: start the GitHub poller, without waking the Durable
+  // Object. Hourly: the safety net that replaces the object's alarm if it is missing or overdue.
+  async scheduled(event, env): Promise<void> {
+    if (event.cron === HOURLY) {
+      await sky(env).ensureRunning();
+      return;
+    }
+    const r = await dispatchPoll(env);
+    if (r !== "dispatched") console.log(`poll dispatch: ${r}`);
   },
 } satisfies ExportedHandler<Env>;

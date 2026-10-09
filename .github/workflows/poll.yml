@@ -1,11 +1,11 @@
 # Fetches flight positions from OpenSky and pushes them to the Worker, which cannot reach OpenSky
-# from Cloudflare's network. Each run asks the Worker what is due (/api/_plan), so the cadence here
+# from Cloudflare's network. Each run asks the Worker what is due (/api/_plan), so how often it runs
 # only sets freshness, never the OpenSky credit spend.
 #
-# Cost: a run bills as 1 minute. Every 5 min is ~8,600 min/month: free on a public repository, far
-# over the 2,000 free minutes of a private one (every 30 min, "*/30", fits a private repo; the
-# Worker then hands out more boxes per run). GitHub also pauses schedules on repositories with no
-# activity for 60 days.
+# Started every 5 minutes by the Worker through GitHub's API (worker/src/dispatch.ts): GitHub's own
+# `schedule:` trigger is best-effort and ran this every 3.5-7 hours. The schedule below stays as a
+# backup; overlapping runs queue (concurrency group) and the Worker never hands out work twice.
+# A run takes ~35 s and bills as 1 minute (free on a public repository).
 #
 # Secrets (Settings -> Secrets and variables -> Actions): OPENSKY_CLIENT_ID, OPENSKY_CLIENT_SECRET,
 # INGEST_SECRET (same value as the Worker's). Variable: FLIGHTFLUX_API (the Worker origin).

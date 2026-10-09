@@ -4,5 +4,5 @@
     "lib": ["ES2023"],
     "types": ["@cloudflare/workers-types", "node"]
   },
-  "include": ["src", "test", "scripts", "../shared", "../netlify/functions"]
+  "include": ["src", "test", "scripts", "../shared"]
 }
