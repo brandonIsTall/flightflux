@@ -40,7 +40,7 @@ export const initialSched = (): Sched => ({
   lastPlanAt: 0,
   lastPruneAt: 0,
   schema: 0,
-  usage: { day: "", read: 0, written: 0 },
+  usage: { day: "", read: 0, written: 0, searches: 0 },
   tileIdx: 0,
   sweeps: 0,
   tiles: INITIAL_TILES,
@@ -113,12 +113,17 @@ export interface Usage {
   day: string;
   read: number;
   written: number;
+  /** Searches answered today: each can cost an adsbdb lookup, an Open-Meteo call and a few writes. */
+  searches?: number;
 }
+
+/** Searches per UTC day across all visitors. The Worker also limits each visitor (wrangler.jsonc). */
+export const SEARCH_BUDGET = 1_000;
 
 /** Add rows to today's tally, starting a new one at UTC midnight. */
 export function recordUsage(s: Sched, now: number, read: number, written: number) {
   const day = new Date(now).toISOString().slice(0, 10);
-  if (!s.usage || s.usage.day !== day) s.usage = { day, read: 0, written: 0 };
+  if (!s.usage || s.usage.day !== day) s.usage = { day, read: 0, written: 0, searches: 0 };
   s.usage.read += read;
   s.usage.written += written;
 }
@@ -130,4 +135,12 @@ export function recordUsage(s: Sched, now: number, read: number, written: number
 export function overBudget(s: Sched, now: number): boolean {
   const day = new Date(now).toISOString().slice(0, 10);
   return !!s.usage && s.usage.day === day && (s.usage.read >= READ_BUDGET || s.usage.written >= WRITE_BUDGET);
+}
+
+/** Count a search against today's cap. False when the cap is reached (the search is refused). */
+export function takeSearch(s: Sched, now: number): boolean {
+  recordUsage(s, now, 0, 0);
+  if ((s.usage.searches ?? 0) >= SEARCH_BUDGET) return false;
+  s.usage.searches = (s.usage.searches ?? 0) + 1;
+  return true;
 }

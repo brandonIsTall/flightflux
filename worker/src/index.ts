@@ -1,6 +1,6 @@
 // Worker entry: forwards /api/* to the single SkyState Durable Object and keeps its loop running.
 
-import { probeUpstreams } from "./probe";
+import { normalizeQuery } from "./core/engine";
 import { SkyState, type Env } from "./sky-state";
 
 export { SkyState };
@@ -19,8 +19,10 @@ const isPollerPath = (p: string) => p === "/api/_plan" || p === "/api/_ingest";
  * why positions come from an external poller (core/ingest.ts). Kept so the stored state stays put.
  */
 const sky = (env: Env) => env.SKY.get(env.SKY.idFromName("global-weur"), { locationHint: "weur" });
-/** The first instance, created in Ashburn before the hint existed. Retired once; kept so it can be again. */
-const legacySky = (env: Env) => env.SKY.get(env.SKY.idFromName("global"));
+
+function json(body: unknown, status: number): Response {
+  return new Response(JSON.stringify(body), { status, headers: { ...CORS, "Content-Type": "application/json; charset=utf-8" } });
+}
 
 export default {
   async fetch(req, env, ctx): Promise<Response> {
@@ -31,16 +33,14 @@ export default {
     }
     if (isPollerPath(url.pathname)) return sky(env).fetch(req);
 
-    // Diagnostic: can this Worker (or the poller's Durable Object, with ?do=1) reach each upstream?
-    if (url.pathname === "/api/_probe") {
-      const body = url.searchParams.has("do") ? await sky(env).probe() : await probeUpstreams();
-      return new Response(JSON.stringify(body, null, 1), { headers: { ...CORS, "Content-Type": "application/json" } });
-    }
-
-    // One-off housekeeping: stop the retired instance's alarm loop. Unlisted; harmless to repeat.
-    if (url.pathname === "/api/_retire-legacy") {
-      await legacySky(env).retire();
-      return new Response("retired", { headers: CORS });
+    // Search: reject what can't be a flight number before waking the object, and limit each
+    // visitor (10 a minute per data centre; see wrangler.jsonc). The object enforces a daily cap.
+    if (url.pathname === "/api/search") {
+      if (!normalizeQuery(url.searchParams.get("q") ?? "")) return json({ error: "expected a flight number like BA117" }, 400);
+      const ip = req.headers.get("cf-connecting-ip") ?? "unknown";
+      if (env.SEARCH_LIMITER && !(await env.SEARCH_LIMITER.limit({ key: ip })).success) {
+        return json({ error: "too many searches, try again in a minute" }, 429);
+      }
     }
 
     // The snapshot is identical for everyone: serve it from the edge cache when we can.

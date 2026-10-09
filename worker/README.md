@@ -10,7 +10,7 @@ cannot reach OpenSky (`docs/PLAN.md` §1). Design: `docs/PLAN.md` §1-§4.
 |---|---|
 | `GET /api/snapshot` | `Snapshot`: up to 150 curated flights with positions, routes, departure/arrival temps. Edge-cached 60 s. |
 | `GET /api/flight/:id` | `FlightDetail`: one flight plus aircraft type, registration and photo. `:id` is a flight id or icao24. |
-| `GET /api/search?q=BA117` | `Flight` for any airborne flight by flight number or callsign. 10 searches/min per IP. |
+| `GET /api/search?q=BA117` | `Flight` for any airborne flight by flight number or callsign. Malformed queries get 400 without waking the object; 10 searches a minute per visitor IP (Workers rate-limit binding); 1,000 a day in total (tallied in the object). |
 | `GET /api/_plan` | Poller only (bearer `INGEST_SECRET`): the tracked icao24s if due, and the region boxes due now. Marks them issued. `?restart` begins a fresh sweep at first-sweep pace. |
 | `POST /api/_ingest` | Poller only: one OpenSky response, pre-filtered compact rows (`src/core/ingest.ts`). |
 
