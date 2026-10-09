@@ -19,7 +19,7 @@ import { Engine } from "./core/engine";
 import { isIngestBody, type PlanResponse } from "./core/ingest";
 import { OpenSkyClient } from "./core/opensky";
 import { initialSched, overBudget, planNext, PRUNE_EVERY_MS, recordUsage, replaceTile, takeSearch, type Sched } from "./core/sched";
-import { AFTER_INGEST_MS, dispatchDue, nextAlarmDelay, STUCK_MS } from "./core/wake";
+import { AFTER_INGEST_MS, dispatchDue, nextAlarmDelay, STUCK_MS, untilDispatch } from "./core/wake";
 import { dispatchPoll } from "./dispatch";
 import { SqlStore } from "./sql-store";
 
@@ -199,7 +199,11 @@ export class SkyState extends DurableObject<Env> {
     } finally {
       await this.settle(now).catch(() => {});
       // Always leave an alarm behind, so an exception can't stop the loop.
-      await this.ctx.storage.setAlarm(Date.now() + nextAlarmDelay(queues, Date.now(), this.engine.routesPausedUntil()));
+      const t = Date.now();
+      let delay = nextAlarmDelay(queues, t, this.engine.routesPausedUntil());
+      // Wake exactly when the next poller start is due, not up to an alarm-interval later.
+      if (this.env.GITHUB_DISPATCH_TOKEN) delay = Math.min(delay, untilDispatch(t, s.lastDispatchAt ?? 0, s.lastPlanAt ?? 0));
+      await this.ctx.storage.setAlarm(t + delay);
     }
   }
 
