@@ -28,4 +28,6 @@ const r = await runPoll({
   concurrency: 4,
   log: console.log,
 });
+// Over the Worker's daily storage budget is a planned pause, not a failure: note it, exit 0.
+if (r.resting) console.log("::notice::Worker is over its daily storage budget; polling resumes at 00:00 UTC.");
 if (r.failed > 0 && r.fetched === 0) process.exit(1);

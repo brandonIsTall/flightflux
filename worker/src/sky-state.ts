@@ -16,7 +16,7 @@ import { DurableObject } from "cloudflare:workers";
 import type { Snapshot } from "../../shared/types";
 import { AdsbdbClient } from "./core/adsbdb";
 import { Engine } from "./core/engine";
-import { isIngestBody, type PlanResponse } from "./core/ingest";
+import { isIngestBody, RESTING, type PlanResponse } from "./core/ingest";
 import { OpenSkyClient } from "./core/opensky";
 import { initialSched, overBudget, planNext, PRUNE_EVERY_MS, recordUsage, replaceTile, takeSearch, type Sched } from "./core/sched";
 import { AFTER_INGEST_MS, dispatchDue, nextAlarmDelay, STUCK_MS, untilDispatch } from "./core/wake";
@@ -213,11 +213,12 @@ export class SkyState extends DurableObject<Env> {
 
     if (path === "/api/_plan" || path === "/api/_ingest") {
       if (!(await this.authorized(req))) return json({ error: "unauthorized" }, 401);
+      // Refuse the plan too, so a poller doesn't spend OpenSky credits on positions we'd refuse.
+      if (overBudget(this.sched, Date.now())) return json(RESTING, 503);
       if (path === "/api/_plan") return json(await this.plan(url.searchParams.has("restart")));
       if (req.method !== "POST") return json({ error: "POST" }, 405);
       const body: unknown = await req.json().catch(() => null);
       if (!isIngestBody(body)) return json({ error: "bad body" }, 400);
-      if (overBudget(this.sched, Date.now())) return json({ error: "daily storage budget reached; resumes at 00:00 UTC" }, 503);
       const readsBefore = this.store.rowsRead;
       this.restore();
       const { aircraft, next } = this.engine.ingest(body);

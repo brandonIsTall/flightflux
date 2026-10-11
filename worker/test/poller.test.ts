@@ -1,21 +1,24 @@
 import { describe, expect, it } from "vitest";
 import type { Bbox } from "../src/core/opensky";
+import { RESTING } from "../src/core/ingest";
 import { requireEnv, runPoll } from "../src/poller";
 
 const TILES: Bbox[] = Array.from({ length: 10 }, (_, i) => [0, i * 10, 10, i * 10 + 10]);
 
 /** Fake Worker + OpenSky. `delayMs` slows each OpenSky call; `failBox` makes one box fail. */
-function fakeUpstreams(opts: { delayMs?: number; failBox?: number; tracked?: string[] | null; openskyDown?: boolean } = {}) {
+function fakeUpstreams(opts: { delayMs?: number; failBox?: number; tracked?: string[] | null; openskyDown?: boolean; restingAt?: "plan" | number } = {}) {
   const seen = { plan: [] as string[], ingested: [] as unknown[], inFlight: 0, maxInFlight: 0, auth: [] as string[] };
   const json = (b: unknown, status = 200, headers: Record<string, string> = {}) => new Response(JSON.stringify(b), { status, headers });
   const fetchFn = (async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input);
     if (url.includes("/api/_plan")) {
       seen.plan.push(url);
+      if (opts.restingAt === "plan") return json(RESTING, 503);
       seen.auth.push(new Headers(init?.headers).get("authorization") ?? "");
       return json({ tracked: opts.tracked === undefined ? ["abc123"] : opts.tracked, tiles: TILES, creditsRemaining: 3900 });
     }
     if (url.includes("/api/_ingest")) {
+      if (typeof opts.restingAt === "number" && seen.ingested.length >= opts.restingAt) return json(RESTING, 503);
       seen.ingested.push(JSON.parse(String(init?.body)));
       return json({ ok: true, known: seen.ingested.length });
     }
@@ -69,6 +72,32 @@ describe("runPoll", () => {
     expect(seen.ingested).toEqual([]);
     expect(r).toMatchObject({ failed: 1, fetched: 0, boxes: 0 });
     expect(lines[0]).toMatch(/opensky unreachable from this host \(fetch failed\)/);
+  });
+
+  it("rests, without fetching from OpenSky, when the Worker refuses the plan over its budget", async () => {
+    const { seen, fetchFn } = fakeUpstreams({ restingAt: "plan" });
+    const lines: string[] = [];
+    const r = await runPoll({ ...base, fetchFn, log: (l) => lines.push(l) });
+    expect(r).toMatchObject({ resting: true, failed: 0, fetched: 0, boxes: 0 });
+    expect(seen.maxInFlight).toBe(0);
+    expect(lines.at(-1)).toMatch(/worker resting/);
+  });
+
+  it("stops fetching boxes once the Worker starts refusing ingests mid-run", async () => {
+    const { seen, fetchFn } = fakeUpstreams({ restingAt: 3 });
+    const r = await runPoll({ ...base, fetchFn, concurrency: 1 });
+    expect(r).toMatchObject({ resting: true, fetched: 3, failed: 0 });
+    expect(seen.ingested).toHaveLength(3);
+  });
+
+  it("still fails loudly on any other Worker error", async () => {
+    const fetchFn = (async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/token")) return new Response(JSON.stringify({ access_token: "t", expires_in: 1800 }));
+      if (url.includes("/states/all")) return new Response(JSON.stringify({ time: 1, states: [] }));
+      return new Response("boom", { status: 503 });
+    }) as typeof fetch;
+    await expect(runPoll({ ...base, fetchFn })).rejects.toThrow("/api/_plan: 503 boom");
   });
 
   it("asks for a restarted sweep when told to", async () => {
