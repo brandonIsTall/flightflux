@@ -3,8 +3,8 @@
 // (scripts/poll-once.ts). OpenSky refuses Cloudflare's and AWS's networks, so not from a Worker
 // or Netlify; it accepts GitHub's runners and home connections.
 
-import { prefilter, type IngestBody, type PlanResponse } from "./core/ingest";
-import { OpenSkyClient, type RawStatesResult, type StatesFilter } from "./core/opensky";
+import { prefilter, RESTING, type IngestBody, type PlanResponse } from "./core/ingest";
+import { OpenSkyClient, type Bbox, type RawStatesResult, type StatesFilter } from "./core/opensky";
 
 export interface PollConfig {
   /** Worker origin, e.g. https://flightflux-api.example.workers.dev */
@@ -31,8 +31,13 @@ export interface PollResult {
   skipped: number;
   known: number | null;
   credits: number | null;
+  /** The Worker is over its daily storage budget and refused work until 00:00 UTC. Not a failure. */
+  resting: boolean;
   ms: number;
 }
+
+/** The Worker answered with RESTING (core/ingest.ts): it takes no positions until 00:00 UTC. */
+class RestingError extends Error {}
 
 /** Trim and require one setting: values pasted into a dashboard often carry stray whitespace. */
 export function requireEnv(env: Record<string, string | undefined>, key: string): string {
@@ -48,13 +53,21 @@ export async function runPoll(c: PollConfig): Promise<PollResult> {
   const api = c.api.replace(/\/$/, "");
   const headers = { Authorization: `Bearer ${c.ingestSecret}`, "Content-Type": "application/json" };
   const opensky = new OpenSkyClient(c.openskyClientId, c.openskyClientSecret, fetchFn);
-  const result: PollResult = { tracked: null, boxes: 0, fetched: 0, failed: 0, skipped: 0, known: null, credits: null, ms: 0 };
+  const result: PollResult = { tracked: null, boxes: 0, fetched: 0, failed: 0, skipped: 0, known: null, credits: null, resting: false, ms: 0 };
 
   const call = async <T>(path: string, init?: RequestInit): Promise<T> => {
     const res = await fetchFn(`${api}${path}`, { ...init, headers: { ...headers, ...init?.headers } });
-    if (!res.ok) throw new Error(`${path}: ${res.status} ${(await res.text()).slice(0, 200)}`);
+    if (!res.ok) {
+      const text = await res.text();
+      // Matched on the message too, for a Worker deployed before the `resting` flag.
+      if (res.status === 503 && (text.includes('"resting":true') || text.includes(RESTING.error))) throw new RestingError(RESTING.error);
+      throw new Error(`${path}: ${res.status} ${text.slice(0, 200)}`);
+    }
     return (await res.json()) as T;
   };
+
+  // Region boxes still to fetch; emptied early if the Worker starts resting.
+  const queue: Bbox[] = [];
 
   const forward = async (filter: StatesFilter, label: string) => {
     const t = Date.now();
@@ -73,7 +86,17 @@ export async function runPoll(c: PollConfig): Promise<PollResult> {
       total: r.rows.length,
       ...("bbox" in filter ? { tile: filter.bbox } : {}),
     };
-    const ack = await call<{ known: number }>("/api/_ingest", { method: "POST", body: JSON.stringify(body) });
+    let ack: { known: number };
+    try {
+      ack = await call<{ known: number }>("/api/_ingest", { method: "POST", body: JSON.stringify(body) });
+    } catch (e) {
+      if (!(e instanceof RestingError)) throw e;
+      // The budget ran out mid-run: fetch nothing more that would be refused.
+      if (!result.resting) log(`worker resting: ${e.message}; stopping`);
+      result.resting = true;
+      queue.length = 0;
+      return;
+    }
     result.fetched++;
     result.known = ack.known;
     result.credits = r.creditsRemaining ?? result.credits;
@@ -94,7 +117,16 @@ export async function runPoll(c: PollConfig): Promise<PollResult> {
     return result;
   }
 
-  const plan = await call<PlanResponse>(c.restart ? "/api/_plan?restart" : "/api/_plan");
+  let plan: PlanResponse;
+  try {
+    plan = await call<PlanResponse>(c.restart ? "/api/_plan?restart" : "/api/_plan");
+  } catch (e) {
+    if (!(e instanceof RestingError)) throw e;
+    result.resting = true;
+    result.ms = Date.now() - t0;
+    log(`worker resting: ${e.message}; nothing to fetch`);
+    return result;
+  }
   result.tracked = plan.tracked?.length ?? null;
   result.boxes = plan.tiles.length;
   result.credits = plan.creditsRemaining;
@@ -104,7 +136,7 @@ export async function runPoll(c: PollConfig): Promise<PollResult> {
 
   // A long gap earns a full sweep (~30 boxes): fetch a few at once, and stop starting new ones
   // at the deadline rather than be cut off mid-request by the host.
-  const queue = [...plan.tiles];
+  if (!result.resting) queue.push(...plan.tiles);
   const deadline = t0 + (c.deadlineMs ?? Infinity);
   const worker = async () => {
     for (let tile = queue.shift(); tile; tile = queue.shift()) {

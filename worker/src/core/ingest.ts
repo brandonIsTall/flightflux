@@ -13,6 +13,12 @@ import { MIN_CANDIDATE_ALT_M, MIN_CANDIDATE_GS_MS } from "./engine";
 import type { Bbox, RawState } from "./opensky";
 import { parseState } from "./opensky";
 
+/**
+ * What /api/_plan and /api/_ingest answer (with 503) while the Durable Object is over its daily
+ * storage budget. A poller treats it as "resting until 00:00 UTC", not as a failure.
+ */
+export const RESTING = { error: "daily storage budget reached; resumes at 00:00 UTC", resting: true } as const;
+
 export interface PlanResponse {
   /** icao24s whose positions are due, or null when the tracked set isn't due yet. */
   tracked: string[] | null;
