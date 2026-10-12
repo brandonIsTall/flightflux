@@ -52,9 +52,21 @@ export function TopBar({ flights }: { flights: Flight[] }) {
 
   return (
     <header className="pointer-events-auto flex h-16 items-center justify-between gap-4 px-4 sm:px-6">
-      <a href="/" className="focus-ring shrink-0 rounded-sm text-[15px] font-medium tracking-tight text-ink-1">
-        Flight Flux
-      </a>
+      {/* The menu opens the flight list, which slides in on this side. */}
+      <div className="flex shrink-0 items-center gap-3">
+        <button
+          type="button"
+          onClick={() => setSheet(sheet === "list" ? "none" : "list")}
+          aria-label="All flights"
+          aria-expanded={sheet === "list"}
+          className="pill focus-ring flex h-9 w-9 items-center justify-center text-ink-2 hover:text-ink-1"
+        >
+          <List size={18} weight="light" aria-hidden />
+        </button>
+        <a href="/" className="focus-ring rounded-sm text-[15px] font-medium tracking-tight text-ink-1">
+          Flight Flux
+        </a>
+      </div>
 
       <form onSubmit={submit} className="relative hidden w-full max-w-sm sm:block" role="search">
         <MagnifyingGlass
@@ -108,15 +120,6 @@ export function TopBar({ flights }: { flights: Flight[] }) {
           </button>
         ))}
       </div>
-        <button
-          type="button"
-          onClick={() => setSheet(sheet === "list" ? "none" : "list")}
-          aria-label="All flights"
-          aria-expanded={sheet === "list"}
-          className="pill focus-ring flex h-9 w-9 items-center justify-center text-ink-2 hover:text-ink-1"
-        >
-          <List size={18} weight="light" aria-hidden />
-        </button>
       </div>
     </header>
   );
