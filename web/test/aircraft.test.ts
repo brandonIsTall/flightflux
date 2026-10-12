@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { aircraftClass } from "../src/lib/aircraft";
+import { aircraftClass, aircraftName } from "../src/lib/aircraft";
 
 describe("aircraft silhouette class", () => {
   it("picks the outline from the ICAO type", () => {
@@ -12,5 +12,16 @@ describe("aircraft silhouette class", () => {
   it("draws an unknown type as a wide-body twin", () => {
     expect(aircraftClass(null)).toBe("wide2");
     expect(aircraftClass("ZZZZ")).toBe("wide2");
+  });
+});
+
+describe("aircraft name", () => {
+  it("reads common designators, passes unknown ones through, and hides a missing one", () => {
+    expect(aircraftName("B789")).toBe("787-9");
+    expect(aircraftName("a21n")).toBe("A321neo");
+    expect(aircraftName("B77W")).toBe("777-300ER");
+    expect(aircraftName("ZZZZ")).toBe("ZZZZ");
+    expect(aircraftName(null)).toBeNull();
+    expect(aircraftName("  ")).toBeNull();
   });
 });

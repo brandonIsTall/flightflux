@@ -4,6 +4,7 @@ import { AnimatePresence, motion, useMotionValue, useSpring } from "motion/react
 import { useEffect, useState } from "react";
 import type { Flight } from "../../../shared/types";
 import { progressAt, tempAtProgress } from "../data/snapshot";
+import { aircraftName } from "../lib/aircraft";
 import { tempToCss } from "../lib/color";
 import { formatDelta, formatLocalTime, formatTemp } from "../lib/format";
 import { flightGradientCss } from "../lib/gradient";
@@ -74,11 +75,13 @@ export function Tooltip({ flights }: { flights: Flight[] }) {
 
 function TooltipBody({ flight: f, nowS, units }: { flight: Flight; nowS: number; units: Units }) {
   const p = progressAt(f, nowS);
+  const type = aircraftName(f.aircraftType);
   return (
     <>
       <div className="flex items-baseline gap-2 text-[13px]">
         <span className="num font-medium text-ink-1">{f.flightNo ?? f.callsign}</span>
         <span className="truncate text-ink-2">{f.airline?.name ?? f.callsign}</span>
+        {type && <span className="num ml-auto shrink-0 text-[12px] text-ink-2">{type}</span>}
       </div>
       <div className="mt-2 flex items-center justify-between gap-3">
         <Endpoint temp={f.depTempC} code={f.origin.iata ?? f.origin.icao} city={f.origin.city} units={units} />

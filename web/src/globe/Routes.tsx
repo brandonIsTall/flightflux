@@ -153,6 +153,9 @@ const Route = memo(function Route({ f, nowS, focus }: { f: Flight; nowS: number;
         transparent
         opacity={aheadOpacity}
         depthWrite={false}
+        // After the earth (renderOrder 1) and coastlines (2): without depthWrite, a line drawn
+        // before the translucent earth was painted over by it and never showed.
+        renderOrder={3}
         toneMapped={false}
         {...handlers}
       />
