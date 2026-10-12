@@ -18,7 +18,7 @@ import { distanceKm, interpolate, trackOffsets } from "./geo";
 import { globalFetch } from "./http";
 import type { IngestBody } from "./ingest";
 import { OpenSkyClient, parseState, toRaw, type Bbox, type RawState, type StateVector, type StatesResult } from "./opensky";
-import { ROUTE_TTL_S, type RouteEntry, type Store } from "./store";
+import { routeExpired, type RouteEntry, type Store } from "./store";
 import { SPLIT_AT, splitTile } from "./tiles";
 import { estimateDeparture, estimateEta, utcDay } from "./timing";
 import { fetchTempSeries, tempAt, WEATHER_TTL_S, type LatLonKey, type TempSeries } from "./weather";
@@ -436,7 +436,7 @@ export class Engine {
     for (const k of this.known.values()) {
       const cs = k.s.callsign;
       const entry = store.getRoute(cs);
-      if (!entry || nowS - entry.at > ROUTE_TTL_S) {
+      if (!entry || routeExpired(entry, nowS)) {
         this.routeQueue.set(cs, k.s.velocityMs ?? 0);
         continue;
       }

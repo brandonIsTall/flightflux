@@ -18,8 +18,8 @@ import { AdsbdbClient } from "./core/adsbdb";
 import { Engine } from "./core/engine";
 import { isIngestBody, RESTING, type PlanResponse } from "./core/ingest";
 import { OpenSkyClient } from "./core/opensky";
-import { initialSched, overBudget, planNext, PRUNE_EVERY_MS, recordUsage, replaceTile, takeSearch, type Sched } from "./core/sched";
-import { AFTER_INGEST_MS, dispatchDue, nextAlarmDelay, STUCK_MS, untilDispatch } from "./core/wake";
+import { aheadOfWritePace, initialSched, overBudget, planNext, PRUNE_EVERY_MS, recordUsage, replaceTile, takeSearch, type Sched } from "./core/sched";
+import { AFTER_INGEST_MS, dispatchDue, HEARTBEAT_MS, nextAlarmDelay, STUCK_MS, untilDispatch } from "./core/wake";
 import { dispatchPoll } from "./dispatch";
 import { SqlStore } from "./sql-store";
 
@@ -184,15 +184,17 @@ export class SkyState extends DurableObject<Env> {
       console.error(`${step} failed: ${(e as Error).message}`);
     }
     let queues = this.engine.queueSizes();
+    // Each route or weather lookup writes a row: past today's even pace, look nothing up this time.
+    const paced = aheadOfWritePace(s, now);
     try {
-      const stats = await this.engine.enrich({ requests: budget });
+      const stats = await this.engine.enrich({ requests: paced ? 0 : budget });
       const snap = this.engine.rebuild(Date.now() - now);
       this.store.putBlob(SNAPSHOT_BLOB, JSON.stringify(snap));
       // Keep the saved routes and weather current, so the next cold restore needn't look them up.
       const docBytes = stats.routeLookups > 0 || stats.weatherAirports > 0 ? this.engine.saveKnown() : undefined;
       queues = this.engine.queueSizes();
       console.log(
-        JSON.stringify({ step, flights: snap.flights.length, known: snap.meta.known, ...stats, queues, rowsRead: this.store.rowsRead - readsBefore, docBytes, usage: s.usage }),
+        JSON.stringify({ step, paced, flights: snap.flights.length, known: snap.meta.known, ...stats, queues, rowsRead: this.store.rowsRead - readsBefore, docBytes, usage: s.usage }),
       );
     } catch (e) {
       console.error(`enrich failed: ${(e as Error).message}`);
@@ -200,7 +202,8 @@ export class SkyState extends DurableObject<Env> {
       await this.settle(now).catch(() => {});
       // Always leave an alarm behind, so an exception can't stop the loop.
       const t = Date.now();
-      let delay = nextAlarmDelay(queues, t, this.engine.routesPausedUntil());
+      // While paced, a queue is no reason to wake every 30 s: each wake writes a few rows itself.
+      let delay = paced ? HEARTBEAT_MS : nextAlarmDelay(queues, t, this.engine.routesPausedUntil());
       // Wake exactly when the next poller start is due, not up to an alarm-interval later.
       if (this.env.GITHUB_DISPATCH_TOKEN) delay = Math.min(delay, untilDispatch(t, s.lastDispatchAt ?? 0, s.lastPlanAt ?? 0));
       await this.ctx.storage.setAlarm(t + delay);

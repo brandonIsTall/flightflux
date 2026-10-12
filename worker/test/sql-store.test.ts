@@ -33,6 +33,20 @@ describe("SqlStore", () => {
     expect(indexes.filter((i) => i.tbl_name !== "blobs")).toEqual([]);
   });
 
+  it("keeps a day of routes in memory and reads older ones back from SQLite", () => {
+    const f = fakeSql();
+    const s = new SqlStore(f.sql);
+    const old = { route: null, at: T - 2 * 24 * 3600 };
+    s.putRoute("OLD1", old);
+    s.putRoute("NEW1", entry(T));
+    s.prune(T);
+    expect(s.routes.has("OLD1")).toBe(false);
+    expect(s.routes.has("NEW1")).toBe(true);
+    const before = s.rowsRead;
+    expect(s.getRoute("OLD1")).toEqual(old); // still in SQLite: one row read, no lookup
+    expect(s.rowsRead).toBe(before + 1);
+  });
+
   it("expires rows only when asked, in one statement per table", () => {
     const f = fakeSql();
     const s = new SqlStore(f.sql);

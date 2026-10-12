@@ -194,6 +194,19 @@ describe("Engine", () => {
     expect(engine.rebuild().flights.map((f) => f.callsign)).toEqual(["DAL77"]);
   });
 
+  it("keeps a found route for a week but retries a miss after a day", async () => {
+    const world = fakeWorld();
+    world.states = [sv("aa9300", "UAL880", interpolate(IAH, LHR, 0.4), 11000), sv("aa9301", "DAL77", interpolate(IAH, LHR, 0.5), 11000)];
+    const { engine, store } = makeEngine(world);
+    await warm(engine);
+    expect(engine.queueSizes().routes).toBe(0);
+    // Both looked up two days ago: only the miss is due again.
+    const twoDaysAgo = T0 - 2 * 24 * 3600;
+    for (const cs of ["UAL880", "DAL77"]) store.putRoute(cs, { ...store.getRoute(cs)!, at: twoDaysAgo });
+    engine.rebuild();
+    expect(engine.queueSizes().routes).toBe(1);
+  });
+
   it("never jumps between a raw fix and its route projection", async () => {
     const world = fakeWorld();
     const offTrack = { ...interpolate(IAH, LHR, 0.4), lat: interpolate(IAH, LHR, 0.4).lat + 1.5 }; // ~170 km off

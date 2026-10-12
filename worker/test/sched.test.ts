@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { FIRST_SWEEP_TILE_MS, initialSched, overBudget, planNext, READ_BUDGET, recordUsage, replaceTile, SEARCH_BUDGET, SWEEP_MS, takeSearch, TRACK_INTERVAL_MS, WRITE_BUDGET } from "../src/core/sched";
+import { aheadOfWritePace, FIRST_SWEEP_TILE_MS, PACE_HEADROOM, initialSched, overBudget, planNext, READ_BUDGET, recordUsage, replaceTile, SEARCH_BUDGET, SWEEP_MS, takeSearch, TRACK_INTERVAL_MS, WRITE_BUDGET } from "../src/core/sched";
 import { INITIAL_TILES } from "../src/core/tiles";
 
 const T = 1_791_080_000_000;
@@ -103,6 +103,22 @@ describe("daily storage budget", () => {
     const w = initialSched();
     recordUsage(w, noon, 0, WRITE_BUDGET);
     expect(overBudget(w, noon)).toBe(true);
+  });
+
+  it("paces writes evenly over the UTC day, after some headroom for the morning catch-up", () => {
+    const midnight = Date.UTC(2026, 9, 6);
+    const s = initialSched();
+    expect(aheadOfWritePace(s, midnight + 60_000)).toBe(false);
+    recordUsage(s, midnight + 60_000, 0, PACE_HEADROOM - 100);
+    expect(aheadOfWritePace(s, midnight + 60_000)).toBe(false);
+    recordUsage(s, midnight + 60_000, 0, 200);
+    expect(aheadOfWritePace(s, midnight + 60_000)).toBe(true);
+    // By noon the pace allows half the rest of the budget.
+    expect(aheadOfWritePace(s, noon)).toBe(false);
+    recordUsage(s, noon, 0, (WRITE_BUDGET - PACE_HEADROOM) / 2);
+    expect(aheadOfWritePace(s, noon)).toBe(true);
+    // A new day starts a new tally.
+    expect(aheadOfWritePace(s, midnight + 86_400_000 + 60_000)).toBe(false);
   });
 
   it("works with scheduler state saved before the tally existed", () => {
