@@ -13,8 +13,12 @@ import { beats, useBoot } from "../boot";
 import { useStore } from "../store";
 
 const SEGMENTS = 64;
-/** The part of the route still ahead: the same gradient at this opacity. */
-const AHEAD_OPACITY = 0.55;
+/**
+ * The part of the route still ahead: the same gradient at this opacity. A thin anti-aliased line
+ * reads brighter than its opacity: measured on screen, 0.55 came out at 75% of the flown part's
+ * contrast and 0.25 at 50%, the first clearly different step.
+ */
+const AHEAD_OPACITY = 0.25;
 /** While another flight is focused, the part ahead fades less than the flown part so it survives. */
 const AHEAD_UNFOCUSED = 0.5;
 /** Non-hovered lines drop to this while something is hovered. */
