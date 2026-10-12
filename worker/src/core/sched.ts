@@ -139,6 +139,21 @@ export function overBudget(s: Sched, now: number): boolean {
   return !!s.usage && s.usage.day === day && (s.usage.read >= READ_BUDGET || s.usage.written >= WRITE_BUDGET);
 }
 
+/** Writes a day may start with before pacing applies: room for the post-midnight catch-up. */
+export const PACE_HEADROOM = 5_000;
+
+/**
+ * Ahead of an even spread of WRITE_BUDGET over the UTC day (plus PACE_HEADROOM): skip optional
+ * lookups for now, so a busy day fills routes in later instead of hitting the cap and freezing
+ * the globe until midnight.
+ */
+export function aheadOfWritePace(s: Sched, now: number): boolean {
+  const day = new Date(now).toISOString().slice(0, 10);
+  if (!s.usage || s.usage.day !== day) return false;
+  const dayFraction = (now % 86_400_000) / 86_400_000;
+  return s.usage.written >= PACE_HEADROOM + (WRITE_BUDGET - PACE_HEADROOM) * dayFraction;
+}
+
 /** Count a search against today's cap. False when the cap is reached (the search is refused). */
 export function takeSearch(s: Sched, now: number): boolean {
   recordUsage(s, now, 0, 0);

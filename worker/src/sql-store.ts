@@ -15,6 +15,8 @@ import { MemoryStore, ROUTE_TTL_S, WEATHER_KEEP_S, type RouteEntry } from "./cor
 import type { TempSeries } from "./core/weather";
 
 const ROUTES = "route_cache";
+/** Routes looked up longer ago than this are dropped from memory (not from SQLite). */
+const MEMORY_ROUTE_S = 24 * 3600;
 const WEATHER = "weather_cache";
 
 export class SqlStore extends MemoryStore {
@@ -114,9 +116,18 @@ export class SqlStore extends MemoryStore {
     }
   }
 
-  /** Expiry: memory only. Storage is pruned by pruneStorage(), once a day. */
+  /**
+   * Expiry: memory only. Storage is pruned by pruneStorage(), once a day. Memory keeps a day of
+   * routes (a week of them would outgrow the object's 128 MB); older ones stay in SQLite and are
+   * read back on demand, one row each.
+   */
   override prune(nowS: number) {
     super.prune(nowS);
+    for (const [k, e] of this.routes) {
+      if (nowS - e.at <= MEMORY_ROUTE_S) continue;
+      this.routes.delete(k);
+      this.routeLooked.delete(k);
+    }
   }
 
   /** Delete expired rows: one scan of each table, so call it daily, not per wake. */

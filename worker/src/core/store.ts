@@ -38,7 +38,18 @@ export interface Store {
   prune(nowS: number): void;
 }
 
-export const ROUTE_TTL_S = 24 * 3600;
+/**
+ * A found route is kept a week: a flight number flies the same route for weeks or months, and
+ * every lookup costs a row written. At 24 h, each daily flight was looked up again every day.
+ */
+export const ROUTE_TTL_S = 7 * 24 * 3600;
+/** A miss (adsbdb doesn't know the callsign) is retried sooner, in case it learns the route. */
+export const ROUTE_MISS_TTL_S = 24 * 3600;
+
+/** Whether a cached route is due to be looked up again. */
+export function routeExpired(e: RouteEntry, nowS: number): boolean {
+  return nowS - e.at > (e.route ? ROUTE_TTL_S : ROUTE_MISS_TTL_S);
+}
 export const DEP_TTL_S = 20 * 3600;
 export const WEATHER_KEEP_S = 6 * 3600;
 
