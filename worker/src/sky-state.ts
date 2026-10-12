@@ -1,7 +1,6 @@
 // One Durable Object instance owns the schedule, the caches and the snapshot, and serves every
-// API request. Positions arrive from an external poller (see core/ingest.ts); the object itself
-// only calls OpenSky as a fallback when none has reported for a while, since Cloudflare's
-// network cannot reach OpenSky today.
+// API request. Positions arrive only from an external poller (see core/ingest.ts): Cloudflare's
+// network cannot reach OpenSky (its front answers 522), so the object never polls it itself.
 //
 // Cost model (free plan: 5M SQLite rows read a day). Cloudflare evicts the object between events,
 // so treat every event as a cold start:
@@ -38,8 +37,6 @@ export interface Env {
 
 /** Workers free plan allows 50 subrequests per invocation; leave headroom. */
 const REQUESTS_PER_TICK = 44;
-/** Poll OpenSky directly only when no external poller has asked for a plan for this long. */
-export const FALLBACK_AFTER_MS = 20 * 60_000;
 /**
  * A poller may take up to a full sweep in one plan: after a long gap (GitHub's cron, for one,
  * often runs hours late) one run then refills the globe (~110 credits) instead of a third of it.
@@ -133,8 +130,6 @@ export class SkyState extends DurableObject<Env> {
     const now = Date.now();
     const readsBefore = this.store.rowsRead;
     const s = this.sched;
-    let step = "enrich";
-    let budget = REQUESTS_PER_TICK;
     if (overBudget(s, now)) {
       // Near a daily cap: keep serving the stored snapshot, do nothing else until UTC midnight.
       console.log(JSON.stringify({ step: "over daily storage budget", usage: s.usage }));
@@ -156,45 +151,21 @@ export class SkyState extends DurableObject<Env> {
         s.lastPruneAt = now;
         this.store.pruneStorage(Math.floor(now / 1000));
       }
-      // Fallback only: the poller normally owns OpenSky. At most one call per run, recorded before
-      // the call so failures can't retry hot.
-      if (now - (s.lastPlanAt ?? 0) >= FALLBACK_AFTER_MS) {
-        const creditsRemaining = this.engine.getSnapshot()?.meta.creditsRemaining ?? null;
-        const p = planNext(s, { now, hasTracked: this.engine.trackedIds().length > 0, creditsRemaining, empty: this.engine.knownCount() === 0, maxTiles: 1 });
-        if (p.track) {
-          if (p.tileIdxs.length > 0) rewindTile(s); // both due: the box goes next time
-          await this.ctx.storage.put("sched", s);
-          step = "track";
-          step = `track ${await this.engine.refreshTracked()}`;
-          this.engine.saveKnown();
-          budget -= 2;
-        } else if (p.tileIdxs.length > 0) {
-          const idx = p.tileIdxs[0]!;
-          const tile = s.tiles[idx]!;
-          await this.ctx.storage.put("sched", s);
-          step = `tile ${idx}`;
-          const { aircraft, next } = await this.engine.pollTile(tile);
-          if (replaceTile(s, tile, next)) await this.ctx.storage.put("sched", s);
-          this.engine.saveKnown();
-          step = `tile ${idx}/${s.tiles.length} (${aircraft})`;
-          budget -= 2;
-        }
-      }
     } catch (e) {
-      console.error(`${step} failed: ${(e as Error).message}`);
+      console.error(`restore or prune failed: ${(e as Error).message}`);
     }
     let queues = this.engine.queueSizes();
     // Each route or weather lookup writes a row: past today's even pace, look nothing up this time.
     const paced = aheadOfWritePace(s, now);
     try {
-      const stats = await this.engine.enrich({ requests: paced ? 0 : budget });
+      const stats = await this.engine.enrich({ requests: paced ? 0 : REQUESTS_PER_TICK });
       const snap = this.engine.rebuild(Date.now() - now);
       this.store.putBlob(SNAPSHOT_BLOB, JSON.stringify(snap));
       // Keep the saved routes and weather current, so the next cold restore needn't look them up.
       const docBytes = stats.routeLookups > 0 || stats.weatherAirports > 0 ? this.engine.saveKnown() : undefined;
       queues = this.engine.queueSizes();
       console.log(
-        JSON.stringify({ step, paced, flights: snap.flights.length, known: snap.meta.known, ...stats, queues, rowsRead: this.store.rowsRead - readsBefore, docBytes, usage: s.usage }),
+        JSON.stringify({ step: "enrich", paced, flights: snap.flights.length, known: snap.meta.known, ...stats, queues, rowsRead: this.store.rowsRead - readsBefore, docBytes, usage: s.usage }),
       );
     } catch (e) {
       console.error(`enrich failed: ${(e as Error).message}`);
@@ -292,16 +263,6 @@ export class SkyState extends DurableObject<Env> {
 function nextUtcMidnight(now: number): number {
   const d = new Date(now);
   return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() + 1);
-}
-
-/** Undo the last box planNext() issued (the fallback path does one OpenSky call per run). */
-function rewindTile(s: Sched) {
-  if (s.tileIdx === 0) {
-    s.tileIdx = s.tiles.length - 1;
-    s.sweeps = Math.max(0, s.sweeps - 1);
-  } else {
-    s.tileIdx--;
-  }
 }
 
 function json(body: unknown, status = 200, headers: Record<string, string> = {}): Response {

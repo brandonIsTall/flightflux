@@ -55,7 +55,7 @@ export interface PlanInput {
   creditsRemaining: number | null;
   /** No aircraft known at all (fresh object, or one whose polling failed for a long time): sweep fast. */
   empty?: boolean;
-  /** At most this many region boxes. The object's fallback takes one; a poller catching up takes several. */
+  /** At most this many region boxes: a poller catching up takes several. */
   maxTiles: number;
 }
 
