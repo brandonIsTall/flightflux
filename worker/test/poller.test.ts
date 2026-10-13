@@ -100,6 +100,26 @@ describe("runPoll", () => {
     await expect(runPoll({ ...base, fetchFn })).rejects.toThrow("/api/_plan: 503 boom");
   });
 
+  it("retries a Worker call that couldn't connect, and fails once the retries run out", async () => {
+    const { seen, fetchFn } = fakeUpstreams({ tracked: null });
+    let drops = 2;
+    const flaky = (async (input: RequestInfo | URL, init?: RequestInit) => {
+      if (String(input).includes("/api/_plan") && drops-- > 0) throw new TypeError("fetch failed");
+      return fetchFn(input, init);
+    }) as typeof fetch;
+    const lines: string[] = [];
+    const r = await runPoll({ ...base, fetchFn: flaky, retryDelaysMs: [1, 1], log: (l) => lines.push(l) });
+    expect(r).toMatchObject({ fetched: 10, failed: 0 });
+    expect(seen.plan).toHaveLength(1);
+    expect(lines.filter((l) => /unreachable .*retrying/.test(l))).toHaveLength(2);
+
+    const down = (async (input: RequestInfo | URL, init?: RequestInit) => {
+      if (String(input).includes("/api/_plan")) throw new TypeError("fetch failed");
+      return fetchFn(input, init);
+    }) as typeof fetch;
+    await expect(runPoll({ ...base, fetchFn: down, retryDelaysMs: [1, 1] })).rejects.toThrow("fetch failed");
+  });
+
   it("asks for a restarted sweep when told to", async () => {
     const { seen, fetchFn } = fakeUpstreams({ tracked: null });
     await runPoll({ ...base, fetchFn, restart: true });

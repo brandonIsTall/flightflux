@@ -20,6 +20,8 @@ export interface PollConfig {
   deadlineMs?: number;
   log?: (line: string) => void;
   fetchFn?: typeof fetch;
+  /** Waits before retrying a Worker call that failed to connect (default 2 s, then 5 s). */
+  retryDelaysMs?: number[];
 }
 
 export interface PollResult {
@@ -55,8 +57,25 @@ export async function runPoll(c: PollConfig): Promise<PollResult> {
   const opensky = new OpenSkyClient(c.openskyClientId, c.openskyClientSecret, fetchFn);
   const result: PollResult = { tracked: null, boxes: 0, fetched: 0, failed: 0, skipped: 0, known: null, credits: null, resting: false, ms: 0 };
 
+  // A GitHub runner sometimes can't connect to Cloudflare for a second or two: retry a call that
+  // never got a response. A real outage still fails after the last retry. Both calls are safe to
+  // repeat: a plan answered but lost is simply superseded, and re-ingesting a box is harmless.
+  const retryDelays = c.retryDelaysMs ?? [2_000, 5_000];
+  const send = async (url: string, init: RequestInit): Promise<Response> => {
+    for (let attempt = 0; ; attempt++) {
+      try {
+        return await fetchFn(url, init);
+      } catch (e) {
+        const wait = retryDelays[attempt];
+        if (wait === undefined) throw e;
+        log(`${url.slice(api.length)} unreachable (${(e as Error).message}); retrying in ${wait / 1000} s`);
+        await new Promise((r) => setTimeout(r, wait));
+      }
+    }
+  };
+
   const call = async <T>(path: string, init?: RequestInit): Promise<T> => {
-    const res = await fetchFn(`${api}${path}`, { ...init, headers: { ...headers, ...init?.headers } });
+    const res = await send(`${api}${path}`, { ...init, headers: { ...headers, ...init?.headers } });
     if (!res.ok) {
       const text = await res.text();
       // Matched on the message too, for a Worker deployed before the `resting` flag.
