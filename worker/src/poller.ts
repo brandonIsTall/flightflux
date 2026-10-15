@@ -38,6 +38,9 @@ export interface PollResult {
   ms: number;
 }
 
+/** Cloudflare edge errors (bad gateway, timeouts, origin unreachable): the Worker never answered. */
+const GATEWAY_ERRORS = new Set([502, 504, 520, 521, 522, 523, 524]);
+
 /** The Worker answered with RESTING (core/ingest.ts): it takes no positions until 00:00 UTC. */
 class RestingError extends Error {}
 
@@ -57,20 +60,27 @@ export async function runPoll(c: PollConfig): Promise<PollResult> {
   const opensky = new OpenSkyClient(c.openskyClientId, c.openskyClientSecret, fetchFn);
   const result: PollResult = { tracked: null, boxes: 0, fetched: 0, failed: 0, skipped: 0, known: null, credits: null, resting: false, ms: 0 };
 
-  // A GitHub runner sometimes can't connect to Cloudflare for a second or two: retry a call that
-  // never got a response. A real outage still fails after the last retry. Both calls are safe to
-  // repeat: a plan answered but lost is simply superseded, and re-ingesting a box is harmless.
+  // A GitHub runner sometimes can't connect to Cloudflare for a second or two, and Cloudflare's
+  // edge sometimes answers a gateway error page without reaching the Worker: retry either. A real
+  // outage still fails after the last retry. Both calls are safe to repeat: a plan answered but
+  // lost is simply superseded, and re-ingesting a box is harmless. 503 is not retried: it is how
+  // the Worker says it is resting.
   const retryDelays = c.retryDelaysMs ?? [2_000, 5_000];
   const send = async (url: string, init: RequestInit): Promise<Response> => {
     for (let attempt = 0; ; attempt++) {
+      const wait = retryDelays[attempt];
+      let why: string;
       try {
-        return await fetchFn(url, init);
+        const res = await fetchFn(url, init);
+        if (wait === undefined || !GATEWAY_ERRORS.has(res.status)) return res;
+        await res.body?.cancel();
+        why = `answered ${res.status}`;
       } catch (e) {
-        const wait = retryDelays[attempt];
         if (wait === undefined) throw e;
-        log(`${url.slice(api.length)} unreachable (${(e as Error).message}); retrying in ${wait / 1000} s`);
-        await new Promise((r) => setTimeout(r, wait));
+        why = `unreachable (${(e as Error).message})`;
       }
+      log(`${url.slice(api.length)} ${why}; retrying in ${wait / 1000} s`);
+      await new Promise((r) => setTimeout(r, wait));
     }
   };
 
