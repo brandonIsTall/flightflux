@@ -31,7 +31,7 @@ export interface TileStat {
   lastAt: number;
   /** The time between its last two visits (ms): what its newest count of new aircraft covers. */
   gapMs: number;
-  /** New cruise-phase airliners it turns up per hour, smoothed. */
+  /** New long-haul flights it turns up per hour, smoothed (see Engine.merge). */
   rate: number;
 }
 

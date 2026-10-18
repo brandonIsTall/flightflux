@@ -355,7 +355,12 @@ export class Engine {
     return this.lastFixAt;
   }
 
-  /** Take in one aircraft's fix. True when it is a cruise-phase airliner not known before. */
+  /**
+   * Take in one aircraft's fix. True when it is a new long-haul flight: a cruise-phase airliner not
+   * known before whose callsign has a cached long-haul route. That is the region box's yield for the
+   * weighted sweep, so short-haul traffic (and short-haul aircraft forgotten and seen again after
+   * KNOWN_TTL_S) doesn't make a box look busy.
+   */
   private merge(s: StateVector, responseTime: number): boolean {
     if (s.onGround || s.lat == null || s.lon == null) return false;
     this.recordClimbDeparture(s, responseTime);
@@ -363,7 +368,9 @@ export class Engine {
     const prev = this.known.get(s.icao24);
     const same = !!prev && prev.s.callsign === s.callsign;
     this.known.set(s.icao24, { s, t: s.timePosition ?? responseTime, seenAt: same ? prev.seenAt : responseTime });
-    return !same;
+    if (same) return false;
+    const route = this.deps.store.getRoute(s.callsign)?.route;
+    return !!route && distanceKm(route.origin, route.dest) >= MIN_ROUTE_KM;
   }
 
   /** An airliner caught low and climbing just took off: back out the climb time. */

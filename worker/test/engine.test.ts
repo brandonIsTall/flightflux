@@ -312,15 +312,37 @@ describe("Engine", () => {
     expect(world.calls.length - before).toBeLessThanOrEqual(20);
   });
 
-  it("counts only cruise-phase airliners it had not seen before as fresh", async () => {
+  it("counts only new long-haul flights as fresh", async () => {
     const world = fakeWorld();
-    world.states = [sv("aa9300", "UAL880", interpolate(IAH, LHR, 0.4), 11000), sv("cc0001", "UAL880", IAH, 900, T0, 10)];
-    const { engine } = makeEngine(world);
-    // The climbing one is no cruise candidate.
+    const { engine, store } = makeEngine(world);
+    store.putRoute("UAL880", { route: await new AdsbdbClient(world.fetch).route("UAL880"), at: T0 }); // IAH-LHR
+    store.putRoute("DAL77", { route: null, at: T0 }); // adsbdb doesn't know it
+    world.states = [
+      sv("aa9300", "UAL880", interpolate(IAH, LHR, 0.4), 11000),
+      sv("bbbbbb", "DAL77", IAH, 11000),
+      sv("dddddd", "BAW1", LHR, 11000), // route not looked up yet
+      sv("cc0001", "UAL880", IAH, 900, T0, 10), // climbing: no cruise candidate
+    ];
     expect((await engine.pollTile(WORLD)).fresh).toBe(1);
+    // Seen again: not new.
     world.time = T0 + 300;
-    world.states = [sv("aa9300", "UAL880", interpolate(IAH, LHR, 0.42), 11000, world.time), sv("aa9301", "BAW1", LHR, 11000, world.time)];
-    expect((await engine.pollTile(WORLD)).fresh).toBe(1); // only BAW1 is new
+    world.states = [sv("aa9300", "UAL880", interpolate(IAH, LHR, 0.42), 11000, world.time)];
+    expect((await engine.pollTile(WORLD)).fresh).toBe(0);
+  });
+
+  it("does not count a long-haul flight as fresh again when it reappears after a coverage gap", async () => {
+    const world = fakeWorld();
+    const { engine, store } = makeEngine(world);
+    store.putRoute("UAL880", { route: await new AdsbdbClient(world.fetch).route("UAL880"), at: T0 });
+    world.states = [sv("aa9300", "UAL880", interpolate(IAH, LHR, 0.3), 11000)];
+    expect((await engine.pollTile(WORLD)).fresh).toBe(1);
+    // Over the ocean, unseen for longer than an untracked short-haul aircraft is remembered...
+    world.time = T0 + KNOWN_TTL_S + 3600;
+    world.states = [];
+    await engine.pollTile(WORLD);
+    // ...then picked up again on the far side.
+    world.states = [sv("aa9300", "UAL880", interpolate(IAH, LHR, 0.75), 11000, world.time)];
+    expect((await engine.pollTile(WORLD)).fresh).toBe(0);
   });
 
   it("ingests pre-filtered rows from an external poller exactly like its own call", async () => {
@@ -329,7 +351,7 @@ describe("Engine", () => {
     const { engine } = makeEngine(world);
     const before = world.calls.length;
     const r = engine.ingest({ time: T0, creditsRemaining: 2500, states: prefilter(rows), total: rows.length, tile: WORLD });
-    expect(r).toEqual({ aircraft: 2, next: [WORLD], fresh: 1 }); // N1 is no airline
+    expect(r).toEqual({ aircraft: 2, next: [WORLD], fresh: 0 }); // no route cached yet for UAL880
     expect(engine.lastPositionsAt()).toBe(T0 * 1000);
     engine.rebuild();
     await engine.enrich({ requests: 40 });
