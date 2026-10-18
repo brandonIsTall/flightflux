@@ -139,6 +139,7 @@ ADS-B carries a callsign, not a route, so the route has to come from a separate 
 1. **Track.** One icao24-filtered call refreshes every flight on the globe (~150) every **5 min**. The response is ~6 KB and parses in ~0.1 ms.
 2. **Extrapolate.** Between fixes, the server and the client both advance each plane along its great-circle route at its last ground speed. Over oceans, where there are no receivers, this was going to happen anyway.
 3. **Discover.** New flights are found by sweeping the world in **29 region boxes**, a full sweep every ~75 min. Boxes were sized from real traffic so each returns ≤ ~1,000 aircraft at peak (≤ 1.6 ms to parse), and any box that returns more than 900 is split in two for the next sweep. While nothing is known yet, boxes are due every 28 s, so a fresh deploy fills the globe in a few poller runs.
+   - **Weighted after the first sweep.** The credits buy the same number of boxes as one full sweep per ~75 min, but not every box gets an equal share. Each box keeps a smoothed count of new cruise airliners it turns up per hour (`tileStats` in `sched.ts`), and the most due boxes go next: time since the last visit × `sqrt(rate / mean rate)`, held to 0.4–2.5. Busy departure regions come round about every 30–45 min, empty ocean every 2–3 h, and no box waits longer than 225 min. Measured after #29: flights first seen near their origin had a P90 first-seen lag of 79 min under the even sweep.
 
 The calls themselves are made by the external poller (§1), which asks the Durable Object what is due; the budget below is unchanged.
 

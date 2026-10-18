@@ -1,9 +1,10 @@
 // The OpenSky schedule: which positions are due now. Pure, so the Durable Object can run it for
 // its own polling and for an external poller's plan request alike, and so it can be tested.
 //
-// Budget (PLAN §2.5): tracked flights every 5 min, one discovery sweep of every region box every
-// ~75 min, both 3x slower when credits run low. The first sweep is front-loaded so a fresh deploy
-// fills the globe in minutes.
+// Budget (PLAN §2.5): tracked flights every 5 min, and as many region boxes as one sweep of every
+// box per ~75 min buys, both 3x slower when credits run low. The first sweep goes round every box
+// in order and is front-loaded, so a fresh deploy fills the globe in minutes; after it, the boxes
+// that keep turning up new aircraft are visited more often and the empty ones less (tileStats).
 
 import type { Bbox } from "./opensky";
 import { INITIAL_TILES } from "./tiles";
@@ -16,6 +17,23 @@ export const SWEEP_MS = 75 * 60_000;
 export const LOW_CREDITS = 800;
 /** During the first sweep (or with nothing known), boxes are due this often. */
 export const FIRST_SWEEP_TILE_MS = 28_000;
+/** However quiet a box is, it is visited at least this often. */
+export const MAX_TILE_GAP_MS = 3 * SWEEP_MS;
+/** A box's visit weight is the square root of its rate over the mean rate, held to this range. */
+export const MIN_TILE_WEIGHT = 0.4;
+export const MAX_TILE_WEIGHT = 2.5;
+/** How fast a box's rate follows new counts (exponential moving average). */
+export const TILE_RATE_ALPHA = 0.3;
+
+/** Per-box discovery history, aligned with `Sched.tiles`. */
+export interface TileStat {
+  /** When the box was last handed out (ms). */
+  lastAt: number;
+  /** The time between its last two visits (ms): what its newest count of new aircraft covers. */
+  gapMs: number;
+  /** New cruise-phase airliners it turns up per hour, smoothed. */
+  rate: number;
+}
 
 /** Scheduler state, persisted so a recreated object can never call OpenSky faster than planned. */
 export interface Sched {
@@ -34,6 +52,8 @@ export interface Sched {
   tileIdx: number;
   sweeps: number;
   tiles: Bbox[];
+  /** Absent in state saved before weighted sweeps (see tileStatsOf). */
+  tileStats?: TileStat[];
 }
 
 export const initialSched = (): Sched => ({
@@ -46,7 +66,47 @@ export const initialSched = (): Sched => ({
   tileIdx: 0,
   sweeps: 0,
   tiles: INITIAL_TILES,
+  // tileStats is created on first use (tileStatsOf), so loading saved state never takes a default.
 });
+
+/**
+ * The per-box history, created for state saved before it existed: every box equally busy, and
+ * last visited where the round-robin sweep left it (the box before `tileIdx` most recently), so
+ * the boxes don't all come due at once.
+ */
+export function tileStatsOf(s: Sched): TileStat[] {
+  if (!s.tileStats || s.tileStats.length !== s.tiles.length) {
+    const n = s.tiles.length;
+    const step = SWEEP_MS / n;
+    s.tileStats = s.tiles.map((_, i) => ({ lastAt: s.lastTileAt - ((s.tileIdx - 1 - i + 2 * n) % n) * step, gapMs: SWEEP_MS, rate: 1 }));
+  }
+  return s.tileStats;
+}
+
+/** Visit weight from a box's rate relative to the mean: busy boxes come round more often. */
+export function tileWeight(rate: number, meanRate: number): number {
+  if (meanRate <= 0) return 1;
+  return Math.min(MAX_TILE_WEIGHT, Math.max(MIN_TILE_WEIGHT, Math.sqrt(rate / meanRate)));
+}
+
+/** Record how many new aircraft a box's latest visit found. */
+export function recordTileYield(s: Sched, tile: Bbox, fresh: number) {
+  const stats = tileStatsOf(s);
+  const idx = s.tiles.findIndex((t) => t.every((v, i) => v === tile[i]));
+  const st = stats[idx];
+  if (!st) return;
+  // Per hour, never over less than 10 min: a box handed out twice in quick succession (a catching-up
+  // poller) shouldn't read as a sudden surge.
+  const perHour = fresh / Math.max(1 / 6, st.gapMs / 3_600_000);
+  st.rate = st.rate + TILE_RATE_ALPHA * (perHour - st.rate);
+}
+
+/** Spread of the time between visits across boxes (minutes), for the logs. */
+export function sweepSpread(s: Sched): { minMin: number; medianMin: number; maxMin: number } {
+  const gaps = tileStatsOf(s).map((t) => t.gapMs / 60_000).sort((a, b) => a - b);
+  const r = (x: number | undefined) => Math.round(x ?? 0);
+  return { minMin: r(gaps[0]), medianMin: r(gaps[Math.floor(gaps.length / 2)]), maxMin: r(gaps[gaps.length - 1]) };
+}
 
 export interface PlanInput {
   now: number;
@@ -61,7 +121,7 @@ export interface PlanInput {
 
 export interface Plan {
   track: boolean;
-  /** Indexes into `sched.tiles`, in sweep order. */
+  /** Indexes into `sched.tiles`, most due first. */
   tileIdxs: number[];
 }
 
@@ -80,16 +140,36 @@ export function planNext(s: Sched, input: PlanInput): Plan {
   // Never more than one whole sweep at once: a long outage shouldn't spend a box twice in one plan.
   const due = Math.min(input.maxTiles, s.tiles.length, Math.floor((now - s.lastTileAt) / tileEvery));
   if (due <= 0) return plan;
-  // The first sweep isn't rate-limited beyond one box per tick, so a catching-up poller takes
-  // every box it is allowed; afterwards only as many as the sweep interval has earned.
-  for (let i = 0; i < due; i++) {
-    const idx = s.tileIdx % s.tiles.length;
+  const stats = tileStatsOf(s);
+  const issue = (idx: number) => {
     plan.tileIdxs.push(idx);
-    s.tileIdx = idx + 1;
-    if (s.tileIdx >= s.tiles.length) {
-      s.tileIdx = 0;
-      s.sweeps++;
+    const st = stats[idx]!;
+    if (st.lastAt > 0) st.gapMs = now - st.lastAt;
+    st.lastAt = now;
+  };
+  if (s.sweeps === 0 || input.empty) {
+    // The first sweep isn't rate-limited beyond one box per tick, so a catching-up poller takes
+    // every box it is allowed, in order, until every box has been seen once.
+    for (let i = 0; i < due; i++) {
+      const idx = s.tileIdx % s.tiles.length;
+      issue(idx);
+      s.tileIdx = idx + 1;
+      if (s.tileIdx >= s.tiles.length) {
+        s.tileIdx = 0;
+        s.sweeps++;
+      }
     }
+  } else {
+    // Afterwards the same number of boxes, but the most due ones: how long since a box's last visit,
+    // scaled by how many new aircraft it tends to turn up. A box left alone for MAX_TILE_GAP_MS goes
+    // first whatever its weight, so no part of the world goes unseen.
+    const mean = stats.reduce((sum, t) => sum + t.rate, 0) / stats.length;
+    const priority = (i: number) => {
+      const age = now - stats[i]!.lastAt;
+      return age >= MAX_TILE_GAP_MS ? Infinity : age * tileWeight(stats[i]!.rate, mean);
+    };
+    const order = stats.map((_, i) => i).sort((a, b) => priority(b) - priority(a) || stats[a]!.lastAt - stats[b]!.lastAt);
+    for (const idx of order.slice(0, due)) issue(idx);
   }
   s.lastTileAt = now;
   return plan;
@@ -100,6 +180,11 @@ export function replaceTile(s: Sched, tile: Bbox, next: Bbox[]): boolean {
   if (next.length <= 1) return false;
   const idx = s.tiles.findIndex((t) => t.every((v, i) => v === tile[i]));
   if (idx < 0) return false;
+  // Each half starts with the box's last visit and its share of the box's rate.
+  const stats = tileStatsOf(s);
+  const parent = stats[idx]!;
+  const halves = next.map(() => ({ ...parent, rate: parent.rate / next.length }));
+  s.tileStats = [...stats.slice(0, idx), ...halves, ...stats.slice(idx + 1)];
   s.tiles = [...s.tiles.slice(0, idx), ...next, ...s.tiles.slice(idx + 1)];
   if (s.tileIdx > idx) s.tileIdx += next.length - 1;
   return true;

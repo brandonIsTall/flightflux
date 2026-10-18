@@ -312,13 +312,24 @@ describe("Engine", () => {
     expect(world.calls.length - before).toBeLessThanOrEqual(20);
   });
 
+  it("counts only cruise-phase airliners it had not seen before as fresh", async () => {
+    const world = fakeWorld();
+    world.states = [sv("aa9300", "UAL880", interpolate(IAH, LHR, 0.4), 11000), sv("cc0001", "UAL880", IAH, 900, T0, 10)];
+    const { engine } = makeEngine(world);
+    // The climbing one is no cruise candidate.
+    expect((await engine.pollTile(WORLD)).fresh).toBe(1);
+    world.time = T0 + 300;
+    world.states = [sv("aa9300", "UAL880", interpolate(IAH, LHR, 0.42), 11000, world.time), sv("aa9301", "BAW1", LHR, 11000, world.time)];
+    expect((await engine.pollTile(WORLD)).fresh).toBe(1); // only BAW1 is new
+  });
+
   it("ingests pre-filtered rows from an external poller exactly like its own call", async () => {
     const world = fakeWorld();
     const rows = [sv("aa9300", "UAL880", interpolate(IAH, LHR, 0.4), 11000), sv("bbbbbb", "N1", IAH, 11000)];
     const { engine } = makeEngine(world);
     const before = world.calls.length;
     const r = engine.ingest({ time: T0, creditsRemaining: 2500, states: prefilter(rows), total: rows.length, tile: WORLD });
-    expect(r).toEqual({ aircraft: 2, next: [WORLD] });
+    expect(r).toEqual({ aircraft: 2, next: [WORLD], fresh: 1 }); // N1 is no airline
     expect(engine.lastPositionsAt()).toBe(T0 * 1000);
     engine.rebuild();
     await engine.enrich({ requests: 40 });

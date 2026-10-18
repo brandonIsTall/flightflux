@@ -322,7 +322,7 @@ export class Engine {
    * Discovery: fetch one region box. Returns the boxes to use in its place next sweep: itself, or
    * two halves when it came back too full to parse comfortably within the CPU limit.
    */
-  async pollTile(tile: Bbox): Promise<{ aircraft: number; next: Bbox[] }> {
+  async pollTile(tile: Bbox): Promise<{ aircraft: number; next: Bbox[]; fresh: number }> {
     return this.applyStates(await this.deps.opensky.states({ bbox: tile }), tile);
   }
 
@@ -331,20 +331,21 @@ export class Engine {
    * the unfiltered response when the poller pre-filtered the rows. Returns how many aircraft were
    * in the response and, for a region box, the boxes to use in its place next sweep.
    */
-  applyStates(res: StatesResult, tile?: Bbox, total = res.states.length): { aircraft: number; next: Bbox[] } {
+  applyStates(res: StatesResult, tile?: Bbox, total = res.states.length): { aircraft: number; next: Bbox[]; fresh: number } {
     this.creditsRemaining = res.creditsRemaining;
     this.lastFixAt = this.now();
-    for (const s of res.states) this.merge(s, res.time);
-    if (!tile) return { aircraft: total, next: [] };
+    let fresh = 0;
+    for (const s of res.states) if (this.merge(s, res.time)) fresh++;
+    if (!tile) return { aircraft: total, next: [], fresh };
     this.expireKnown();
     this.deps.store.prune(this.nowS());
     const next = total > SPLIT_AT ? splitTile(tile) : [tile];
     if (next.length > 1) this.log(`tile ${tile.join(",")} had ${total} aircraft; splitting`);
-    return { aircraft: total, next };
+    return { aircraft: total, next, fresh };
   }
 
   /** Compact rows from an external poller (see core/ingest.ts). */
-  ingest(body: IngestBody): { aircraft: number; next: Bbox[] } {
+  ingest(body: IngestBody): { aircraft: number; next: Bbox[]; fresh: number } {
     const res: StatesResult = { time: body.time, states: body.states.map(parseState), creditsRemaining: body.creditsRemaining };
     return this.applyStates(res, body.tile, body.total);
   }
@@ -354,13 +355,15 @@ export class Engine {
     return this.lastFixAt;
   }
 
-  private merge(s: StateVector, responseTime: number) {
-    if (s.onGround || s.lat == null || s.lon == null) return;
+  /** Take in one aircraft's fix. True when it is a cruise-phase airliner not known before. */
+  private merge(s: StateVector, responseTime: number): boolean {
+    if (s.onGround || s.lat == null || s.lon == null) return false;
     this.recordClimbDeparture(s, responseTime);
-    if (!this.isCandidate(s)) return;
+    if (!this.isCandidate(s)) return false;
     const prev = this.known.get(s.icao24);
-    const seenAt = prev && prev.s.callsign === s.callsign ? prev.seenAt : responseTime;
-    this.known.set(s.icao24, { s, t: s.timePosition ?? responseTime, seenAt });
+    const same = !!prev && prev.s.callsign === s.callsign;
+    this.known.set(s.icao24, { s, t: s.timePosition ?? responseTime, seenAt: same ? prev.seenAt : responseTime });
+    return !same;
   }
 
   /** An airliner caught low and climbing just took off: back out the climb time. */
