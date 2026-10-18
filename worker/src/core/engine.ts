@@ -39,6 +39,8 @@ export const KNOWN_TTL_S = 100 * 60;
 export const MAX_DEAD_RECKON_S = 18 * 3600;
 /** Recent arrivals on the globe kept for the entry-lag metric. */
 export const MAX_ENTRIES = 300;
+/** A flight first seen further than this along its route took off where there is no coverage. */
+export const SEEN_FAR_KM = 1000;
 /** Searched flights stay tracked this long even if they aren't curated. */
 export const PIN_TTL_S = 3 * 3600;
 export const ROUTE_CONCURRENCY = 8;
@@ -91,6 +93,10 @@ interface Entry {
   depTime: number;
   seenAt: number;
   enteredAt: number;
+  /** Joined by replacing a shown flight, rather than filling a free slot. */
+  via?: "swap" | "slot";
+  /** First seen more than SEEN_FAR_KM along its route: it took off out of coverage. */
+  seenFar?: boolean;
 }
 
 /** The curated-set document: the hysteresis keys plus what the swap rule and metric need. */
@@ -533,7 +539,7 @@ export class Engine {
     // Score cheap candidates; only the ~150 winners become full Flight objects. Building one per
     // eligible aircraft every run cost more in garbage collection than everything else combined.
     this.swaps = this.swaps.filter((t) => nowS - t < 3600);
-    const { chosen, swappedIn } = curate(eligible, this.curatedKeys, undefined, {
+    const { chosen, swappedIn, swapped } = curate(eligible, this.curatedKeys, undefined, {
       enteredAt: this.enteredAt,
       swapsLeft: SWAPS_PER_HOUR - this.swaps.length,
       nowS,
@@ -541,7 +547,7 @@ export class Engine {
     for (let i = 0; i < swappedIn; i++) this.swaps.push(nowS);
     const keys = chosen.map(hysteresisKey);
     if (keys.length !== this.curatedKeys.size || keys.some((k) => !this.curatedKeys.has(k))) {
-      this.recordEntries(chosen, nowS);
+      this.recordEntries(chosen, swapped, nowS);
       this.curatedKeys = new Set(keys);
       this.saveCurated(); // hysteresis survives an eviction
     }
@@ -557,7 +563,7 @@ export class Engine {
   }
 
   /** Note when newly shown flights joined the globe, and forget the ones that left. */
-  private recordEntries(chosen: Candidate[], nowS: number) {
+  private recordEntries(chosen: Candidate[], swapped: Set<string>, nowS: number) {
     if (this.epoch === 0) this.epoch = nowS;
     const keys = new Set(chosen.map(hysteresisKey));
     for (const k of this.enteredAt.keys()) if (!keys.has(k)) this.enteredAt.delete(k);
@@ -572,7 +578,16 @@ export class Engine {
       this.enteredAt.set(key, nowS);
       // Only flights that took off after measuring began: the rest were in the air before we looked.
       if (c.depTime >= this.epoch && !this.entries.some((e) => e.key === key)) {
-        this.entries.push({ key, depTime: c.depTime, seenAt: c.k.seenAt, enteredAt: nowS });
+        // Where it was when first seen: its distance flown now, less what it has flown since.
+        const seenAlongKm = c.flownKm - ((c.k.s.velocityMs ?? 0) * (nowS - c.k.seenAt)) / 1000;
+        this.entries.push({
+          key,
+          depTime: c.depTime,
+          seenAt: c.k.seenAt,
+          enteredAt: nowS,
+          via: swapped.has(key) ? "swap" : "slot",
+          seenFar: seenAlongKm > SEEN_FAR_KM,
+        });
       }
     }
     if (this.entries.length > MAX_ENTRIES) this.entries = this.entries.slice(-MAX_ENTRIES);
@@ -598,6 +613,14 @@ export class Engine {
     };
     const discover = this.entries.map((e) => e.seenAt - e.depTime);
     const onGlobe = this.entries.map((e) => e.enteredAt - e.depTime);
+    const gap = (via: "swap" | "slot") => {
+      // Arrivals recorded before `via` existed count as slot fills.
+      const xs = this.entries.filter((e) => (e.via ?? "slot") === via).map((e) => e.enteredAt - e.seenAt);
+      return { n: xs.length, gapP50Min: pct(xs, 0.5) };
+    };
+    // Only arrivals known to have been first seen near their origin: what the sweep controls.
+    const near = this.entries.filter((e) => e.seenFar === false).map((e) => e.seenAt - e.depTime);
+    const oldest = this.entries.reduce((t, e) => Math.min(t, e.enteredAt), Infinity);
     return {
       n: this.entries.length,
       discoverP50Min: pct(discover, 0.5),
@@ -605,6 +628,10 @@ export class Engine {
       onGlobeP50Min: pct(onGlobe, 0.5),
       onGlobeP90Min: pct(onGlobe, 0.9),
       swapsLastHour: this.swaps.length,
+      windowMin: this.entries.length > 0 ? Math.round((this.nowS() - oldest) / 60) : null,
+      swap: gap("swap"),
+      slot: gap("slot"),
+      near: { n: near.length, discoverP50Min: pct(near, 0.5), discoverP90Min: pct(near, 0.9) },
     };
   }
 

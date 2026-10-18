@@ -68,7 +68,7 @@ export function curate<T extends Curatable>(
   previous: Set<string>,
   max = CURATED_MAX,
   swaps?: SwapOptions,
-): { chosen: T[]; swappedIn: number } {
+): { chosen: T[]; swappedIn: number; swapped: Set<string> } {
   const band = (f: T) => Math.floor((f.pos.lon + 180) / LON_BAND_DEG);
   const perBand = new Map<number, number>();
   const take = (f: T) => perBand.set(band(f), (perBand.get(band(f)) ?? 0) + 1);
@@ -90,8 +90,10 @@ export function curate<T extends Curatable>(
     take(f);
   }
 
+  /** Keys of the newcomers that replaced a shown flight (not ones that filled a free slot). */
+  const swapped = new Set<string>();
   let swappedIn = 0;
-  if (!swaps || swaps.swapsLeft <= 0 || waiting.length === 0) return { chosen: out, swappedIn };
+  if (!swaps || swaps.swapsLeft <= 0 || waiting.length === 0) return { chosen: out, swappedIn, swapped };
   // Weakest first; only flights that have had their minimum time on the globe can be replaced.
   const replaceable = kept
     .filter((f) => swaps.nowS - (swaps.enteredAt.get(hysteresisKey(f)) ?? 0) >= MIN_DWELL_S)
@@ -108,7 +110,8 @@ export function curate<T extends Curatable>(
     out[out.indexOf(weakest)] = f;
     drop(weakest);
     take(f);
+    swapped.add(hysteresisKey(f));
     swappedIn++;
   }
-  return { chosen: out, swappedIn };
+  return { chosen: out, swappedIn, swapped };
 }
