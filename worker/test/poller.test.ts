@@ -120,6 +120,26 @@ describe("runPoll", () => {
     await expect(runPoll({ ...base, fetchFn: down, retryDelaysMs: [1, 1] })).rejects.toThrow("fetch failed");
   });
 
+  it("retries a Cloudflare gateway error, and fails once the retries run out", async () => {
+    const { seen, fetchFn } = fakeUpstreams({ tracked: null });
+    let bad = 2;
+    const gateway = (async (input: RequestInfo | URL, init?: RequestInit) => {
+      if (String(input).includes("/api/_ingest") && bad-- > 0) return new Response("<!DOCTYPE html>", { status: 502 });
+      return fetchFn(input, init);
+    }) as typeof fetch;
+    const lines: string[] = [];
+    const r = await runPoll({ ...base, fetchFn: gateway, retryDelaysMs: [1, 1], log: (l) => lines.push(l) });
+    expect(r).toMatchObject({ fetched: 10, failed: 0 });
+    expect(seen.ingested).toHaveLength(10);
+    expect(lines.filter((l) => /answered 502; retrying/.test(l))).toHaveLength(2);
+
+    const down = (async (input: RequestInfo | URL, init?: RequestInit) => {
+      if (String(input).includes("/api/_plan")) return new Response("<!DOCTYPE html>", { status: 504 });
+      return fetchFn(input, init);
+    }) as typeof fetch;
+    await expect(runPoll({ ...base, fetchFn: down, retryDelaysMs: [1, 1] })).rejects.toThrow("/api/_plan: 504");
+  });
+
   it("asks for a restarted sweep when told to", async () => {
     const { seen, fetchFn } = fakeUpstreams({ tracked: null });
     await runPoll({ ...base, fetchFn, restart: true });
