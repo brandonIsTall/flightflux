@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { aheadOfWritePace, FIRST_SWEEP_TILE_MS, PACE_HEADROOM, initialSched, overBudget, planNext, READ_BUDGET, recordUsage, replaceTile, SEARCH_BUDGET, SWEEP_MS, takeSearch, TRACK_INTERVAL_MS, WRITE_BUDGET } from "../src/core/sched";
+import { aheadOfWritePace, FIRST_SWEEP_TILE_MS, MAX_TILE_GAP_MS, PACE_HEADROOM, initialSched, overBudget, planNext, READ_BUDGET, recordTileYield, recordUsage, replaceTile, SEARCH_BUDGET, SWEEP_MS, takeSearch, tileStatsOf, TRACK_INTERVAL_MS, WRITE_BUDGET, type Sched } from "../src/core/sched";
 import { INITIAL_TILES } from "../src/core/tiles";
 
 const T = 1_791_080_000_000;
@@ -43,7 +43,6 @@ describe("planNext", () => {
     const p = planNext(s, input(T + 2 * SWEEP_MS, { maxTiles: 50 }));
     expect(p.tileIdxs.length).toBe(n);
     expect(new Set(p.tileIdxs).size).toBe(n);
-    expect(s.sweeps).toBe(2);
   });
 
   it("sweeps at first-sweep pace again when nothing is known, whatever the sweep count says", () => {
@@ -145,5 +144,88 @@ describe("daily search cap", () => {
     s.usage = { day: "2026-10-09", read: 5, written: 5 };
     expect(takeSearch(s, noon)).toBe(true);
     expect(s.usage).toEqual({ day: "2026-10-09", read: 5, written: 5, searches: 1 });
+  });
+});
+
+describe("weighted sweep", () => {
+  /** A sched past its first sweep, boxes last visited in round-robin order up to T, with the given rates. */
+  const steady = (rates: number[]): Sched => {
+    const s = initialSched();
+    s.sweeps = 1;
+    s.lastTileAt = T;
+    tileStatsOf(s).forEach((t, i) => (t.rate = rates[i]!));
+    return s;
+  };
+  /** Run a poller every 5 min for a day; count visits and the longest gap per box. */
+  const day = (s: Sched) => {
+    const visits = s.tiles.map(() => 0);
+    const last = tileStatsOf(s).map((t) => t.lastAt);
+    const maxGap = s.tiles.map(() => 0);
+    for (let t = T + 5 * 60_000; t <= T + 24 * 3_600_000; t += 5 * 60_000) {
+      for (const i of planNext(s, input(t, { maxTiles: 50 })).tileIdxs) {
+        visits[i]!++;
+        maxGap[i] = Math.max(maxGap[i]!, t - last[i]!);
+        last[i] = t;
+      }
+    }
+    return { visits, maxGap, total: visits.reduce((a, b) => a + b, 0) };
+  };
+  const n = INITIAL_TILES.length;
+
+  it("visits a busy box more often, for the same number of boxes in all", () => {
+    const even = day(steady(Array(n).fill(1)));
+    const busy = day(steady([10, ...Array(n - 1).fill(1)]));
+    expect(busy.total).toBe(even.total); // same credits
+    const median = [...busy.visits].sort((a, b) => a - b)[Math.floor(n / 2)]!;
+    expect(busy.visits[0]! / median).toBeGreaterThanOrEqual(2);
+    expect(busy.visits[0]! / median).toBeLessThanOrEqual(3.5);
+  });
+
+  it("never leaves a quiet box unvisited for longer than MAX_TILE_GAP_MS", () => {
+    const rates = INITIAL_TILES.map((_, i) => (i % 2 === 0 ? 20 : 0.001));
+    const { visits, maxGap } = day(steady(rates));
+    expect(Math.max(...maxGap)).toBeLessThanOrEqual(MAX_TILE_GAP_MS + 5 * 60_000);
+    expect(visits[0]!).toBeGreaterThan(visits[1]!);
+  });
+
+  it("learns a box's rate as new aircraft per hour since its previous visit", () => {
+    const s = steady(Array(n).fill(1));
+    tileStatsOf(s)[3]!.gapMs = 30 * 60_000;
+    recordTileYield(s, INITIAL_TILES[3]!, 20); // 40 an hour
+    expect(tileStatsOf(s)[3]!.rate).toBeCloseTo(1 + 0.3 * (40 - 1));
+  });
+
+  it("splits a box's history between its halves", () => {
+    const s = steady(Array(n).fill(1));
+    tileStatsOf(s)[0]!.rate = 8;
+    const halves = [
+      [-90, -180, -45, -60],
+      [-45, -180, 0, -60],
+    ] as const;
+    expect(replaceTile(s, INITIAL_TILES[0]!, halves.map((h) => [...h]))).toBe(true);
+    expect(s.tiles).toHaveLength(n + 1);
+    expect(tileStatsOf(s).slice(0, 2).map((t) => t.rate)).toEqual([4, 4]);
+    expect(tileStatsOf(s)[2]!.rate).toBe(1);
+  });
+
+  it("staggers the history it creates for old state, so boxes don't all come due at once", () => {
+    const s = initialSched();
+    s.lastTileAt = T;
+    s.tileIdx = 5;
+    const at = tileStatsOf(s).map((t) => t.lastAt);
+    expect(at[4]).toBe(T); // the box the round-robin sweep handed out last
+    expect(at[5]).toBe(T - (n - 1) * (SWEEP_MS / n)); // the one it was about to come back to
+    expect(new Set(at).size).toBe(n);
+  });
+
+  it("plans from state saved before box history existed", () => {
+    const { tileStats: _, ...saved } = initialSched();
+    const s: Sched = { ...initialSched(), ...saved }; // as sky-state loads it
+    expect(s.tileStats).toBeUndefined();
+    s.sweeps = 2;
+    s.lastTileAt = T;
+    const p = planNext(s, input(T + 10 * 60_000));
+    expect(p.tileIdxs.length).toBe(Math.floor((10 * 60_000 * n) / SWEEP_MS));
+    expect(tileStatsOf(s)).toHaveLength(n);
   });
 });

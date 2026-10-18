@@ -17,7 +17,7 @@ import { AdsbdbClient } from "./core/adsbdb";
 import { Engine } from "./core/engine";
 import { isIngestBody, RESTING, type PlanResponse } from "./core/ingest";
 import { OpenSkyClient } from "./core/opensky";
-import { aheadOfWritePace, initialSched, overBudget, planNext, PRUNE_EVERY_MS, recordUsage, replaceTile, takeSearch, type Sched } from "./core/sched";
+import { aheadOfWritePace, initialSched, overBudget, planNext, PRUNE_EVERY_MS, recordTileYield, recordUsage, replaceTile, sweepSpread, takeSearch, type Sched } from "./core/sched";
 import { AFTER_INGEST_MS, dispatchDue, HEARTBEAT_MS, nextAlarmDelay, STUCK_MS, untilDispatch } from "./core/wake";
 import { dispatchPoll } from "./dispatch";
 import { SqlStore } from "./sql-store";
@@ -195,9 +195,13 @@ export class SkyState extends DurableObject<Env> {
       if (!isIngestBody(body)) return json({ error: "bad body" }, 400);
       const readsBefore = this.store.rowsRead;
       this.restore();
-      const { aircraft, next } = this.engine.ingest(body);
+      const { aircraft, next, fresh } = this.engine.ingest(body);
       const docBytes = this.engine.saveKnown();
-      if (body.tile) replaceTile(this.sched, body.tile, next);
+      if (body.tile) {
+        // Before any split, so both halves inherit what this box turned up.
+        recordTileYield(this.sched, body.tile, fresh);
+        replaceTile(this.sched, body.tile, next);
+      }
       await this.settle();
       // Enrich and rebuild once the poller's burst is over, not once per box.
       await this.alarmWithin(AFTER_INGEST_MS);
@@ -206,7 +210,9 @@ export class SkyState extends DurableObject<Env> {
           step: body.tile ? `ingest tile ${body.tile.join(",")}` : "ingest tracked",
           aircraft,
           kept: body.states.length,
+          fresh,
           known: this.engine.knownCount(),
+          ...(body.tile ? { boxGapsMin: sweepSpread(this.sched) } : {}),
           rowsRead: this.store.rowsRead - readsBefore,
           docBytes,
           usage: this.sched.usage,
