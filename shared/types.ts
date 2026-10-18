@@ -80,6 +80,14 @@ export interface EntryLag {
   onGlobeP50Min: number | null;
   onGlobeP90Min: number | null;
   swapsLastHour: number;
+  /** How far back (minutes) the recorded arrivals reach. */
+  windowMin?: number | null;
+  /** Arrivals that replaced a shown flight, and the median wait from first seen to shown. */
+  swap?: { n: number; gapP50Min: number | null };
+  /** Arrivals that filled a free slot (a shown flight landed), and the same wait. */
+  slot?: { n: number; gapP50Min: number | null };
+  /** First-seen lag for arrivals first seen near their origin only: what the sweep controls. */
+  near?: { n: number; discoverP50Min: number | null; discoverP90Min: number | null };
 }
 
 export interface FlightDetail extends Flight {

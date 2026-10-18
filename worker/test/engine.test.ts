@@ -467,6 +467,27 @@ describe("Engine", () => {
     expect(entry.discoverP50Min).toBeGreaterThan(20);
     expect(entry.discoverP50Min).toBeLessThan(50);
     expect(entry.onGlobeP50Min).toBe(entry.discoverP50Min);
+    // It filled a free slot, and was first seen ~390 km out: near its origin.
+    expect(entry.slot).toEqual({ n: 1, gapP50Min: 0 });
+    expect(entry.swap).toEqual({ n: 0, gapP50Min: null });
+    expect(entry.near).toMatchObject({ n: 1, discoverP50Min: entry.discoverP50Min });
+  });
+
+  it("leaves flights first seen far along their route out of the near-origin lag", async () => {
+    const world = fakeWorld();
+    world.states = [sv("aa9300", "UAL880", interpolate(IAH, LHR, 0.4), 11000)];
+    const { engine } = makeEngine(world);
+    await warm(engine);
+    // Took off ~5 h before it was first seen, halfway across: out of coverage until then.
+    world.time = T0 + 8 * 3600;
+    world.states = [sv("aa9302", "UAL880", interpolate(IAH, LHR, 0.5), 11000, world.time)];
+    await engine.pollTile(WORLD);
+    engine.rebuild();
+    await engine.enrich({ requests: 40 }); // the cached weather has aged out by now
+    const entry = engine.rebuild().meta.entry!;
+    expect(entry.n).toBe(1);
+    expect(entry.discoverP50Min).toBeGreaterThan(200);
+    expect(entry.near).toEqual({ n: 0, discoverP50Min: null, discoverP90Min: null });
   });
 
   it("restores a curated set saved before the swap rule", async () => {

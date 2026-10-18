@@ -76,6 +76,14 @@ describe("curate swaps", () => {
     const r = run([weak, strong], [shown(weak)], 1);
     expect(r.chosen.map((f) => f.icao24)).toEqual(["a2"]);
     expect(r.swappedIn).toBe(1);
+    expect([...r.swapped]).toEqual([hysteresisKey(strong)]);
+  });
+
+  it("labels a newcomer filling a free slot as no swap", () => {
+    const shownOne = flight(1, 0, 10);
+    const r = run([shownOne, flight(2, 40, 30)], [shown(shownOne)], 2);
+    expect(r.chosen).toHaveLength(2);
+    expect(r.swapped.size).toBe(0);
   });
 
   it("keeps the shown flight when the newcomer is less than SWAP_MARGIN better", () => {
