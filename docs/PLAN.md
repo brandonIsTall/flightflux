@@ -403,7 +403,7 @@ Every animation has a one-line reason. Anything without one gets cut.
 - Plain, functional language: "Back to globe", "Search flight", "Estimated", "Live, 1 min ago". No emoji, no em-dashes, no filler verbs.
 - Middle dots are rationed to at most one per line.
 - Real data only. No invented flights, sample numbers or placeholder names ship in the UI. Empty and error states say what happened and what to do:
-  - "No airborne flight matches BA1170. Check the number, or it may have landed."
+  - "BA1170 isn't one of the 150 flights on the globe (the biggest temperature swings), and we couldn't find it elsewhere in the sky. It may have landed or not be tracked yet."
   - "Showing positions from 4 min ago. Live data will resume automatically."
 - Required attributions (OpenSky, adsb.lol ODbL, Open-Meteo CC BY 4.0, OurAirports) live in a single "Data sources" sheet linked from the ≡ menu.
 
