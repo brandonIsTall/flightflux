@@ -45,7 +45,7 @@ export function score(f: Curatable): number {
 /** A newcomer must beat the weakest flight on the globe by this much (score ~ degrees C) to replace it. */
 export const SWAP_MARGIN = 5;
 /** At most this many such replacements in any rolling hour, so the globe changes gradually. */
-export const SWAPS_PER_HOUR = 6;
+export const SWAPS_PER_HOUR = 12;
 /** A flight stays on the globe at least this long before a newcomer may replace it. */
 export const MIN_DWELL_S = 45 * 60;
 
