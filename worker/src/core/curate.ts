@@ -42,14 +42,37 @@ export function score(f: Curatable): number {
   return Math.abs(f.arrTempC - f.depTempC) + f.distKm / 2000;
 }
 
+/** A newcomer must beat the weakest flight on the globe by this much (score ~ degrees C) to replace it. */
+export const SWAP_MARGIN = 5;
+/** At most this many such replacements in any rolling hour, so the globe changes gradually. */
+export const SWAPS_PER_HOUR = 6;
+/** A flight stays on the globe at least this long before a newcomer may replace it. */
+export const MIN_DWELL_S = 45 * 60;
+
+export interface SwapOptions {
+  /** When each previously shown flight joined the globe (unix s), by hysteresis key. */
+  enteredAt: ReadonlyMap<string, number>;
+  /** Replacements still allowed this hour. */
+  swapsLeft: number;
+  nowS: number;
+}
+
 /**
  * Keep every still-valid flight from the previous set (so lines don't flicker), then fill by score
- * with a per-longitude-band cap for geographic spread.
+ * with a per-longitude-band cap for geographic spread. Finally, a few clearly better newcomers may
+ * replace the weakest shown flights (SWAP_MARGIN, SWAPS_PER_HOUR, MIN_DWELL_S), so a big new swing
+ * doesn't wait for a weaker flight to land.
  */
-export function curate<T extends Curatable>(eligible: T[], previous: Set<string>, max = CURATED_MAX): T[] {
+export function curate<T extends Curatable>(
+  eligible: T[],
+  previous: Set<string>,
+  max = CURATED_MAX,
+  swaps?: SwapOptions,
+): { chosen: T[]; swappedIn: number } {
   const band = (f: T) => Math.floor((f.pos.lon + 180) / LON_BAND_DEG);
   const perBand = new Map<number, number>();
   const take = (f: T) => perBand.set(band(f), (perBand.get(band(f)) ?? 0) + 1);
+  const drop = (f: T) => perBand.set(band(f), (perBand.get(band(f)) ?? 0) - 1);
 
   const kept = eligible.filter((f) => previous.has(hysteresisKey(f))).slice(0, max);
   kept.forEach(take);
@@ -57,11 +80,33 @@ export function curate<T extends Curatable>(eligible: T[], previous: Set<string>
 
   const rest = eligible.filter((f) => !chosen.has(hysteresisKey(f))).sort((a, b) => score(b) - score(a));
   const out = [...kept];
+  const waiting: T[] = [];
   for (const f of rest) {
-    if (out.length >= max) break;
-    if ((perBand.get(band(f)) ?? 0) >= MAX_PER_BAND) continue;
+    if (out.length >= max || (perBand.get(band(f)) ?? 0) >= MAX_PER_BAND) {
+      waiting.push(f);
+      continue;
+    }
     out.push(f);
     take(f);
   }
-  return out;
+
+  let swappedIn = 0;
+  if (!swaps || swaps.swapsLeft <= 0 || waiting.length === 0) return { chosen: out, swappedIn };
+  // Weakest first; only flights that have had their minimum time on the globe can be replaced.
+  const replaceable = kept
+    .filter((f) => swaps.nowS - (swaps.enteredAt.get(hysteresisKey(f)) ?? 0) >= MIN_DWELL_S)
+    .sort((a, b) => score(a) - score(b));
+  for (const f of waiting) {
+    if (swappedIn >= swaps.swapsLeft) break;
+    // The weakest flight this newcomer can take the place of without breaking its band's cap.
+    const i = replaceable.findIndex((w) => band(w) === band(f) || (perBand.get(band(f)) ?? 0) < MAX_PER_BAND);
+    const weakest = replaceable[i];
+    if (!weakest || score(f) < score(weakest) + SWAP_MARGIN) continue;
+    replaceable.splice(i, 1);
+    out[out.indexOf(weakest)] = f;
+    drop(weakest);
+    take(f);
+    swappedIn++;
+  }
+  return { chosen: out, swappedIn };
 }

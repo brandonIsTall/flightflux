@@ -1,5 +1,6 @@
-import { Suspense, useEffect, useMemo } from "react";
+import { Suspense, useEffect, useMemo, useRef } from "react";
 import { motion } from "motion/react";
+import type { Flight } from "../../shared/types";
 import { ready, useBoot } from "./boot";
 import { hasLanded, useSnapshot } from "./data/snapshot";
 import { Scene } from "./globe/Scene";
@@ -20,14 +21,22 @@ export function App() {
   const inOrbit = useStore((s) => s.cameraMode === "orbit");
   const hasPanel = useStore((s) => s.selectedId !== null);
   const selectedId = useStore((s) => s.selectedId);
+  // The server may swap a flight off the globe for a bigger temperature swing. The one being viewed
+  // stays: its last copy is kept, and the client keeps moving it along its route.
+  const held = useRef<Flight | null>(null);
   const flights = useMemo(() => {
     const base = snapshot.data?.flights ?? [];
     const ids = new Set(base.map((f) => f.id));
     const nowS = Date.now() / 1000;
     // Flights past their arrival leave the globe (unless you're riding one), so a stale cache
     // never shows planes parked at their destinations.
-    return [...base, ...extra.filter((f) => !ids.has(f.id))].filter((f) => f.id === selectedId || !hasLanded(f, nowS));
+    const all = [...base, ...extra.filter((f) => !ids.has(f.id))].filter((f) => f.id === selectedId || !hasLanded(f, nowS));
+    if (selectedId && held.current?.id === selectedId && !all.some((f) => f.id === selectedId)) all.push(held.current);
+    return all;
   }, [snapshot.data, extra, selectedId]);
+  useEffect(() => {
+    held.current = (selectedId && flights.find((f) => f.id === selectedId)) || null;
+  }, [flights, selectedId]);
   const booted = useBoot((s) => s.phase === "done");
 
   // Tell the boot what the network has delivered.
