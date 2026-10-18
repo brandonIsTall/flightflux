@@ -86,6 +86,8 @@ export interface Known {
 
 /** One flight's arrival on the globe, for the entry-lag metric. */
 interface Entry {
+  /** Hysteresis key: a flight that drops off briefly and returns is still one arrival. */
+  key?: string;
   depTime: number;
   seenAt: number;
   enteredAt: number;
@@ -211,8 +213,12 @@ export class Engine {
         const nc = this.neverCurated.get(k.s.callsign);
         return nc === undefined || nc !== store.getRoute(k.s.callsign)?.at;
       })
-      .sort((a, b) => b.t - a.t)
-      .slice(0, MAX_SAVED_KNOWN);
+      // Long-haul flights first, so the ones kept through a coverage gap (oldest fixes of all)
+      // survive the cut; then aircraft awaiting a route; newest fixes first within each.
+      .map((k) => ({ k, rank: this.saveRank(k) }))
+      .sort((a, b) => a.rank - b.rank || b.k.t - a.k.t)
+      .slice(0, MAX_SAVED_KNOWN)
+      .map((x) => x.k);
     const routes: Record<string, RouteEntry> = {};
     const weather: Record<string, TempSeries> = {};
     const airports = new Set<string>();
@@ -243,6 +249,13 @@ export class Engine {
     if (json.length > MAX_DOC_BYTES) json = JSON.stringify({ ...doc, weather: {}, airports: [], routes: {}, rows: doc.rows.slice(0, 1000) });
     store.putBlob(KNOWN_BLOB, json);
     return json.length;
+  }
+
+  /** 0: cached long-haul route; 1: route not looked up yet; 2: anything else. */
+  private saveRank(k: Known): number {
+    const e = this.deps.store.getRoute(k.s.callsign);
+    if (!e) return 1;
+    return e.route && distanceKm(e.route.origin, e.route.dest) >= MIN_ROUTE_KM ? 0 : 2;
   }
 
   /** Reload saved aircraft, their routes and weather, and curation keys; then rebuild. */
@@ -377,11 +390,17 @@ export class Engine {
   private stillFlying(k: Known): boolean {
     const route = this.deps.store.getRoute(k.s.callsign)?.route;
     if (!route) return false;
+    const p = this.project(k, route);
+    return p.distKm >= MIN_ROUTE_KM && checkPlausible(p.distKm, p.crossKm, p.projAlong).ok;
+  }
+
+  /** Where a known aircraft is on its route now: its last fix advanced at its last ground speed. */
+  private project(k: Known, route: Route) {
     const distKm = distanceKm(route.origin, route.dest);
-    if (distKm < MIN_ROUTE_KM) return false;
     const { crossKm, alongKm } = trackOffsets(route.origin, route.dest, { lat: k.s.lat!, lon: k.s.lon! });
-    const projAlong = alongKm + ((k.s.velocityMs ?? 0) * (this.nowS() - k.t)) / 1000;
-    return checkPlausible(distKm, crossKm, projAlong).ok;
+    const gs = k.s.velocityMs ?? 0;
+    const ageS = Math.max(0, this.nowS() - k.t);
+    return { distKm, crossKm, alongKm, gs, ageS, projAlong: alongKm + (gs * ageS) / 1000 };
   }
 
   /** Spend up to `budget.requests` outbound requests filling caches. */
@@ -552,7 +571,9 @@ export class Engine {
       }
       this.enteredAt.set(key, nowS);
       // Only flights that took off after measuring began: the rest were in the air before we looked.
-      if (c.depTime >= this.epoch) this.entries.push({ depTime: c.depTime, seenAt: c.k.seenAt, enteredAt: nowS });
+      if (c.depTime >= this.epoch && !this.entries.some((e) => e.key === key)) {
+        this.entries.push({ key, depTime: c.depTime, seenAt: c.k.seenAt, enteredAt: nowS });
+      }
     }
     if (this.entries.length > MAX_ENTRIES) this.entries = this.entries.slice(-MAX_ENTRIES);
   }
@@ -600,11 +621,7 @@ export class Engine {
   private evaluate(k: Known, route: Route, curatedRules: boolean): Candidate | null {
     const { s } = k;
     const nowS = this.nowS();
-    const distKm = distanceKm(route.origin, route.dest);
-    const { crossKm, alongKm } = trackOffsets(route.origin, route.dest, { lat: s.lat!, lon: s.lon! });
-    const gs = s.velocityMs ?? 0;
-    const ageS = Math.max(0, nowS - k.t);
-    const projAlong = alongKm + (gs * ageS) / 1000;
+    const { distKm, crossKm, alongKm, gs, ageS, projAlong } = this.project(k, route);
     if (curatedRules && !checkPlausible(distKm, crossKm, projAlong).ok) return null;
     if (!curatedRules && (Math.abs(crossKm) > 600 || projAlong > distKm)) return null;
 

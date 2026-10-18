@@ -405,6 +405,38 @@ describe("Engine", () => {
     expect((await engine.search("UA880"))?.callsign).toBe("UAL880");
   });
 
+  it("saves long-haul flights out of coverage ahead of fresher aircraft", async () => {
+    const world = fakeWorld();
+    const engine = await knownNotCurated(world);
+    // Hours later a new aircraft appears whose route isn't looked up yet.
+    world.time = T0 + 3 * 3600;
+    world.states = [sv("cc0002", "ABC9", { lat: 10, lon: 10 }, 11000, world.time)];
+    await engine.pollTile(WORLD);
+    engine.saveKnown();
+    const rows = (JSON.parse(engine["deps"].store.getBlob("known")!) as { rows: unknown[][] }).rows;
+    // Oldest fix, but first in line: it is the one a size cut must not drop.
+    expect(rows.map((r) => r[1])).toEqual(["UAL880", "ABC9"]);
+  });
+
+  it("counts a flight that drops off the globe and returns as one arrival", async () => {
+    const world = fakeWorld();
+    world.states = [sv("aa9300", "UAL880", interpolate(IAH, LHR, 0.4), 11000)];
+    const { engine, store } = makeEngine(world);
+    await warm(engine);
+    world.time = T0 + 3 * 3600;
+    world.states = [sv("aa9301", "UAL880", interpolate(IAH, LHR, 0.05), 11000, world.time)];
+    await engine.pollTile(WORLD);
+    expect(engine.rebuild().meta.entry!.n).toBe(1);
+    // Its destination's weather goes missing for one rebuild, then comes back.
+    const lhr = store.getWeather("EGLL")!;
+    store.weather.delete("EGLL");
+    expect(engine.rebuild().flights).toHaveLength(0);
+    store.putWeather("EGLL", lhr);
+    const snap = engine.rebuild();
+    expect(snap.flights).toHaveLength(2);
+    expect(snap.meta.entry!.n).toBe(1);
+  });
+
   it("keeps when an aircraft was first seen across fixes and an eviction", async () => {
     const world = fakeWorld();
     world.states = [sv("aa9300", "UAL880", interpolate(IAH, LHR, 0.4), 11000)];

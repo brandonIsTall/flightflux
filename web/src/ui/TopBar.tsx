@@ -2,7 +2,7 @@ import { List, MagnifyingGlass } from "@phosphor-icons/react";
 import { useState } from "react";
 import type { Flight } from "../../../shared/types";
 import { searchErrorMessage, searchFlight, SearchError } from "../data/detail";
-import { USING_FIXTURE } from "../data/snapshot";
+import { useSnapshot, USING_FIXTURE } from "../data/snapshot";
 import { useStore } from "../store";
 
 export function TopBar({ flights }: { flights: Flight[] }) {
@@ -15,6 +15,8 @@ export function TopBar({ flights }: { flights: Flight[] }) {
   const [q, setQ] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  // The curated flights only: `flights` also holds searched ones.
+  const curatedCount = useSnapshot().data?.flights.length ?? 0;
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,7 +40,7 @@ export function TopBar({ flights }: { flights: Flight[] }) {
       setMessage(null);
     } catch (err) {
       const kind = err instanceof SearchError ? err.kind : "down";
-      setMessage(searchErrorMessage(kind, key, flights.length));
+      setMessage(searchErrorMessage(kind, key, curatedCount));
     } finally {
       setBusy(false);
     }

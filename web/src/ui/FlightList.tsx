@@ -7,7 +7,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Flight } from "../../../shared/types";
 import { searchErrorMessage, searchFlight, SearchError } from "../data/detail";
-import { progressAt, USING_FIXTURE } from "../data/snapshot";
+import { progressAt, useSnapshot, USING_FIXTURE } from "../data/snapshot";
 import { formatDelta, formatTemp } from "../lib/format";
 import { flightGradientCss } from "../lib/gradient";
 import { useStore } from "../store";
@@ -43,6 +43,8 @@ function ListBody({ flights, onClose }: { flights: Flight[]; onClose: () => void
   const [q, setQ] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  // The curated flights only: `flights` also holds searched ones.
+  const curatedCount = useSnapshot().data?.flights.length ?? 0;
   const listRef = useRef<HTMLUListElement>(null);
   const nowS = Date.now() / 1000;
 
@@ -87,7 +89,7 @@ function ListBody({ flights, onClose }: { flights: Flight[]; onClose: () => void
       choose(f);
     } catch (err) {
       const kind = err instanceof SearchError ? err.kind : "down";
-      setMessage(searchErrorMessage(kind, key, flights.length));
+      setMessage(searchErrorMessage(kind, key, curatedCount));
     } finally {
       setBusy(false);
     }

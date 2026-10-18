@@ -97,7 +97,9 @@ export function curate<T extends Curatable>(
     .filter((f) => swaps.nowS - (swaps.enteredAt.get(hysteresisKey(f)) ?? 0) >= MIN_DWELL_S)
     .sort((a, b) => score(a) - score(b));
   for (const f of waiting) {
-    if (swappedIn >= swaps.swapsLeft) break;
+    if (swappedIn >= swaps.swapsLeft || replaceable.length === 0) break;
+    // Newcomers come best first: once one can't beat the weakest by the margin, none can.
+    if (score(f) < score(replaceable[0]!) + SWAP_MARGIN) break;
     // The weakest flight this newcomer can take the place of without breaking its band's cap.
     const i = replaceable.findIndex((w) => band(w) === band(f) || (perBand.get(band(f)) ?? 0) < MAX_PER_BAND);
     const weakest = replaceable[i];
