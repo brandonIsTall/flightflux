@@ -205,8 +205,11 @@ Run this every poll in the Durable Object:
 1. Start from all OpenSky states that are airborne, have a callsign, and match an airline-callsign pattern (three letters + digits).
 2. Keep flights with a resolved, **plausible** route and great-circle distance > 2,500 km. Long arcs look best on a globe.
 3. Score them: `|arrTempC − depTempC|` (dramatic gradients first) + geographic diversity (at most N per 30° longitude band) + a bonus for wide-body types.
-4. Keep the top 150, with **hysteresis**: a flight already in the set stays until it lands, so lines don't flicker in and out.
-5. **Search** works on the full global snapshot, not just the curated 150. A searched flight is resolved on demand and pinned to the user's view.
+4. Keep the top 150, with **hysteresis**: a flight already in the set stays, so lines don't flicker in and out. Free slots go to the best newcomers.
+5. **Swaps** keep the set current without churn. A newcomer replaces the weakest shown flight only if it scores at least **5** higher (≈ 5 °C), the shown flight has been up for at least **45 min**, and fewer than **6** swaps happened in the last hour (`curate.ts`). The flight someone is viewing never disappears: the client keeps its last copy and keeps moving it along its route.
+6. **Coverage gaps.** An unseen aircraft is forgotten after 100 min, except a long-haul flight whose cached route says it is still in the air: it is advanced along its route like a curated flight (up to 18 h) until its projection says it has landed. Over oceans, where there are no receivers, this keeps it eligible for the globe and findable by search.
+7. **Search** works on every known aircraft, not just the curated 150. A searched flight is resolved on demand and pinned to the user's view.
+8. **Entry lag.** The snapshot's `meta.entry` reports, over recent arrivals on the globe that took off after measuring began, the median and 90th-percentile minutes from take-off until a flight was first seen in cruise (`discover…`) and first shown (`onGlobe…`), plus swaps in the last hour. A high `discover` points at the sweep; a large gap between the two points at curation.
 
 ---
 
@@ -403,7 +406,7 @@ Every animation has a one-line reason. Anything without one gets cut.
 - Plain, functional language: "Back to globe", "Search flight", "Estimated", "Live, 1 min ago". No emoji, no em-dashes, no filler verbs.
 - Middle dots are rationed to at most one per line.
 - Real data only. No invented flights, sample numbers or placeholder names ship in the UI. Empty and error states say what happened and what to do:
-  - "No airborne flight matches BA1170. Check the number, or it may have landed."
+  - "BA1170 isn't one of the 150 flights on the globe (the biggest temperature swings), and we couldn't find it elsewhere in the sky. It may have landed or not be tracked yet."
   - "Showing positions from 4 min ago. Live data will resume automatically."
 - Required attributions (OpenSky, adsb.lol ODbL, Open-Meteo CC BY 4.0, OurAirports) live in a single "Data sources" sheet linked from the ≡ menu.
 

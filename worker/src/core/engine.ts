@@ -11,9 +11,9 @@
 // Long-haul flights move predictably, so between fixes each plane is advanced along its
 // great-circle route at its last ground speed (the client does the same every frame).
 
-import type { Airport, Flight, FlightDetail, Snapshot } from "../../../shared/types";
+import type { Airport, EntryLag, Flight, FlightDetail, Snapshot } from "../../../shared/types";
 import { AdsbdbClient, type Aircraft, type Route } from "./adsbdb";
-import { curate, checkPlausible, hysteresisKey, isAirlineCallsign, MIN_ROUTE_KM } from "./curate";
+import { curate, checkPlausible, hysteresisKey, isAirlineCallsign, MIN_ROUTE_KM, SWAPS_PER_HOUR } from "./curate";
 import { distanceKm, interpolate, trackOffsets } from "./geo";
 import { globalFetch } from "./http";
 import type { IngestBody } from "./ingest";
@@ -30,8 +30,15 @@ export const MIN_CANDIDATE_GS_MS = 150;
 export const DEP_MATCH_KM = 60;
 /** An observed departure further than this from the distance-based estimate is a previous leg. */
 export const DEP_AGREE_S = 90 * 60;
-/** Forget an untracked aircraft not seen for this long (a little over one sweep). */
+/** Forget an untracked aircraft not seen for this long (a little over one sweep)... */
 export const KNOWN_TTL_S = 100 * 60;
+/**
+ * ...unless it is a long-haul flight its route says is still in the air: over oceans there is no
+ * coverage, so it is advanced along its route like a curated flight, for at most this long.
+ */
+export const MAX_DEAD_RECKON_S = 18 * 3600;
+/** Recent arrivals on the globe kept for the entry-lag metric. */
+export const MAX_ENTRIES = 300;
 /** Searched flights stay tracked this long even if they aren't curated. */
 export const PIN_TTL_S = 3 * 3600;
 export const ROUTE_CONCURRENCY = 8;
@@ -53,7 +60,7 @@ interface SavedKnown {
   credits: number | null;
   /** When positions last arrived (ms). */
   at: number;
-  /** Compact OpenSky rows with the fix time appended (index 14). */
+  /** Compact OpenSky rows with the fix time (index 14) and first-seen time (index 15) appended. */
   rows: RawState[];
   /** Cached route of each saved callsign that had one. */
   routes?: Record<string, RouteEntry>;
@@ -73,6 +80,29 @@ export interface Known {
   s: StateVector;
   /** Unix seconds of the fix (timePosition, else the response time). */
   t: number;
+  /** Unix seconds this aircraft, under this callsign, was first seen in cruise. */
+  seenAt: number;
+}
+
+/** One flight's arrival on the globe, for the entry-lag metric. */
+interface Entry {
+  /** Hysteresis key: a flight that drops off briefly and returns is still one arrival. */
+  key?: string;
+  depTime: number;
+  seenAt: number;
+  enteredAt: number;
+}
+
+/** The curated-set document: the hysteresis keys plus what the swap rule and metric need. */
+interface SavedCurated {
+  keys: string[];
+  /** When each shown flight joined the globe (unix s). */
+  enteredAt: Record<string, number>;
+  /** Swap times in the last hour (unix s). */
+  swaps: number[];
+  entries: Entry[];
+  /** Only flights departing after this are measured, so ones already flying at deploy don't count. */
+  epoch: number;
 }
 
 /** A projected, temperature-tagged aircraft: enough to curate on, cheap to build. */
@@ -119,6 +149,10 @@ export interface StepStats {
 export class Engine {
   private known = new Map<string, Known>();
   private curatedKeys = new Set<string>();
+  private enteredAt = new Map<string, number>();
+  private swaps: number[] = [];
+  private entries: Entry[] = [];
+  private epoch = 0;
   private snapshot: Snapshot | null = null;
   private routeQueue = new Map<string, number>(); // callsign -> priority
   private weatherQueue = new Map<string, LatLonKey>(); // icao -> coords
@@ -179,8 +213,12 @@ export class Engine {
         const nc = this.neverCurated.get(k.s.callsign);
         return nc === undefined || nc !== store.getRoute(k.s.callsign)?.at;
       })
-      .sort((a, b) => b.t - a.t)
-      .slice(0, MAX_SAVED_KNOWN);
+      // Long-haul flights first, so the ones kept through a coverage gap (oldest fixes of all)
+      // survive the cut; then aircraft awaiting a route; newest fixes first within each.
+      .map((k) => ({ k, rank: this.saveRank(k) }))
+      .sort((a, b) => a.rank - b.rank || b.k.t - a.k.t)
+      .slice(0, MAX_SAVED_KNOWN)
+      .map((x) => x.k);
     const routes: Record<string, RouteEntry> = {};
     const weather: Record<string, TempSeries> = {};
     const airports = new Set<string>();
@@ -198,7 +236,7 @@ export class Engine {
     const doc: SavedKnown = {
       credits: this.creditsRemaining,
       at: this.lastFixAt,
-      rows: saved.map((k) => [...toRaw(k.s), k.t]),
+      rows: saved.map((k) => [...toRaw(k.s), k.t, k.seenAt]),
       routes,
       airports: [...airports],
       weather,
@@ -213,6 +251,13 @@ export class Engine {
     return json.length;
   }
 
+  /** 0: cached long-haul route; 1: route not looked up yet; 2: anything else. */
+  private saveRank(k: Known): number {
+    const e = this.deps.store.getRoute(k.s.callsign);
+    if (!e) return 1;
+    return e.route && distanceKm(e.route.origin, e.route.dest) >= MIN_ROUTE_KM ? 0 : 2;
+  }
+
   /** Reload saved aircraft, their routes and weather, and curation keys; then rebuild. */
   restore() {
     const { store } = this.deps;
@@ -223,14 +268,24 @@ export class Engine {
       this.lastFixAt = saved.at;
       for (const r of saved.rows) {
         const s = parseState(r);
-        if (!this.known.has(s.icao24)) this.known.set(s.icao24, { s, t: r[14] as number });
+        const t = r[14] as number;
+        if (!this.known.has(s.icao24)) this.known.set(s.icao24, { s, t, seenAt: (r[15] as number | undefined) ?? t });
         // Absent from the document means no route was cached when it was saved.
         store.primeRoute(s.callsign, saved.routes?.[s.callsign]);
       }
       for (const a of saved.airports ?? []) store.primeWeather(a, saved.weather?.[a]);
     }
     const curated = store.getBlob(CURATED_BLOB);
-    if (curated) for (const k of JSON.parse(curated) as string[]) this.curatedKeys.add(k);
+    if (curated) {
+      const doc = JSON.parse(curated) as SavedCurated | string[];
+      // Before the swap rule, the document was the bare list of keys.
+      const c = Array.isArray(doc) ? { keys: doc, enteredAt: {}, swaps: [], entries: [], epoch: 0 } : doc;
+      for (const k of c.keys) this.curatedKeys.add(k);
+      for (const [k, t] of Object.entries(c.enteredAt)) if (!this.enteredAt.has(k)) this.enteredAt.set(k, t);
+      this.swaps = c.swaps;
+      this.entries = c.entries;
+      this.epoch = c.epoch;
+    }
     const types = store.getBlob(TYPES_BLOB);
     if (types) for (const [id, t] of JSON.parse(types) as [string, string | null][]) if (!this.types.has(id)) this.types.set(id, t);
     this.rebuild();
@@ -297,7 +352,9 @@ export class Engine {
     if (s.onGround || s.lat == null || s.lon == null) return;
     this.recordClimbDeparture(s, responseTime);
     if (!this.isCandidate(s)) return;
-    this.known.set(s.icao24, { s, t: s.timePosition ?? responseTime });
+    const prev = this.known.get(s.icao24);
+    const seenAt = prev && prev.s.callsign === s.callsign ? prev.seenAt : responseTime;
+    this.known.set(s.icao24, { s, t: s.timePosition ?? responseTime, seenAt });
   }
 
   /** An airliner caught low and climbing just took off: back out the climb time. */
@@ -321,7 +378,29 @@ export class Engine {
   private expireKnown() {
     const nowS = this.nowS();
     const tracked = new Set(this.trackedIds());
-    for (const [k, v] of this.known) if (nowS - v.t > KNOWN_TTL_S && !tracked.has(k)) this.known.delete(k);
+    for (const [k, v] of this.known) {
+      const ageS = nowS - v.t;
+      if (ageS <= KNOWN_TTL_S || tracked.has(k)) continue;
+      if (ageS <= MAX_DEAD_RECKON_S && this.stillFlying(v)) continue;
+      this.known.delete(k);
+    }
+  }
+
+  /** Whether a known aircraft's cached long-haul route says it is still on its way, projected to now. */
+  private stillFlying(k: Known): boolean {
+    const route = this.deps.store.getRoute(k.s.callsign)?.route;
+    if (!route) return false;
+    const p = this.project(k, route);
+    return p.distKm >= MIN_ROUTE_KM && checkPlausible(p.distKm, p.crossKm, p.projAlong).ok;
+  }
+
+  /** Where a known aircraft is on its route now: its last fix advanced at its last ground speed. */
+  private project(k: Known, route: Route) {
+    const distKm = distanceKm(route.origin, route.dest);
+    const { crossKm, alongKm } = trackOffsets(route.origin, route.dest, { lat: k.s.lat!, lon: k.s.lon! });
+    const gs = k.s.velocityMs ?? 0;
+    const ageS = Math.max(0, this.nowS() - k.t);
+    return { distKm, crossKm, alongKm, gs, ageS, projAlong: alongKm + (gs * ageS) / 1000 };
   }
 
   /** Spend up to `budget.requests` outbound requests filling caches. */
@@ -453,21 +532,80 @@ export class Engine {
     if (this.neverCurated.size > 50_000) this.neverCurated.clear(); // routes expire after 24 h
     // Score cheap candidates; only the ~150 winners become full Flight objects. Building one per
     // eligible aircraft every run cost more in garbage collection than everything else combined.
-    const chosen = curate(eligible, this.curatedKeys);
+    this.swaps = this.swaps.filter((t) => nowS - t < 3600);
+    const { chosen, swappedIn } = curate(eligible, this.curatedKeys, undefined, {
+      enteredAt: this.enteredAt,
+      swapsLeft: SWAPS_PER_HOUR - this.swaps.length,
+      nowS,
+    });
+    for (let i = 0; i < swappedIn; i++) this.swaps.push(nowS);
     const keys = chosen.map(hysteresisKey);
     if (keys.length !== this.curatedKeys.size || keys.some((k) => !this.curatedKeys.has(k))) {
-      this.deps.store.putBlob(CURATED_BLOB, JSON.stringify(keys)); // hysteresis survives an eviction
+      this.recordEntries(chosen, nowS);
+      this.curatedKeys = new Set(keys);
+      this.saveCurated(); // hysteresis survives an eviction
     }
-    this.curatedKeys = new Set(keys);
     this.typeQueue.clear();
     for (const c of chosen) if (!this.types.has(c.k.s.icao24)) this.typeQueue.add(c.k.s.icao24);
     this.snapshot = {
       v: 1,
       generatedAt: nowS,
       flights: chosen.map((c) => this.materialize(c)),
-      meta: { known: this.known.size, routed, creditsRemaining: this.creditsRemaining, stepMs },
+      meta: { known: this.known.size, routed, creditsRemaining: this.creditsRemaining, stepMs, entry: this.entryLag() },
     };
     return this.snapshot;
+  }
+
+  /** Note when newly shown flights joined the globe, and forget the ones that left. */
+  private recordEntries(chosen: Candidate[], nowS: number) {
+    if (this.epoch === 0) this.epoch = nowS;
+    const keys = new Set(chosen.map(hysteresisKey));
+    for (const k of this.enteredAt.keys()) if (!keys.has(k)) this.enteredAt.delete(k);
+    for (const c of chosen) {
+      const key = hysteresisKey(c);
+      if (this.enteredAt.has(key)) continue;
+      // Shown before join times were recorded: long since joined, so not protected, not measured.
+      if (this.curatedKeys.has(key)) {
+        this.enteredAt.set(key, 0);
+        continue;
+      }
+      this.enteredAt.set(key, nowS);
+      // Only flights that took off after measuring began: the rest were in the air before we looked.
+      if (c.depTime >= this.epoch && !this.entries.some((e) => e.key === key)) {
+        this.entries.push({ key, depTime: c.depTime, seenAt: c.k.seenAt, enteredAt: nowS });
+      }
+    }
+    if (this.entries.length > MAX_ENTRIES) this.entries = this.entries.slice(-MAX_ENTRIES);
+  }
+
+  private saveCurated() {
+    const doc: SavedCurated = {
+      keys: [...this.curatedKeys],
+      enteredAt: Object.fromEntries(this.enteredAt),
+      swaps: this.swaps,
+      entries: this.entries,
+      epoch: this.epoch,
+    };
+    this.deps.store.putBlob(CURATED_BLOB, JSON.stringify(doc));
+  }
+
+  /** How long after take-off flights are first seen and first shown, over recent arrivals on the globe. */
+  private entryLag(): EntryLag {
+    const pct = (xs: number[], p: number) => {
+      if (xs.length === 0) return null;
+      const sorted = [...xs].sort((a, b) => a - b);
+      return Math.round(sorted[Math.min(sorted.length - 1, Math.floor(p * sorted.length))]! / 60);
+    };
+    const discover = this.entries.map((e) => e.seenAt - e.depTime);
+    const onGlobe = this.entries.map((e) => e.enteredAt - e.depTime);
+    return {
+      n: this.entries.length,
+      discoverP50Min: pct(discover, 0.5),
+      discoverP90Min: pct(discover, 0.9),
+      onGlobeP50Min: pct(onGlobe, 0.5),
+      onGlobeP90Min: pct(onGlobe, 0.9),
+      swapsLastHour: this.swaps.length,
+    };
   }
 
   private isCandidate(s: StateVector): boolean {
@@ -483,11 +621,7 @@ export class Engine {
   private evaluate(k: Known, route: Route, curatedRules: boolean): Candidate | null {
     const { s } = k;
     const nowS = this.nowS();
-    const distKm = distanceKm(route.origin, route.dest);
-    const { crossKm, alongKm } = trackOffsets(route.origin, route.dest, { lat: s.lat!, lon: s.lon! });
-    const gs = s.velocityMs ?? 0;
-    const ageS = Math.max(0, nowS - k.t);
-    const projAlong = alongKm + (gs * ageS) / 1000;
+    const { distKm, crossKm, alongKm, gs, ageS, projAlong } = this.project(k, route);
     if (curatedRules && !checkPlausible(distKm, crossKm, projAlong).ok) return null;
     if (!curatedRules && (Math.abs(crossKm) > 600 || projAlong > distKm)) return null;
 

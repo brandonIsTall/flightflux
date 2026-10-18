@@ -64,7 +64,22 @@ export interface Snapshot {
     routed: number;
     creditsRemaining: number | null;
     stepMs: number;
+    /** How quickly new flights reach the globe (absent from servers that predate it). */
+    entry?: EntryLag;
   };
+}
+
+/**
+ * Minutes from take-off until a flight is first seen in cruise (discover) and first shown on the
+ * globe (onGlobe), over recent arrivals on the globe. Null until there are any.
+ */
+export interface EntryLag {
+  n: number;
+  discoverP50Min: number | null;
+  discoverP90Min: number | null;
+  onGlobeP50Min: number | null;
+  onGlobeP90Min: number | null;
+  swapsLastHour: number;
 }
 
 export interface FlightDetail extends Flight {

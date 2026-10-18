@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { AdsbdbClient } from "../src/core/adsbdb";
-import { Engine, normalizeQuery } from "../src/core/engine";
+import { Engine, KNOWN_TTL_S, normalizeQuery } from "../src/core/engine";
 import { prefilter } from "../src/core/ingest";
 import { distanceKm, interpolate } from "../src/core/geo";
 import { OpenSkyClient, type Bbox } from "../src/core/opensky";
@@ -260,7 +260,7 @@ describe("Engine", () => {
     expect(blob.credits).toBe(3000);
     // DLH400's route is unknown (404) and so can never be curated: not worth saving.
     expect(blob.rows.map((r) => r[1])).toEqual(["UAL880"]);
-    expect(a.store.blobs.get("curated")).toBe(JSON.stringify(["aa9300:UAL880"]));
+    expect(JSON.parse(a.store.blobs.get("curated")!).keys).toEqual(["aa9300:UAL880"]);
 
     // A new object shares the SQLite caches (same store here) but starts with empty memory.
     const b = new Engine({
@@ -370,6 +370,121 @@ describe("Engine", () => {
     expect(b.getSnapshot()!.flights.map((x) => x.callsign)).toEqual(["UAL880"]);
     // The known-set document carries the route and weather it needs; plus the curation keys.
     expect(store.rowsRead).toBe(2);
+  });
+
+  /** Known with a route but no weather yet: not curated, so nothing keeps it tracked. */
+  async function knownNotCurated(world: ReturnType<typeof fakeWorld>) {
+    world.states = [sv("aa9300", "UAL880", interpolate(IAH, LHR, 0.4), 11000), sv("bbbbbb", "DAL77", IAH, 11000)];
+    const { engine } = makeEngine(world);
+    await engine.pollTile(WORLD);
+    engine.rebuild();
+    await engine.enrich({ requests: 2 });
+    expect(engine.rebuild().flights).toHaveLength(0);
+    world.states = [];
+    return engine;
+  }
+
+  it("remembers a long-haul flight out of coverage until its route says it has landed", async () => {
+    const world = fakeWorld();
+    const engine = await knownNotCurated(world);
+    // Three hours unseen over the ocean: still known; the one without a long-haul route is gone.
+    world.time = T0 + KNOWN_TTL_S + 3 * 3600;
+    await engine.pollTile(WORLD);
+    expect(engine.knownCount()).toBe(1);
+    // ~4,700 km to go at 250 m/s is ~5.2 h: by 7 h its projection is past the destination.
+    world.time = T0 + 7 * 3600;
+    await engine.pollTile(WORLD);
+    expect(engine.knownCount()).toBe(0);
+  });
+
+  it("finds a flight by search while it is out of coverage", async () => {
+    const world = fakeWorld();
+    const engine = await knownNotCurated(world);
+    world.time = T0 + KNOWN_TTL_S + 3 * 3600;
+    await engine.pollTile(WORLD);
+    expect((await engine.search("UA880"))?.callsign).toBe("UAL880");
+  });
+
+  it("saves long-haul flights out of coverage ahead of fresher aircraft", async () => {
+    const world = fakeWorld();
+    const engine = await knownNotCurated(world);
+    // Hours later a new aircraft appears whose route isn't looked up yet.
+    world.time = T0 + 3 * 3600;
+    world.states = [sv("cc0002", "ABC9", { lat: 10, lon: 10 }, 11000, world.time)];
+    await engine.pollTile(WORLD);
+    engine.saveKnown();
+    const rows = (JSON.parse(engine["deps"].store.getBlob("known")!) as { rows: unknown[][] }).rows;
+    // Oldest fix, but first in line: it is the one a size cut must not drop.
+    expect(rows.map((r) => r[1])).toEqual(["UAL880", "ABC9"]);
+  });
+
+  it("counts a flight that drops off the globe and returns as one arrival", async () => {
+    const world = fakeWorld();
+    world.states = [sv("aa9300", "UAL880", interpolate(IAH, LHR, 0.4), 11000)];
+    const { engine, store } = makeEngine(world);
+    await warm(engine);
+    world.time = T0 + 3 * 3600;
+    world.states = [sv("aa9301", "UAL880", interpolate(IAH, LHR, 0.05), 11000, world.time)];
+    await engine.pollTile(WORLD);
+    expect(engine.rebuild().meta.entry!.n).toBe(1);
+    // Its destination's weather goes missing for one rebuild, then comes back.
+    const lhr = store.getWeather("EGLL")!;
+    store.weather.delete("EGLL");
+    expect(engine.rebuild().flights).toHaveLength(0);
+    store.putWeather("EGLL", lhr);
+    const snap = engine.rebuild();
+    expect(snap.flights).toHaveLength(2);
+    expect(snap.meta.entry!.n).toBe(1);
+  });
+
+  it("keeps when an aircraft was first seen across fixes and an eviction", async () => {
+    const world = fakeWorld();
+    world.states = [sv("aa9300", "UAL880", interpolate(IAH, LHR, 0.4), 11000)];
+    const { engine, store } = makeEngine(world);
+    await warm(engine);
+    world.time = T0 + 600;
+    world.states = [sv("aa9300", "UAL880", interpolate(IAH, LHR, 0.42), 11000, world.time)];
+    await engine.pollTile(WORLD);
+    engine.saveKnown();
+    const row = (JSON.parse(store.blobs.get("known")!) as { rows: unknown[][] }).rows[0]!;
+    expect(row[14]).toBe(T0 + 600);
+    expect(row[15]).toBe(T0);
+  });
+
+  it("measures how long after take-off new flights reach the globe", async () => {
+    const world = fakeWorld();
+    world.states = [sv("aa9300", "UAL880", interpolate(IAH, LHR, 0.4), 11000)];
+    const { engine } = makeEngine(world);
+    // Already flying when measuring starts: not counted.
+    expect((await warm(engine)).meta.entry).toMatchObject({ n: 0, onGlobeP50Min: null });
+
+    // Took off after measuring began; seen ~35 min after take-off, shown on the same rebuild.
+    world.time = T0 + 3 * 3600;
+    world.states = [sv("aa9301", "UAL880", interpolate(IAH, LHR, 0.05), 11000, world.time)];
+    await engine.pollTile(WORLD);
+    const entry = engine.rebuild().meta.entry!;
+    expect(entry.n).toBe(1);
+    expect(entry.discoverP50Min).toBeGreaterThan(20);
+    expect(entry.discoverP50Min).toBeLessThan(50);
+    expect(entry.onGlobeP50Min).toBe(entry.discoverP50Min);
+  });
+
+  it("restores a curated set saved before the swap rule", async () => {
+    const world = fakeWorld();
+    world.states = [sv("aa9300", "UAL880", interpolate(IAH, LHR, 0.4), 11000)];
+    const a = makeEngine(world);
+    await warm(a.engine);
+    a.engine.saveKnown();
+    a.store.putBlob("curated", JSON.stringify(["aa9300:UAL880"]));
+    const b = new Engine({
+      opensky: new OpenSkyClient("id", "secret", world.fetch, () => world.time * 1000),
+      adsbdb: new AdsbdbClient(world.fetch),
+      store: a.store,
+      fetchFn: world.fetch,
+      now: () => world.time * 1000,
+    });
+    b.restore();
+    expect(b.getSnapshot()!.flights.map((f) => f.callsign)).toEqual(["UAL880"]);
   });
 
   it("only accepts queries that could be a flight number or callsign", () => {

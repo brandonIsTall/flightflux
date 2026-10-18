@@ -6,8 +6,8 @@ import { MagnifyingGlass, X } from "@phosphor-icons/react";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Flight } from "../../../shared/types";
-import { searchFlight, SearchError } from "../data/detail";
-import { progressAt, USING_FIXTURE } from "../data/snapshot";
+import { searchErrorMessage, searchFlight, SearchError } from "../data/detail";
+import { progressAt, useSnapshot, USING_FIXTURE } from "../data/snapshot";
 import { formatDelta, formatTemp } from "../lib/format";
 import { flightGradientCss } from "../lib/gradient";
 import { useStore } from "../store";
@@ -43,6 +43,8 @@ function ListBody({ flights, onClose }: { flights: Flight[]; onClose: () => void
   const [q, setQ] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  // The curated flights only: `flights` also holds searched ones.
+  const curatedCount = useSnapshot().data?.flights.length ?? 0;
   const listRef = useRef<HTMLUListElement>(null);
   const nowS = Date.now() / 1000;
 
@@ -87,13 +89,7 @@ function ListBody({ flights, onClose }: { flights: Flight[]; onClose: () => void
       choose(f);
     } catch (err) {
       const kind = err instanceof SearchError ? err.kind : "down";
-      setMessage(
-        kind === "none"
-          ? `No airborne flight matches ${key}. Check the number, or it may have landed.`
-          : kind === "rate"
-            ? "Too many searches. Try again in a minute."
-            : "Search is unavailable right now.",
-      );
+      setMessage(searchErrorMessage(kind, key, curatedCount));
     } finally {
       setBusy(false);
     }
@@ -111,20 +107,22 @@ function ListBody({ flights, onClose }: { flights: Flight[]; onClose: () => void
       </header>
 
       <form onSubmit={submit} role="search" className="relative px-5 pb-3">
-        <MagnifyingGlass size={16} weight="light" aria-hidden className={`pointer-events-none absolute top-1/2 left-8.5 -translate-y-1/2 text-ink-2 ${busy ? "animate-pulse" : ""}`} />
-        <input
-          value={q}
-          onChange={(e) => {
-            setQ(e.target.value);
-            setMessage(null);
-          }}
-          placeholder="Flight, airline or airport"
-          aria-label="Filter flights or search by flight number"
-          autoComplete="off"
-          spellCheck={false}
-          autoFocus
-          className="pill num h-9 w-full pr-4 pl-9 text-[13px] text-ink-1 placeholder:font-sans placeholder:text-ink-3"
-        />
+        <div className="relative">
+          <MagnifyingGlass size={16} weight="light" aria-hidden className={`pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-ink-2 ${busy ? "animate-pulse" : ""}`} />
+          <input
+            value={q}
+            onChange={(e) => {
+              setQ(e.target.value);
+              setMessage(null);
+            }}
+            placeholder="Flight, airline or airport"
+            aria-label="Filter flights or search by flight number"
+            autoComplete="off"
+            spellCheck={false}
+            autoFocus
+            className="pill num h-9 w-full pr-4 pl-9 text-[13px] text-ink-1 placeholder:font-sans placeholder:text-ink-3"
+          />
+        </div>
         {message && (
           <p role="status" className="mt-2 pl-3.5 text-[12px] text-ink-2">
             {message}

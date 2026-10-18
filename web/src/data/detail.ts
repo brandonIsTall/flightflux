@@ -37,3 +37,12 @@ export async function searchFlight(q: string): Promise<Flight> {
   if (!res.ok) throw new SearchError(`search ${res.status}`, "down");
   return (await res.json()) as Flight;
 }
+
+/** What a failed search says. `onGlobe` is the curated count (0 while it is unknown). The globe shows only the curated flights, and the server only knows
+ * aircraft its sweeps have picked up, so a miss doesn't mean the flight has landed. */
+export function searchErrorMessage(kind: SearchError["kind"], key: string, onGlobe: number): string {
+  if (kind === "rate") return "Too many searches. Try again in a minute.";
+  if (kind === "down") return "Search is unavailable right now.";
+  const count = onGlobe > 0 ? `${onGlobe} ` : "";
+  return `${key} isn't one of the ${count}flights on the globe (the biggest temperature swings), and we couldn't find it elsewhere in the sky. It may have landed or not be tracked yet.`;
+}

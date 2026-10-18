@@ -165,7 +165,7 @@ export class SkyState extends DurableObject<Env> {
       const docBytes = stats.routeLookups > 0 || stats.weatherAirports > 0 ? this.engine.saveKnown() : undefined;
       queues = this.engine.queueSizes();
       console.log(
-        JSON.stringify({ step: "enrich", paced, flights: snap.flights.length, known: snap.meta.known, ...stats, queues, rowsRead: this.store.rowsRead - readsBefore, docBytes, usage: s.usage }),
+        JSON.stringify({ step: "enrich", paced, flights: snap.flights.length, known: snap.meta.known, entry: snap.meta.entry, ...stats, queues, rowsRead: this.store.rowsRead - readsBefore, docBytes, usage: s.usage }),
       );
     } catch (e) {
       console.error(`enrich failed: ${(e as Error).message}`);
