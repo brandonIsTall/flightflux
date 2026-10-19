@@ -88,6 +88,8 @@ export interface EntryLag {
   slot?: { n: number; gapP50Min: number | null };
   /** First-seen lag for arrivals first seen near their origin only: what the sweep controls. */
   near?: { n: number; discoverP50Min: number | null; discoverP90Min: number | null };
+  /** Arrivals first seen by a departure watch box, and how many departures are remembered to watch. */
+  watch?: { n: number; discoverP50Min: number | null; schedule: number };
 }
 
 export interface FlightDetail extends Flight {

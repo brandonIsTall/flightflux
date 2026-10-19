@@ -541,6 +541,64 @@ describe("Engine", () => {
     expect(b.getSnapshot()!.flights.map((f) => f.callsign)).toEqual(["UAL880"]);
   });
 
+  it("watches for a flight that made the globe at the same time the next day", async () => {
+    const world = fakeWorld();
+    world.states = [sv("aa9300", "UAL880", interpolate(IAH, LHR, 0.4), 11000)];
+    const { engine } = makeEngine(world);
+    const dep = (await warm(engine)).flights[0]!.depTime;
+    expect(engine.rebuild().meta.entry!.watch).toMatchObject({ schedule: 1 });
+
+    const tomorrow = dep + 86_400;
+    world.time = tomorrow + 5 * 60; // still climbing: too early
+    expect(engine.planWatch(8)).toEqual([]);
+    world.time = tomorrow + 20 * 60;
+    const boxes = engine.planWatch(8);
+    expect(boxes).toHaveLength(1);
+    const [la0, lo0, la1, lo1] = boxes[0]!;
+    expect(IAH.lat).toBeGreaterThan(la0);
+    expect(IAH.lat).toBeLessThan(la1);
+    expect(IAH.lon).toBeGreaterThan(lo0);
+    expect(IAH.lon).toBeLessThan(lo1);
+    expect((la1 - la0) * (lo1 - lo0)).toBeLessThanOrEqual(25); // the 1-credit tier
+    // One box per take-off, and none once it is past its window.
+    expect(engine.planWatch(8)).toEqual([]);
+    world.time = tomorrow + 86_400 + 40 * 60;
+    expect(engine.planWatch(8)).toEqual([]);
+  });
+
+  /** A flight on the globe today, and when it took off: tomorrow's watch is due at the same time. */
+  async function flownToday() {
+    const world = fakeWorld();
+    world.states = [sv("aa9300", "UAL880", interpolate(IAH, LHR, 0.4), 11000)];
+    const { engine } = makeEngine(world);
+    const dep = (await warm(engine)).flights[0]!.depTime;
+    return { world, engine, tomorrow: dep + 86_400 };
+  }
+
+  it("skips the watch when the sweep has already found the flight", async () => {
+    const { world, engine, tomorrow } = await flownToday();
+    world.time = tomorrow + 10 * 60;
+    world.states = [sv("bb0001", "UAL880", interpolate(IAH, LHR, 0.02), 11000, world.time)];
+    await engine.pollTile(WORLD);
+    world.time = tomorrow + 20 * 60;
+    expect(engine.planWatch(8)).toEqual([]);
+  });
+
+  it("credits a flight first seen by its watch box", async () => {
+    const { world, engine, tomorrow } = await flownToday();
+    world.time = tomorrow + 20 * 60;
+    const [box] = engine.planWatch(8);
+    expect(box).toBeDefined();
+    world.time += 60;
+    world.states = [sv("bb0002", "UAL880", interpolate(IAH, LHR, 0.04), 11000, world.time)];
+    await engine.pollTile(box!);
+    engine.rebuild();
+    await engine.enrich({ requests: 40 }); // the cached weather has aged out by now
+    const entry = engine.rebuild().meta.entry!;
+    expect(entry.watch).toMatchObject({ n: 1 });
+    expect(entry.watch!.discoverP50Min).toBeLessThan(30);
+  });
+
   it("only accepts queries that could be a flight number or callsign", () => {
     expect(normalizeQuery(" ba 117 ")).toBe("BA117");
     expect(normalizeQuery("BAW117")).toBe("BAW117");
