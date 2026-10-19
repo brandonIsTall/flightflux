@@ -41,6 +41,18 @@ export const MAX_DEAD_RECKON_S = 18 * 3600;
 export const MAX_ENTRIES = 300;
 /** A flight first seen further than this along its route took off where there is no coverage. */
 export const SEEN_FAR_KM = 1000;
+/**
+ * Departure watch: a flight that made the globe is likely to fly again at the same time of day, so
+ * this long after its usual take-off a small box around its origin is polled, catching it as soon
+ * as it reaches cruise instead of whenever the sweep next comes round.
+ */
+export const WATCH_FROM_S = 15 * 60;
+export const WATCH_UNTIL_S = 35 * 60;
+/** Half the side of a watch box (degrees): 4.8 x 4.8 = 23 sq deg, the 1-credit OpenSky tier. */
+export const WATCH_HALF_DEG = 2.4;
+/** Remembered departures: forgotten when not flown again for this long. */
+export const SCHEDULE_TTL_S = 3 * 86_400;
+export const MAX_SCHEDULE = 1500;
 /** Searched flights stay tracked this long even if they aren't curated. */
 export const PIN_TTL_S = 3 * 3600;
 export const ROUTE_CONCURRENCY = 8;
@@ -90,6 +102,8 @@ export interface Known {
 interface Entry {
   /** Hysteresis key: a flight that drops off briefly and returns is still one arrival. */
   key?: string;
+  /** First seen by a departure watch box. */
+  watched?: boolean;
   depTime: number;
   seenAt: number;
   enteredAt: number;
@@ -109,6 +123,19 @@ interface SavedCurated {
   entries: Entry[];
   /** Only flights departing after this are measured, so ones already flying at deploy don't count. */
   epoch: number;
+  /** Usual departures of flights that made the globe, for the departure watch. */
+  schedule?: Departure[];
+}
+
+/** When and where a flight that made the globe last took off. */
+interface Departure {
+  callsign: string;
+  lat: number;
+  lon: number;
+  /** Seconds after 00:00 UTC. */
+  depS: number;
+  /** Unix s of that take-off. */
+  lastDep: number;
 }
 
 /** A projected, temperature-tagged aircraft: enough to curate on, cheap to build. */
@@ -159,6 +186,13 @@ export class Engine {
   private swaps: number[] = [];
   private entries: Entry[] = [];
   private epoch = 0;
+  private schedule = new Map<string, Departure>();
+  /**
+   * callsign -> when a watch box was last issued for it (unix s). Owned by the caller (the
+   * scheduler state, saved after every request; see useWatched), so it survives an eviction and a
+   * take-off is never watched twice.
+   */
+  private watched: Record<string, number> = {};
   private snapshot: Snapshot | null = null;
   private routeQueue = new Map<string, number>(); // callsign -> priority
   private weatherQueue = new Map<string, LatLonKey>(); // icao -> coords
@@ -291,6 +325,7 @@ export class Engine {
       this.swaps = c.swaps;
       this.entries = c.entries;
       this.epoch = c.epoch;
+      for (const d of (doc as SavedCurated).schedule ?? []) this.schedule.set(d.callsign, d);
     }
     const types = store.getBlob(TYPES_BLOB);
     if (types) for (const [id, t] of JSON.parse(types) as [string, string | null][]) if (!this.types.has(id)) this.types.set(id, t);
@@ -580,6 +615,7 @@ export class Engine {
     for (const c of chosen) {
       const key = hysteresisKey(c);
       if (this.enteredAt.has(key)) continue;
+      this.rememberDeparture(c);
       // Shown before join times were recorded: long since joined, so not protected, not measured.
       if (this.curatedKeys.has(key)) {
         this.enteredAt.set(key, 0);
@@ -590,8 +626,10 @@ export class Engine {
       if (c.depTime >= this.epoch && !this.entries.some((e) => e.key === key)) {
         // Where it was when first seen: its distance flown now, less what it has flown since.
         const seenAlongKm = c.flownKm - ((c.k.s.velocityMs ?? 0) * (nowS - c.k.seenAt)) / 1000;
+        const w = this.watched[c.callsign];
         this.entries.push({
           key,
+          watched: w !== undefined && c.k.seenAt >= w && c.k.seenAt - w <= WATCH_UNTIL_S,
           depTime: c.depTime,
           seenAt: c.k.seenAt,
           enteredAt: nowS,
@@ -603,6 +641,61 @@ export class Engine {
     if (this.entries.length > MAX_ENTRIES) this.entries = this.entries.slice(-MAX_ENTRIES);
   }
 
+  /** Keep watch records in `rec`, which the caller persists (sched.watch.watched). */
+  useWatched(rec: Record<string, number>) {
+    this.watched = rec;
+  }
+
+  /** Note a flight's take-off, so it can be watched for at the same time on later days. */
+  private rememberDeparture(c: Candidate) {
+    const { origin } = c.route;
+    this.schedule.delete(c.callsign); // re-insert as newest
+    this.schedule.set(c.callsign, { callsign: c.callsign, lat: origin.lat, lon: origin.lon, depS: ((c.depTime % 86_400) + 86_400) % 86_400, lastDep: c.depTime });
+    for (const cs of this.schedule.keys()) {
+      if (this.schedule.size <= MAX_SCHEDULE) break;
+      this.schedule.delete(cs);
+    }
+  }
+
+  /**
+   * Departure-watch boxes due now: one 1-credit box per origin with a remembered flight that should
+   * have taken off WATCH_FROM_S..WATCH_UNTIL_S ago and hasn't been seen since. At most `max`, the
+   * origins with the most such flights first. Marks the flights watched, so each take-off costs one box.
+   */
+  planWatch(max: number): Bbox[] {
+    const nowS = this.nowS();
+    if (max <= 0) return [];
+    for (const [cs, t] of Object.entries(this.watched)) if (nowS - t > 86_400) delete this.watched[cs];
+    const seenSince = new Map<string, number>();
+    for (const k of this.known.values()) seenSince.set(k.s.callsign, Math.max(seenSince.get(k.s.callsign) ?? 0, k.seenAt));
+    const today = nowS - (nowS % 86_400);
+    const byOrigin = new Map<string, { lat: number; lon: number; callsigns: string[] }>();
+    for (const d of this.schedule.values()) {
+      if (nowS - d.lastDep > SCHEDULE_TTL_S) {
+        this.schedule.delete(d.callsign);
+        continue;
+      }
+      // Today's take-off, or yesterday's for one just before midnight.
+      const dep = [today + d.depS, today - 86_400 + d.depS].find((t) => nowS - t >= WATCH_FROM_S && nowS - t <= WATCH_UNTIL_S);
+      if (dep === undefined || d.lastDep >= dep - 3600) continue; // not due, or this take-off already recorded
+      if ((this.watched[d.callsign] ?? 0) >= dep) continue; // already watched for
+      if ((seenSince.get(d.callsign) ?? 0) >= dep - 1800) continue; // the sweep already found it
+      const key = `${d.lat.toFixed(1)},${d.lon.toFixed(1)}`;
+      const o = byOrigin.get(key) ?? { lat: d.lat, lon: d.lon, callsigns: [] };
+      o.callsigns.push(d.callsign);
+      byOrigin.set(key, o);
+    }
+    const chosen = [...byOrigin.values()].sort((a, b) => b.callsigns.length - a.callsigns.length).slice(0, max);
+    for (const o of chosen) for (const cs of o.callsigns) this.watched[cs] = nowS;
+    const r = (x: number) => Math.round(x * 10) / 10;
+    return chosen.map((o) => [
+      r(Math.max(-90, o.lat - WATCH_HALF_DEG)),
+      r(Math.max(-180, o.lon - WATCH_HALF_DEG)),
+      r(Math.min(90, o.lat + WATCH_HALF_DEG)),
+      r(Math.min(180, o.lon + WATCH_HALF_DEG)),
+    ]);
+  }
+
   private saveCurated() {
     const doc: SavedCurated = {
       keys: [...this.curatedKeys],
@@ -610,6 +703,7 @@ export class Engine {
       swaps: this.swaps,
       entries: this.entries,
       epoch: this.epoch,
+      schedule: [...this.schedule.values()],
     };
     this.deps.store.putBlob(CURATED_BLOB, JSON.stringify(doc));
   }
@@ -630,6 +724,7 @@ export class Engine {
     };
     // Only arrivals known to have been first seen near their origin: what the sweep controls.
     const near = this.entries.filter((e) => e.seenFar === false).map((e) => e.seenAt - e.depTime);
+    const watched = this.entries.filter((e) => e.watched).map((e) => e.seenAt - e.depTime);
     const oldest = this.entries.reduce((t, e) => Math.min(t, e.enteredAt), Infinity);
     return {
       n: this.entries.length,
@@ -642,6 +737,7 @@ export class Engine {
       swap: gap("swap"),
       slot: gap("slot"),
       near: { n: near.length, discoverP50Min: pct(near, 0.5), discoverP90Min: pct(near, 0.9) },
+      watch: { n: watched.length, discoverP50Min: pct(watched, 0.5), schedule: this.schedule.size },
     };
   }
 

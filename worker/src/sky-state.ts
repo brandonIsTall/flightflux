@@ -17,7 +17,7 @@ import { AdsbdbClient } from "./core/adsbdb";
 import { Engine } from "./core/engine";
 import { isIngestBody, RESTING, type PlanResponse } from "./core/ingest";
 import { OpenSkyClient } from "./core/opensky";
-import { aheadOfWritePace, initialSched, overBudget, planNext, PRUNE_EVERY_MS, recordTileYield, recordUsage, replaceTile, sweepSpread, takeSearch, type Sched } from "./core/sched";
+import { aheadOfWritePace, initialSched, overBudget, planNext, PRUNE_EVERY_MS, queueWatch, recordTileYield, watchOf, recordUsage, replaceTile, sweepSpread, takeSearch, takeWatch, watchAllowance, type Sched } from "./core/sched";
 import { AFTER_INGEST_MS, dispatchDue, HEARTBEAT_MS, nextAlarmDelay, STUCK_MS, untilDispatch } from "./core/wake";
 import { dispatchPoll } from "./dispatch";
 import { SqlStore } from "./sql-store";
@@ -85,6 +85,9 @@ export class SkyState extends DurableObject<Env> {
 
   /** Load the known set and rebuild from the cached routes and weather. Once per instance. */
   private restore() {
+    // Watch records live in the scheduler state, which is saved after every request; the engine
+    // works on that same object, so the rebuild restore() runs already sees them.
+    this.engine.useWatched(watchOf(this.sched, Date.now()).watched);
     if (this.restored) return;
     this.restored = true;
     this.engine.restore();
@@ -122,8 +125,11 @@ export class SkyState extends DurableObject<Env> {
       empty: (snap?.meta.known ?? 0) === 0,
       maxTiles: this.sched.tiles.length,
     });
+    // Departure-watch boxes the alarm planned ride along with the sweep's (core/engine.ts planWatch).
+    const watch = takeWatch(this.sched, now);
     await this.settle(now);
-    return { tracked: p.track ? tracked : null, tiles: p.tileIdxs.map((i) => this.sched.tiles[i]!), creditsRemaining };
+    if (watch.length > 0) console.log(JSON.stringify({ step: "plan watch", boxes: watch.length, today: this.sched.watch?.boxes }));
+    return { tracked: p.track ? tracked : null, tiles: [...p.tileIdxs.map((i) => this.sched.tiles[i]!), ...watch], creditsRemaining };
   }
 
   async alarm(): Promise<void> {
@@ -161,6 +167,9 @@ export class SkyState extends DurableObject<Env> {
       const stats = await this.engine.enrich({ requests: paced ? 0 : REQUESTS_PER_TICK });
       const snap = this.engine.rebuild(Date.now() - now);
       this.store.putBlob(SNAPSHOT_BLOB, JSON.stringify(snap));
+      // With the engine warm, plan the departure-watch boxes the next poller run will fetch.
+      const allowance = watchAllowance(s, now, snap.meta.creditsRemaining);
+      if (allowance > 0) queueWatch(s, now, this.engine.planWatch(allowance));
       // Keep the saved routes and weather current, so the next cold restore needn't look them up.
       const docBytes = stats.routeLookups > 0 || stats.weatherAirports > 0 ? this.engine.saveKnown() : undefined;
       queues = this.engine.queueSizes();

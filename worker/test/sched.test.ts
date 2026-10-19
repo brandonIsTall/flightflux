@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { aheadOfWritePace, FIRST_SWEEP_TILE_MS, MAX_TILE_GAP_MS, PACE_HEADROOM, initialSched, overBudget, planNext, READ_BUDGET, recordTileYield, recordUsage, replaceTile, SEARCH_BUDGET, SWEEP_MS, takeSearch, tileStatsOf, TRACK_INTERVAL_MS, WRITE_BUDGET, type Sched } from "../src/core/sched";
+import { queueWatch, takeWatch, watchAllowance, WATCH_BOXES_PER_DAY, WATCH_MIN_CREDITS, WATCH_PENDING_TTL_MS, WATCH_PER_PLAN, aheadOfWritePace, FIRST_SWEEP_TILE_MS, MAX_TILE_GAP_MS, PACE_HEADROOM, initialSched, overBudget, planNext, READ_BUDGET, recordTileYield, recordUsage, replaceTile, SEARCH_BUDGET, SWEEP_MS, takeSearch, tileStatsOf, TRACK_INTERVAL_MS, WRITE_BUDGET, type Sched } from "../src/core/sched";
 import { INITIAL_TILES } from "../src/core/tiles";
 
 const T = 1_791_080_000_000;
@@ -227,5 +227,36 @@ describe("weighted sweep", () => {
     const p = planNext(s, input(T + 10 * 60_000));
     expect(p.tileIdxs.length).toBe(Math.floor((10 * 60_000 * n) / SWEEP_MS));
     expect(tileStatsOf(s)).toHaveLength(n);
+  });
+});
+
+describe("departure watch budget", () => {
+  const box = [0, 0, 4, 4] as [number, number, number, number];
+
+  it("allows a few boxes per plan, none while some wait, and counts them when handed out", () => {
+    const s = initialSched();
+    expect(watchAllowance(s, T, 3000)).toBe(WATCH_PER_PLAN);
+    queueWatch(s, T, [box, box]);
+    expect(watchAllowance(s, T + 1000, 3000)).toBe(0);
+    expect(takeWatch(s, T + 2000)).toHaveLength(2);
+    expect(s.watch!.boxes).toBe(2);
+    expect(takeWatch(s, T + 3000)).toEqual([]); // handed out once
+  });
+
+  it("drops boxes that waited too long, uncounted", () => {
+    const s = initialSched();
+    queueWatch(s, T, [box]);
+    expect(takeWatch(s, T + WATCH_PENDING_TTL_MS + 1)).toEqual([]);
+    expect(s.watch!.boxes).toBe(0);
+  });
+
+  it("stops at the daily cap and when credits run low, and starts afresh each UTC day", () => {
+    const s = initialSched();
+    expect(watchAllowance(s, T, WATCH_MIN_CREDITS - 1)).toBe(0);
+    expect(watchAllowance(s, T, null)).toBe(WATCH_PER_PLAN); // credits unknown: the cap still holds
+    queueWatch(s, T, Array(WATCH_BOXES_PER_DAY).fill(box));
+    takeWatch(s, T);
+    expect(watchAllowance(s, T, 3000)).toBe(0);
+    expect(watchAllowance(s, T + 86_400_000, 3000)).toBe(WATCH_PER_PLAN);
   });
 });

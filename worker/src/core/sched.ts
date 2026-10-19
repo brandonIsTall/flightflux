@@ -54,6 +54,64 @@ export interface Sched {
   tiles: Bbox[];
   /** Absent in state saved before weighted sweeps (see tileStatsOf). */
   tileStats?: TileStat[];
+  /** Departure-watch boxes: today's count and the ones waiting for the next poller. */
+  watch?: WatchState;
+}
+
+export interface WatchState {
+  /** UTC date, YYYY-MM-DD. */
+  day: string;
+  /** Watch boxes handed out today (1 credit each). */
+  boxes: number;
+  /** Planned by the alarm, handed out by the next plan request. */
+  pending: Bbox[];
+  /** When `pending` was planned (ms). */
+  at: number;
+  /** callsign -> when a watch box was issued for it (unix s): see Engine.useWatched. */
+  watched: Record<string, number>;
+}
+
+/**
+ * Departure watch budget, on top of the sweep and the tracked refresh (~2,500 credits a day):
+ * at most this many 1-credit boxes a UTC day, and none while credits are below WATCH_MIN_CREDITS.
+ */
+export const WATCH_BOXES_PER_DAY = 600;
+export const WATCH_MIN_CREDITS = 1200;
+/** Watch boxes planned per alarm; the poller runs every 5 min. */
+export const WATCH_PER_PLAN = 8;
+/** Planned watch boxes older than this are dropped: their flights' window has moved on. */
+export const WATCH_PENDING_TTL_MS = 10 * 60_000;
+
+const today = (now: number) => new Date(now).toISOString().slice(0, 10);
+
+export function watchOf(s: Sched, now: number): WatchState {
+  if (!s.watch || s.watch.day !== today(now)) {
+    s.watch = { day: today(now), boxes: 0, pending: s.watch?.pending ?? [], at: s.watch?.at ?? 0, watched: s.watch?.watched ?? {} };
+  }
+  return s.watch;
+}
+
+/** How many watch boxes may be planned now: 0 while some wait, credits are low or today's are spent. */
+export function watchAllowance(s: Sched, now: number, creditsRemaining: number | null): number {
+  const w = watchOf(s, now);
+  if (w.pending.length > 0 && now - w.at < WATCH_PENDING_TTL_MS) return 0;
+  if (creditsRemaining !== null && creditsRemaining < WATCH_MIN_CREDITS) return 0;
+  return Math.max(0, Math.min(WATCH_PER_PLAN, WATCH_BOXES_PER_DAY - w.boxes));
+}
+
+export function queueWatch(s: Sched, now: number, boxes: Bbox[]) {
+  const w = watchOf(s, now);
+  w.pending = boxes;
+  w.at = now;
+}
+
+/** The planned watch boxes, counted against today's budget, or none if they went stale. */
+export function takeWatch(s: Sched, now: number): Bbox[] {
+  const w = watchOf(s, now);
+  const fresh = now - w.at < WATCH_PENDING_TTL_MS ? w.pending : [];
+  w.pending = [];
+  w.boxes += fresh.length;
+  return fresh;
 }
 
 export const initialSched = (): Sched => ({
