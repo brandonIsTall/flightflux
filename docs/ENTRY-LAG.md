@@ -43,6 +43,8 @@ Delays from take-off to the globe:
 | Oct 18 17:26 | #29 | **39 / 79** (n=109) | 14 | 42 | 5 | the sweep is the limit |
 | Oct 18 21:40 | #30 | 31 / 75 (n=167) | 0 | 21 | 12 | visit gaps 27–164 min; avg fresh **159**/visit (noise) |
 | Oct 19 02:20 | #31 | 36 / 76 (n=149) | 4 | 18 | 12 | avg fresh **19**/visit (clean); visit gaps 32/111/204 min |
+| Oct 19 06:05 | #32 (+70 min) | 30 / 70 (n=149) | 4 | 19 | 11 | watch n=0, schedule 109; no plan-watch lines yet; avg fresh 19/visit; visit gaps 49/81/215 min; credits 3,613 (~101/h since 02:18); no errors. Early check only |
+| Oct 20 06:30 | #32 (+25.5 h) | **22 / 66** (n=174) | 4 | 9 | 12 | **watch n=14, P50 28 min**, schedule 1,500 (at `MAX_SCHEDULE`); 29 watch boxes last hour, 159 today (~24/h, on pace for the 600 cap); credits 3,428 (~88/h since 00:00 incl. watch); avg fresh **10**/visit (watch finds flights before the sweep does); visit gaps 36/95/203 min; no errors |
 
 Conclusion before #32: the weighted sweep works and curation is no longer the bottleneck. The
 `near` P90 stays at about 75 min whatever the sweep does. Only extra polling around take-off
