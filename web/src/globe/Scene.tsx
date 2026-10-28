@@ -14,6 +14,7 @@ import { useEarthAssets } from "./earthAssets";
 import { Globe } from "./Globe";
 import { Planes } from "./Planes";
 import { Routes } from "./Routes";
+import { TrackDots } from "./TrackDots";
 import { spin } from "./spin";
 
 /** Degrees per second of auto-spin: never still, still readable. */
@@ -148,6 +149,7 @@ export function Scene({ flights, failed }: { flights: Flight[]; failed: boolean 
         <Globe />
         <Routes flights={flights} />
         <Planes flights={flights} />
+        <TrackDots />
         <BootLayer flights={flights} landSamples={assets?.landSamples ?? null} />
       </Spinner>
       <BootDirector flights={flights} failed={failed} />

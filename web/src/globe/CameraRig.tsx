@@ -11,6 +11,7 @@ import { useEffect, useMemo, useRef } from "react";
 import { Matrix4, PerspectiveCamera, Quaternion, Vector3 } from "three";
 import type { Flight } from "../../../shared/types";
 import { progressAt } from "../data/snapshot";
+import { nowS as clockNowS } from "../lib/clock";
 import { interpolate, toVec3 } from "../lib/geo";
 import { useStore } from "../store";
 import { spin } from "./spin";
@@ -138,7 +139,7 @@ export function CameraRig({ flights }: { flights: Flight[] }) {
 
     // Where the seat is right now (world space, including the globe's spin).
     if (flight) {
-      const nowS = Date.now() / 1000;
+      const nowS = clockNowS();
       const p = progressAt(flight, nowS);
       const r = 1 + SEAT_HEIGHT;
       toVec3(interpolate(flight.origin, flight.dest, p), r, seatPos).applyAxisAngle(UP, spin.y);

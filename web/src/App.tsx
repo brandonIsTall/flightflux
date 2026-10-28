@@ -2,6 +2,7 @@ import { Suspense, useEffect, useMemo, useRef } from "react";
 import { motion } from "motion/react";
 import type { Flight } from "../../shared/types";
 import { ready, useBoot } from "./boot";
+import { useReplayTrack } from "./data/replay";
 import { hasLanded, useSnapshot } from "./data/snapshot";
 import { Scene } from "./globe/Scene";
 import { useStore } from "./store";
@@ -12,6 +13,7 @@ import { DetailPanel } from "./ui/DetailPanel";
 import { FlightList } from "./ui/FlightList";
 import { Freshness } from "./ui/Freshness";
 import { Legend } from "./ui/Legend";
+import { ReplayBar } from "./ui/ReplayBar";
 import { Tooltip } from "./ui/Tooltip";
 import { TopBar } from "./ui/TopBar";
 
@@ -21,10 +23,16 @@ export function App() {
   const inOrbit = useStore((s) => s.cameraMode === "orbit");
   const hasPanel = useStore((s) => s.selectedId !== null);
   const selectedId = useStore((s) => s.selectedId);
+  const replay = useStore((s) => s.replay);
+  // The flight only, so seeking or pausing doesn't rebuild the globe's layers.
+  const replayed = replay?.flight;
+  useReplayTrack();
   // The server may swap a flight off the globe for a bigger temperature swing. The one being viewed
   // stays: its last copy is kept, and the client keeps moving it along its route.
   const held = useRef<Flight | null>(null);
   const flights = useMemo(() => {
+    // A replay shows its flight alone, as it was then.
+    if (replayed) return [replayed];
     const base = snapshot.data?.flights ?? [];
     const ids = new Set(base.map((f) => f.id));
     const nowS = Date.now() / 1000;
@@ -33,7 +41,7 @@ export function App() {
     const all = [...base, ...extra.filter((f) => !ids.has(f.id))].filter((f) => f.id === selectedId || !hasLanded(f, nowS));
     if (selectedId && held.current?.id === selectedId && !all.some((f) => f.id === selectedId)) all.push(held.current);
     return all;
-  }, [snapshot.data, extra, selectedId]);
+  }, [snapshot.data, extra, selectedId, replayed]);
   useEffect(() => {
     held.current = (selectedId && flights.find((f) => f.id === selectedId)) || null;
   }, [flights, selectedId]);
@@ -50,7 +58,7 @@ export function App() {
   const failed = snapshot.isError && !snapshot.data;
 
   return (
-    <div className={`relative h-full w-full bg-space ${hasPanel ? "has-panel" : ""}`}>
+    <div className={`relative h-full w-full bg-space ${hasPanel ? "has-panel" : ""} ${replay ? "replaying" : ""}`}>
       <Suspense fallback={null}>
         <Scene flights={flights} failed={failed} />
       </Suspense>
@@ -62,10 +70,11 @@ export function App() {
         initial={{ opacity: 0 }}
         animate={{ opacity: booted ? 1 : 0, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] } }}
       >
-        <TopBar flights={flights} />
+        {replay ? <ReplayBar replay={replay} /> : <TopBar flights={flights} />}
         <div className="flex items-end justify-between px-4 pb-4 sm:px-6 sm:pb-5">
           {inOrbit ? <Legend /> : <span />}
-          <Freshness snapshot={snapshot.data} isError={snapshot.isError} isFetching={snapshot.isFetching} />
+          {/* Live-data status means nothing for a past flight. */}
+          {!replay && <Freshness snapshot={snapshot.data} isError={snapshot.isError} isFetching={snapshot.isFetching} />}
         </div>
       </motion.div>
 

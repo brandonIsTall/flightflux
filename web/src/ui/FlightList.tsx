@@ -3,6 +3,7 @@
 // pointer. On phones it also holds the search box. Curated flights are numbered by rank; flights
 // added by search are listed in place but unnumbered, since curation didn't pick them. The other
 // tabs are the leaderboard: the top 10 swings of the last 24 h, 7 days and 30 days, landed or not.
+// A landed one opens as a replay.
 
 import { MagnifyingGlass, X } from "@phosphor-icons/react";
 import { AnimatePresence, motion } from "motion/react";
@@ -10,6 +11,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { Flight, LeaderFlight, LeaderWindow } from "../../../shared/types";
 import { searchErrorMessage, searchFlight, SearchError } from "../data/detail";
 import { LEADER_WINDOWS, useLeaders } from "../data/leaders";
+import { defaultRate, replayFlight } from "../data/replay";
 import { hasLanded, progressAt, useSnapshot, USING_FIXTURE } from "../data/snapshot";
 import { formatAgo, formatDelta, formatTemp } from "../lib/format";
 import { flightGradientCss } from "../lib/gradient";
@@ -207,24 +209,31 @@ function Leaderboard({
   const top = leaders.data?.windows[view] ?? [];
   const label = LEADER_WINDOWS.find((w) => w.key === view)!.label;
   const onGlobe = new Map(flights.map((f) => [f.id, f]));
+  const startReplay = useStore((s) => s.startReplay);
+  const replay = (f: LeaderFlight) => {
+    const r = replayFlight(f);
+    startReplay(r, defaultRate(r));
+  };
   return (
     <ul ref={listRef} className="min-h-0 flex-1 overflow-y-auto px-2 pb-3" aria-label={`Biggest temperature changes, last ${label}`}>
       {leaders.isLoading && <li className="px-3 py-6 text-[13px] text-ink-2">Loading the leaderboard…</li>}
       {leaders.isError && !leaders.data && <li className="px-3 py-6 text-[13px] text-ink-2">The leaderboard isn't available right now.</li>}
       {leaders.data && top.length === 0 && <li className="px-3 py-6 text-[13px] text-ink-2">No flights recorded in the last {label} yet.</li>}
       {top.map((f, i) => {
-        // Still on the globe: open it there. Landed or never curated: nothing to fly to yet.
+        // Still on the globe: open it there. Landed: replay it. In the air but never curated: there
+        // is nothing to fly to yet, nor a whole flight to replay.
         const live = onGlobe.get(f.id);
         const landed = live ? hasLanded(live, nowS) : f.eta < nowS;
+        const open = live && !landed ? () => onChoose(live) : landed ? () => replay(f) : undefined;
         return (
           <li key={f.id}>
             <Row
               f={f}
               rank={i + 1}
               progress={live ? progressAt(live, nowS) : null}
-              status={landed ? `Landed ${formatAgo(nowS - f.eta)}` : live ? null : "In the air, not on the globe"}
+              status={landed ? `Landed ${formatAgo(nowS - f.eta)} · Replay` : live ? null : "In the air, not on the globe"}
               units={units}
-              onClick={live ? () => onChoose(live) : undefined}
+              onClick={open}
             />
           </li>
         );

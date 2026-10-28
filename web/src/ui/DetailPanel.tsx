@@ -2,9 +2,10 @@
 
 import { Clock, X } from "@phosphor-icons/react";
 import { AnimatePresence, motion } from "motion/react";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import type { Flight } from "../../../shared/types";
 import { useFlightDetail } from "../data/detail";
+import { useNowS } from "../lib/clock";
 import { formatAltitude, formatDelta, formatLocalTime, formatSpeed, formatTemp } from "../lib/format";
 import { useStore } from "../store";
 import { RouteChart } from "./RouteChart";
@@ -46,13 +47,10 @@ function PanelBody({ flight: f, onClose }: { flight: Flight; onClose: () => void
   const detail = useFlightDetail(f);
   const aircraft = detail.data?.aircraft ?? null;
 
-  const [nowS, setNowS] = useState(() => Date.now() / 1000);
-  useEffect(() => {
-    const id = window.setInterval(() => setNowS(Date.now() / 1000), 5_000);
-    return () => window.clearInterval(id);
-  }, []);
+  const nowS = useNowS(5_000);
 
   const estimated = f.flags.depTimeSource === "estimated";
+  const replaying = useStore((s) => s.replay !== null);
 
   return (
     <div className="flex flex-col gap-6 p-6">
@@ -91,9 +89,9 @@ function PanelBody({ flight: f, onClose }: { flight: Flight; onClose: () => void
           value={`${formatLocalTime(f.depTime, f.origin.tz, f.origin.utcOffsetS)} local`}
           note={estimated ? "estimated" : undefined}
         />
-        <Fact label="Lands" value={`${formatLocalTime(f.eta, f.dest.tz, f.dest.utcOffsetS)} local`} note="estimated" />
-        <Fact label="Altitude" value={formatAltitude(f.pos.altM, units)} />
-        <Fact label="Ground speed" value={formatSpeed(f.pos.gsMs, units)} />
+        <Fact label={replaying ? "Landed" : "Lands"} value={`${formatLocalTime(f.eta, f.dest.tz, f.dest.utcOffsetS)} local`} note="estimated" />
+        <Fact label="Altitude" value={f.pos.altM > 0 ? formatAltitude(f.pos.altM, units) : "Not recorded"} note={replaying && f.pos.altM > 0 ? "typical" : undefined} />
+        <Fact label="Ground speed" value={formatSpeed(f.pos.gsMs, units)} note={replaying ? "average" : undefined} />
         <Fact label="Aircraft" value={aircraft?.icaoType ?? (detail.isLoading ? "…" : "Unknown")} />
         <Fact label="Registration" value={aircraft?.registration ?? (detail.isLoading ? "…" : "Unknown")} />
       </dl>
