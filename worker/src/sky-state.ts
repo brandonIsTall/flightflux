@@ -5,7 +5,7 @@
 // Cost model (free plan: 5M SQLite rows read a day). Cloudflare evicts the object between events,
 // so treat every event as a cold start:
 //   - a read-only request (snapshot, flight detail, plan) loads 2 rows: scheduler + snapshot;
-//     the leaderboard, when the engine isn't restored, 1 more;
+//     the leaderboard, when the engine isn't restored, 1 more; a flight's track ~1 per 5 min flown;
 //   - work (alarm, ingest, search) also restores the engine from one document holding the known
 //     set and the routes and weather it needs (plus 1 row per aircraft new since it was saved);
 //   - the alarm runs every 30 s only while lookups are queued, otherwise every 15 min;
@@ -169,6 +169,7 @@ export class SkyState extends DurableObject<Env> {
       const stats = await this.engine.enrich({ requests: paced ? 0 : REQUESTS_PER_TICK });
       const snap = this.engine.rebuild(Date.now() - now);
       this.store.putBlob(SNAPSHOT_BLOB, JSON.stringify(snap));
+      const fixesLogged = this.engine.logFixes();
       // With the engine warm, plan the departure-watch boxes the next poller run will fetch.
       const allowance = watchAllowance(s, now, snap.meta.creditsRemaining);
       if (allowance > 0) queueWatch(s, now, this.engine.planWatch(allowance));
@@ -176,7 +177,7 @@ export class SkyState extends DurableObject<Env> {
       const docBytes = stats.routeLookups > 0 || stats.weatherAirports > 0 ? this.engine.saveKnown() : undefined;
       queues = this.engine.queueSizes();
       console.log(
-        JSON.stringify({ step: "enrich", paced, flights: snap.flights.length, known: snap.meta.known, entry: snap.meta.entry, ...stats, queues, rowsRead: this.store.rowsRead - readsBefore, docBytes, usage: s.usage }),
+        JSON.stringify({ step: "enrich", paced, flights: snap.flights.length, fixesLogged, known: snap.meta.known, entry: snap.meta.entry, ...stats, queues, rowsRead: this.store.rowsRead - readsBefore, docBytes, usage: s.usage }),
       );
     } catch (e) {
       console.error(`enrich failed: ${(e as Error).message}`);
@@ -239,16 +240,18 @@ export class SkyState extends DurableObject<Env> {
     }
 
     if (path === "/api/leaders") {
-      const nowS = Math.floor(Date.now() / 1000);
-      let leaders = this.engine.getLeaders();
-      if (!leaders) {
-        // Not restored: read the saved board alone rather than restoring the whole engine.
-        const board = new Leaderboard();
-        const raw = this.store.getBlob(LEADERS_BLOB);
-        if (raw) board.load(raw);
-        leaders = board.top(nowS);
-      }
+      const leaders = this.engine.getLeaders() ?? this.savedBoard().top(Math.floor(Date.now() / 1000));
       return json(leaders, 200, { "Cache-Control": "public, max-age=60, s-maxage=300" });
+    }
+
+    const tr = path.match(/^\/api\/track\/([a-z0-9-]+)$/);
+    if (tr) {
+      const id = tr[1]!;
+      const track = this.engine.getLeaders() ? this.engine.track(id) : this.engine.track(id, this.savedBoard());
+      if (!track) return json({ error: "not found" }, 404);
+      // A landed flight's track is final; one in the air gains a point every 5 minutes.
+      const f = this.engine.getSnapshot()?.flights.find((x) => x.id === id);
+      return json(track, 200, { "Cache-Control": f ? "public, max-age=60, s-maxage=300" : "public, max-age=3600, s-maxage=86400" });
     }
 
     const m = path.match(/^\/api\/flight\/([a-z0-9-]+)$/);
@@ -275,6 +278,14 @@ export class SkyState extends DurableObject<Env> {
     }
 
     return json({ error: "not found" }, 404);
+  }
+
+  /** The saved leaderboard, read alone (1 row) rather than restoring the whole engine. */
+  private savedBoard(): Leaderboard {
+    const board = new Leaderboard();
+    const raw = this.store.getBlob(LEADERS_BLOB);
+    if (raw) board.load(raw);
+    return board;
   }
 
   /** Bearer token equal to INGEST_SECRET, compared in constant time. No secret configured: nothing is authorized. */

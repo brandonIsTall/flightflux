@@ -70,6 +70,10 @@ export class Leaderboard {
     return this.byId.size;
   }
 
+  get(id: string): LeaderFlight | undefined {
+    return this.byId.get(id);
+  }
+
   /**
    * Fold in this rebuild's scored flights. `describe` builds the record of one that stays on the
    * board; it isn't called for the rest, so scoring every eligible flight stays cheap.

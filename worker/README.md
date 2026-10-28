@@ -10,6 +10,7 @@ cannot reach OpenSky (`docs/PLAN.md` §1). Design: `docs/PLAN.md` §1-§4.
 |---|---|
 | `GET /api/snapshot` | `Snapshot`: up to 150 curated flights with positions, routes, departure/arrival temps. Edge-cached 60 s. |
 | `GET /api/leaders` | `Leaders`: the 10 biggest temperature swings landing within the last 24 h, 7 d and 30 d (or still in the air), among every long-haul flight scored, not only curated ones (`src/core/leaders.ts`). Edge-cached 5 min. |
+| `GET /api/track/:id` | `Track`: the real positions recorded for a flight on the leaderboard or the globe, oldest first, for replay (`src/core/fixlog.ts`). Edge-cached 5 min while in the air, a day once landed. |
 | `GET /api/flight/:id` | `FlightDetail`: one flight plus aircraft type, registration and photo. `:id` is a flight id or icao24. |
 | `GET /api/search?q=BA117` | `Flight` for any airborne flight by flight number or callsign. Malformed queries get 400 without waking the object; 10 searches a minute per visitor IP (Workers rate-limit binding); 1,000 a day in total (tallied in the object). |
 | `GET /api/_plan` | Poller only (bearer `INGEST_SECRET`): the tracked icao24s if due, and the region boxes due now. Marks them issued. `?restart` begins a fresh sweep at first-sweep pace. |
@@ -64,6 +65,10 @@ object between events (often between two alarms), so every event is treated as a
 - The leaderboard is one document of ~100 flights: a flight is dropped once 10 others landing no
   earlier swing more, since it can then never rank in any rolling window. It is saved when it
   changes, at most every 5 min. Read without a restore, `/api/leaders` costs 1 row.
+- The fix log keeps real positions for replay: every 5 min, one row with the new fix of every
+  long-haul flight scored since the last (~250 entries, ~13 KB), so 288 rows written a day and
+  ~115 MB over its 31 days. Keyed by an `INTEGER PRIMARY KEY` (the rowid: no index to write),
+  so a track reads one row per 5 min flown and the daily prune deletes by a seek, not a scan.
 - Rows read and written are tallied per UTC day in the scheduler state. Past 4M read or 80k
   written, ingests and lookups pause until midnight; the stored snapshot keeps being served.
 

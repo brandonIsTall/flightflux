@@ -4,6 +4,7 @@
 import type { Route } from "./adsbdb";
 import type { TempSeries } from "./weather";
 import type { DepTimeSource } from "../../../shared/types";
+import { FIX_LOG_KEEP_S } from "./fixlog";
 
 export interface RouteEntry {
   route: Route | null;
@@ -31,6 +32,12 @@ export interface Store {
    */
   primeRoute(callsign: string, e: RouteEntry | undefined): void;
   primeWeather(icao: string, s: TempSeries | undefined): void;
+  /** One fix-log row (core/fixlog.ts), keyed by when it was written (unix s). */
+  putFixes(t: number, rows: string): void;
+  /** Fix-log rows written between `from` and `to` (unix s, inclusive), oldest first. */
+  getFixes(from: number, to: number): string[];
+  /** When the newest fix-log row was written, if any. */
+  lastFixesAt(): number | undefined;
   /** Small named documents (the known-aircraft set, curation keys) that must outlive an eviction. */
   getBlob(key: string): string | undefined;
   putBlob(key: string, value: string): void;
@@ -58,6 +65,7 @@ export class MemoryStore implements Store {
   readonly weather = new Map<string, TempSeries>();
   readonly deps = new Map<string, DepEntry>();
   readonly blobs = new Map<string, string>();
+  readonly fixes = new Map<number, string>();
 
   getRoute(k: string) {
     return this.routes.get(k);
@@ -83,6 +91,15 @@ export class MemoryStore implements Store {
   primeWeather(k: string, s: TempSeries | undefined) {
     if (s && !this.weather.has(k)) this.weather.set(k, s);
   }
+  putFixes(t: number, rows: string) {
+    this.fixes.set(t, rows);
+  }
+  getFixes(from: number, to: number) {
+    return [...this.fixes].filter(([t]) => t >= from && t <= to).sort((a, b) => a[0] - b[0]).map(([, v]) => v);
+  }
+  lastFixesAt() {
+    return this.fixes.size ? Math.max(...this.fixes.keys()) : undefined;
+  }
   getBlob(k: string) {
     return this.blobs.get(k);
   }
@@ -94,5 +111,6 @@ export class MemoryStore implements Store {
     for (const [k, e] of this.routes) if (nowS - e.at > ROUTE_TTL_S) this.routes.delete(k);
     for (const [k, s] of this.weather) if (nowS - s.fetchedAt > WEATHER_KEEP_S) this.weather.delete(k);
     for (const [k, e] of this.deps) if (nowS - e.at > DEP_TTL_S) this.deps.delete(k);
+    for (const t of this.fixes.keys()) if (nowS - t > FIX_LOG_KEEP_S) this.fixes.delete(t);
   }
 }

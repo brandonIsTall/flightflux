@@ -12,12 +12,14 @@
 // `rowsRead` counts what this instance has read, for the logs.
 
 import { MemoryStore, ROUTE_TTL_S, WEATHER_KEEP_S, type RouteEntry } from "./core/store";
+import { FIX_LOG_KEEP_S } from "./core/fixlog";
 import type { TempSeries } from "./core/weather";
 
 const ROUTES = "route_cache";
 /** Routes looked up longer ago than this are dropped from memory (not from SQLite). */
 const MEMORY_ROUTE_S = 24 * 3600;
 const WEATHER = "weather_cache";
+const FIXES = "fix_log";
 
 export class SqlStore extends MemoryStore {
   /** Keys already looked up in SQLite this instance (found or not). */
@@ -33,6 +35,9 @@ export class SqlStore extends MemoryStore {
     // index beside it, and Cloudflare counts a written row for each, doubling the cost of a write.
     sql.exec(`CREATE TABLE IF NOT EXISTS ${ROUTES} (k TEXT PRIMARY KEY, v TEXT NOT NULL, at INTEGER NOT NULL) WITHOUT ROWID`);
     sql.exec(`CREATE TABLE IF NOT EXISTS ${WEATHER} (k TEXT PRIMARY KEY, v TEXT NOT NULL, at INTEGER NOT NULL) WITHOUT ROWID`);
+    // The fix log: INTEGER PRIMARY KEY is the rowid itself, so there is no index to write beside it,
+    // and reading a time range or deleting old rows seeks rather than scans.
+    sql.exec(`CREATE TABLE IF NOT EXISTS ${FIXES} (t INTEGER PRIMARY KEY, v TEXT NOT NULL)`);
     // One row per document (a row may hold up to 2 MB): the known set, curation keys, snapshot.
     sql.exec("CREATE TABLE IF NOT EXISTS blobs (k TEXT PRIMARY KEY, v TEXT NOT NULL)");
   }
@@ -101,6 +106,26 @@ export class SqlStore extends MemoryStore {
     this.run("INSERT OR REPLACE INTO blobs VALUES (?, ?)", k, v);
   }
 
+  /** Storage only: the log is written once and read back only for a replay. */
+  override putFixes(t: number, rows: string) {
+    this.run(`INSERT OR REPLACE INTO ${FIXES} VALUES (?, ?)`, t, rows);
+  }
+
+  /** Read from SQLite every time: replays are rare, and the edge caches each track. */
+  override getFixes(from: number, to: number): string[] {
+    const cur = this.sql.exec<{ v: string }>(`SELECT v FROM ${FIXES} WHERE t BETWEEN ? AND ? ORDER BY t`, from, to);
+    const rows = cur.toArray();
+    this.rowsRead += cur.rowsRead;
+    return rows.map((r) => r.v);
+  }
+
+  override lastFixesAt(): number | undefined {
+    const cur = this.sql.exec<{ t: number | null }>(`SELECT MAX(t) AS t FROM ${FIXES}`);
+    const t = cur.toArray()[0]?.t;
+    this.rowsRead += cur.rowsRead;
+    return t ?? undefined;
+  }
+
   // Departures stay in memory only: they're cheap to re-estimate if the object restarts.
 
   /**
@@ -134,6 +159,7 @@ export class SqlStore extends MemoryStore {
   pruneStorage(nowS: number) {
     this.run(`DELETE FROM ${ROUTES} WHERE at < ?`, nowS - ROUTE_TTL_S);
     this.run(`DELETE FROM ${WEATHER} WHERE at < ?`, nowS - WEATHER_KEEP_S);
+    this.run(`DELETE FROM ${FIXES} WHERE t < ?`, nowS - FIX_LOG_KEEP_S);
     // Forget lookups of rows that may now be gone (misses stay misses).
     this.routeLooked = new Set([...this.routeLooked].filter((k) => !super.getRoute(k) || nowS - super.getRoute(k)!.at <= ROUTE_TTL_S));
     this.weatherLooked = new Set([...this.weatherLooked].filter((k) => !super.getWeather(k) || nowS - super.getWeather(k)!.fetchedAt <= WEATHER_KEEP_S));

@@ -107,6 +107,18 @@ export type LeaderFlight = Omit<Flight, "pos" | "flownKm">;
 
 export type LeaderWindow = "24h" | "7d" | "30d";
 
+/** [unix s of the fix, lat, lon, altitude m]: one real transponder position. */
+export type TrackPoint = [number, number, number, number];
+
+/**
+ * The positions recorded for one flight, oldest first. Sparse: about every 5 min while it was on
+ * the globe, about every sweep (~75 min) otherwise, and none over oceans out of receiver range.
+ */
+export interface Track {
+  id: string;
+  points: TrackPoint[];
+}
+
 /**
  * The biggest temperature swings among flights landing (or due to land) within each rolling
  * window, biggest first. Ranks every long-haul flight the server scored, not only the curated ones.

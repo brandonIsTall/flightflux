@@ -11,9 +11,10 @@
 // Long-haul flights move predictably, so between fixes each plane is advanced along its
 // great-circle route at its last ground speed (the client does the same every frame).
 
-import type { Airport, EntryLag, Flight, FlightDetail, LeaderFlight, Leaders, Snapshot } from "../../../shared/types";
+import type { Airport, EntryLag, Flight, FlightDetail, LeaderFlight, Leaders, Snapshot, Track } from "../../../shared/types";
 import { AdsbdbClient, type Aircraft, type Route } from "./adsbdb";
 import { curate, checkPlausible, hysteresisKey, isAirlineCallsign, MIN_ROUTE_KM, SWAPS_PER_HOUR } from "./curate";
+import { FIX_LOG_EVERY_S, fixRow, trackFrom } from "./fixlog";
 import { distanceKm, interpolate, trackOffsets } from "./geo";
 import { globalFetch } from "./http";
 import type { IngestBody } from "./ingest";
@@ -71,6 +72,8 @@ const TYPES_BLOB = "aircraft-types";
 export const MAX_SAVED_TYPES = 5000;
 /** The leaderboard's flights (core/leaders.ts): ~100 records of ~500 bytes. */
 export const LEADERS_BLOB = "leaders";
+/** How much later than its ETA a flight's track may still have fixes. */
+export const LATE_LANDING_S = 3600;
 /** The leaderboard is saved at most this often; flights in the air re-score on every rebuild anyway. */
 export const LEADERS_SAVE_S = 5 * 60;
 
@@ -222,6 +225,10 @@ export class Engine {
    */
   private leadersLoaded = false;
   private leadersSavedAt = 0;
+  /** The flights the last rebuild scored, for the fix log. */
+  private scored: Candidate[] = [];
+  /** When the newest fix-log row was written (unix s); undefined until read from the store. */
+  private fixesLoggedAt: number | undefined;
   private adsbdbBackoffUntil = 0;
   private creditsRemaining: number | null = null;
   private lastFixAt = 0;
@@ -614,6 +621,7 @@ export class Engine {
     this.typeQueue.clear();
     for (const c of chosen) if (!this.types.has(c.k.s.icao24)) this.typeQueue.add(c.k.s.icao24);
     this.updateLeaders(eligible, nowS);
+    this.scored = eligible;
     this.snapshot = {
       v: 1,
       generatedAt: nowS,
@@ -630,6 +638,35 @@ export class Engine {
     this.deps.store.putBlob(LEADERS_BLOB, this.leaders.toJSON());
     this.leaders.dirty = false;
     this.leadersSavedAt = nowS;
+  }
+
+  /**
+   * Write a fix-log row (core/fixlog.ts) if FIX_LOG_EVERY_S has passed since the last: the new fix
+   * of every flight the last rebuild scored. Returns the entries written (0 when not due).
+   */
+  logFixes(): number {
+    const { store } = this.deps;
+    const nowS = this.nowS();
+    const last = (this.fixesLoggedAt ??= store.lastFixesAt() ?? 0);
+    if (nowS - last < FIX_LOG_EVERY_S) return 0;
+    const row = fixRow(
+      this.scored.map(({ k }) => ({ icao24: k.s.icao24, callsign: k.s.callsign, t: k.t, lat: k.s.lat!, lon: k.s.lon!, altM: k.s.baroAltM ?? k.s.geoAltM ?? 0 })),
+      last,
+    );
+    this.fixesLoggedAt = nowS;
+    if (row.length > 0) store.putFixes(nowS, JSON.stringify(row));
+    return row.length;
+  }
+
+  /** The recorded positions of a flight, found on the leaderboard or the globe. Null if neither has it. */
+  track(id: string, board: Leaderboard | null = this.leadersLoaded ? this.leaders : null): Track | null {
+    const f = board?.get(id) ?? this.snapshot?.flights.find((x) => x.id === id);
+    if (!f) return null;
+    // The ETA is an estimate: allow for landing a little late. A fix is logged up to one interval
+    // after it was taken.
+    const until = f.eta + LATE_LANDING_S;
+    const rows = this.deps.store.getFixes(f.depTime, Math.min(this.nowS(), until) + FIX_LOG_EVERY_S);
+    return { id, points: trackFrom(rows, f.icao24, f.callsign, f.depTime, until) };
   }
 
   /** The leaderboard, or null until restore() has loaded the saved one. */
