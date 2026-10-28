@@ -75,7 +75,7 @@ export interface WatchState {
  * Departure watch budget, on top of the sweep and the tracked refresh (~2,500 credits a day):
  * at most this many 1-credit boxes a UTC day, and none while credits are below WATCH_MIN_CREDITS.
  */
-export const WATCH_BOXES_PER_DAY = 600;
+export const WATCH_BOXES_PER_DAY = 900;
 export const WATCH_MIN_CREDITS = 1200;
 /** Watch boxes planned per alarm; the poller runs every 5 min. */
 export const WATCH_PER_PLAN = 8;
