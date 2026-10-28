@@ -5,6 +5,7 @@
 // Cost model (free plan: 5M SQLite rows read a day). Cloudflare evicts the object between events,
 // so treat every event as a cold start:
 //   - a read-only request (snapshot, flight detail, plan) loads 2 rows: scheduler + snapshot;
+//     the leaderboard, when the engine isn't restored, 1 more;
 //   - work (alarm, ingest, search) also restores the engine from one document holding the known
 //     set and the routes and weather it needs (plus 1 row per aircraft new since it was saved);
 //   - the alarm runs every 30 s only while lookups are queued, otherwise every 15 min;
@@ -14,7 +15,8 @@
 import { DurableObject } from "cloudflare:workers";
 import type { Snapshot } from "../../shared/types";
 import { AdsbdbClient } from "./core/adsbdb";
-import { Engine } from "./core/engine";
+import { Engine, LEADERS_BLOB } from "./core/engine";
+import { Leaderboard } from "./core/leaders";
 import { isIngestBody, RESTING, type PlanResponse } from "./core/ingest";
 import { OpenSkyClient } from "./core/opensky";
 import { aheadOfWritePace, initialSched, overBudget, planNext, PRUNE_EVERY_MS, queueWatch, recordTileYield, watchOf, recordUsage, replaceTile, sweepSpread, takeSearch, takeWatch, watchAllowance, type Sched } from "./core/sched";
@@ -234,6 +236,19 @@ export class SkyState extends DurableObject<Env> {
       const snap = this.engine.getSnapshot();
       if (!snap || snap.flights.length === 0) return json({ error: "warming up" }, 503, { "Retry-After": "60" });
       return json(snap, 200, { "Cache-Control": "public, max-age=15, s-maxage=60" });
+    }
+
+    if (path === "/api/leaders") {
+      const nowS = Math.floor(Date.now() / 1000);
+      let leaders = this.engine.getLeaders();
+      if (!leaders) {
+        // Not restored: read the saved board alone rather than restoring the whole engine.
+        const board = new Leaderboard();
+        const raw = this.store.getBlob(LEADERS_BLOB);
+        if (raw) board.load(raw);
+        leaders = board.top(nowS);
+      }
+      return json(leaders, 200, { "Cache-Control": "public, max-age=60, s-maxage=300" });
     }
 
     const m = path.match(/^\/api\/flight\/([a-z0-9-]+)$/);

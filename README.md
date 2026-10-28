@@ -6,7 +6,7 @@ route for the numbers; click it to ride along in a stylized cockpit.
 
 - `docs/PLAN.md`: the product and technical plan, with measured results per phase
 - `worker/`: Cloudflare Worker + Durable Object that polls OpenSky, adsbdb and Open-Meteo and
-  serves the curated snapshot (`/api/snapshot`, `/api/flight/:id`, `/api/search`)
+  serves the curated snapshot (`/api/snapshot`, `/api/leaders`, `/api/flight/:id`, `/api/search`)
 - `web/`: the Vite + React + react-three-fiber app
 - `shared/types.ts`: the wire format both sides use
 
