@@ -2,9 +2,9 @@
 // Density is deliberately instrument-like: mono numerals, hairlines, no cards. See PLAN §6.6.
 
 import { AnimatePresence, motion } from "motion/react";
-import { useEffect, useState } from "react";
 import type { Flight } from "../../../shared/types";
 import { progressAt, tempAtProgress } from "../data/snapshot";
+import { useNowS } from "../lib/clock";
 import { tempToCss } from "../lib/color";
 import { formatDuration, formatTemp } from "../lib/format";
 import { bearingDeg, interpolate } from "../lib/geo";
@@ -35,11 +35,7 @@ export function Cockpit({ flights }: { flights: Flight[] }) {
 
 function Hud({ flight: f }: { flight: Flight }) {
   const units = useStore((s) => s.units);
-  const [nowS, setNowS] = useState(() => Date.now() / 1000);
-  useEffect(() => {
-    const id = window.setInterval(() => setNowS(Date.now() / 1000), 250);
-    return () => window.clearInterval(id);
-  }, []);
+  const nowS = useNowS(250);
 
   const p = progressAt(f, nowS);
   const here = interpolate(f.origin, f.dest, p);
@@ -55,7 +51,8 @@ function Hud({ flight: f }: { flight: Flight }) {
     <>
       <HeadingRibbon heading={heading} />
       <Tape side="left" label="IAS" value={speed} unit={speedUnit} step={units === "F" ? 20 : 40} />
-      <Tape side="right" label="ALT" value={alt} unit={altUnit} step={units === "F" ? 1000 : 250} />
+      {/* A replay without a recorded track has no altitude to show. */}
+      {f.pos.altM > 0 && <Tape side="right" label="ALT" value={alt} unit={altUnit} step={units === "F" ? 1000 : 250} />}
       <BottomStrip flight={f} p={p} oat={oat} remainingS={remainingS} units={units} />
     </>
   );
@@ -71,7 +68,7 @@ function HeadingRibbon({ heading }: { heading: number }) {
     ticks.push({ h, x, label });
   }
   return (
-    <div className="absolute top-16 left-1/2 w-[min(520px,70vw)] -translate-x-1/2">
+    <div className="absolute top-16 left-1/2 w-[min(520px,70vw)] -translate-x-1/2 [.replaying_&]:top-24">
       <div className="relative h-8 overflow-hidden">
         <div className="absolute inset-x-0 top-0 h-px bg-hairline" />
         {ticks.map((t) => (

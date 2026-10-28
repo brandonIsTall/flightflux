@@ -3,10 +3,11 @@
 
 import { Line } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
-import { memo, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useMemo, useRef } from "react";
 import type { Line2 } from "three-stdlib";
 import type { Flight } from "../../../shared/types";
 import { progressAt, tempAtProgress } from "../data/snapshot";
+import { useNowS } from "../lib/clock";
 import { tempToRgb, type RGB } from "../lib/color";
 import { arcLift, centralAngle, interpolate, toVec3 } from "../lib/geo";
 import { beats, useBoot } from "../boot";
@@ -43,17 +44,6 @@ function buildPolyline(f: Flight): Polyline {
     colors.push(tempToRgb(tempAtProgress(f, p)));
   }
   return { points, colors };
-}
-
-/** Re-renders every few seconds so the flown/ahead split tracks the plane. Frozen during the boot. */
-function useCoarseClock(periodMs: number, running: boolean) {
-  const [nowS, setNowS] = useState(() => Date.now() / 1000);
-  useEffect(() => {
-    if (!running) return;
-    const id = window.setInterval(() => setNowS(Date.now() / 1000), periodMs);
-    return () => window.clearInterval(id);
-  }, [periodMs, running]);
-  return nowS;
 }
 
 const polylineLength = (pts: [number, number, number][]) => {
@@ -169,7 +159,8 @@ const Route = memo(function Route({ f, nowS, focus }: { f: Flight; nowS: number;
 
 export function Routes({ flights }: { flights: Flight[] }) {
   const booted = useBoot((s) => s.phase === "done");
-  const nowS = useCoarseClock(5_000, booted);
+  // Re-renders every few seconds so the flown/ahead split tracks the plane. Frozen during the boot.
+  const nowS = useNowS(5_000, booted);
   const hoveredId = useStore((s) => s.hoveredId);
   const selectedId = useStore((s) => s.selectedId);
   const active = hoveredId ?? selectedId;

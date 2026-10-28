@@ -7,6 +7,7 @@ import { useMemo, useRef } from "react";
 import { Color, DoubleSide, InstancedMesh, Matrix4, MeshBasicMaterial, Vector3 } from "three";
 import type { Flight } from "../../../shared/types";
 import { progressAt } from "../data/snapshot";
+import { nowS as clockNowS } from "../lib/clock";
 import { AIRCRAFT_CLASSES, aircraftClass, type AircraftClass } from "../lib/aircraft";
 import { arcLift, centralAngle, interpolate, toVec3 } from "../lib/geo";
 import { beats } from "../boot";
@@ -47,7 +48,7 @@ function PlaneClass({ cls, entries, material }: { cls: AircraftClass; entries: E
   useFrame(({ camera }) => {
     const im = mesh.current;
     if (!im) return;
-    const nowS = Date.now() / 1000;
+    const nowS = clockNowS();
     const { hoveredId, selectedId, cameraMode } = useStore.getState();
     const active = hoveredId ?? selectedId;
     // The camera sits on the selected plane once seated; don't draw it in the lens.

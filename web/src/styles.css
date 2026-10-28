@@ -98,3 +98,30 @@ canvas {
   display: block;
   touch-action: none;
 }
+
+/* The replay scrubber: a thin track painted with the flight's gradient, and a white knob. */
+.scrub {
+  appearance: none;
+  height: 4px;
+  border-radius: 9999px;
+  cursor: pointer;
+}
+.scrub::-webkit-slider-thumb {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 9999px;
+  background: var(--color-ink-1);
+  border: 2px solid var(--color-space);
+}
+.scrub::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 9999px;
+  background: var(--color-ink-1);
+  border: 2px solid var(--color-space);
+}
+.scrub:focus-visible {
+  outline: 2px solid var(--color-ink-1);
+  outline-offset: 4px;
+}

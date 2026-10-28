@@ -1,9 +1,10 @@
 // Glass tooltip that follows the cursor over a hovered route. See docs/PLAN.md §6.6.
 
 import { AnimatePresence, motion, useMotionValue, useSpring } from "motion/react";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import type { Flight } from "../../../shared/types";
 import { progressAt, tempAtProgress } from "../data/snapshot";
+import { useNowS } from "../lib/clock";
 import { aircraftName } from "../lib/aircraft";
 import { tempToCss } from "../lib/color";
 import { formatDelta, formatLocalTime, formatTemp } from "../lib/format";
@@ -46,12 +47,7 @@ export function Tooltip({ flights }: { flights: Flight[] }) {
     }
   }, [appearing, sx, sy, x, y]);
 
-  const [nowS, setNowS] = useState(() => Date.now() / 1000);
-  useEffect(() => {
-    if (!flight) return;
-    const id = window.setInterval(() => setNowS(Date.now() / 1000), 1000);
-    return () => window.clearInterval(id);
-  }, [flight]);
+  const nowS = useNowS(1000, !!flight);
 
   return (
     <AnimatePresence>
