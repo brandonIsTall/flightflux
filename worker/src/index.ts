@@ -43,8 +43,8 @@ export default {
       }
     }
 
-    // The snapshot is identical for everyone: serve it from the edge cache when we can.
-    const cacheable = url.pathname === "/api/snapshot";
+    // The snapshot and leaderboard are identical for everyone: serve them from the edge cache when we can.
+    const cacheable = url.pathname === "/api/snapshot" || url.pathname === "/api/leaders";
     const cache = caches.default;
     if (cacheable) {
       const hit = await cache.match(req);

@@ -11,12 +11,13 @@
 // Long-haul flights move predictably, so between fixes each plane is advanced along its
 // great-circle route at its last ground speed (the client does the same every frame).
 
-import type { Airport, EntryLag, Flight, FlightDetail, Snapshot } from "../../../shared/types";
+import type { Airport, EntryLag, Flight, FlightDetail, LeaderFlight, Leaders, Snapshot } from "../../../shared/types";
 import { AdsbdbClient, type Aircraft, type Route } from "./adsbdb";
 import { curate, checkPlausible, hysteresisKey, isAirlineCallsign, MIN_ROUTE_KM, SWAPS_PER_HOUR } from "./curate";
 import { distanceKm, interpolate, trackOffsets } from "./geo";
 import { globalFetch } from "./http";
 import type { IngestBody } from "./ingest";
+import { Leaderboard } from "./leaders";
 import { OpenSkyClient, parseState, toRaw, type Bbox, type RawState, type StateVector, type StatesResult } from "./opensky";
 import { routeExpired, type RouteEntry, type Store } from "./store";
 import { SPLIT_AT, splitTile } from "./tiles";
@@ -68,6 +69,10 @@ const CURATED_BLOB = "curated";
 const TYPES_BLOB = "aircraft-types";
 /** Saved aircraft types, oldest dropped first: ~20 bytes each. */
 export const MAX_SAVED_TYPES = 5000;
+/** The leaderboard's flights (core/leaders.ts): ~100 records of ~500 bytes. */
+export const LEADERS_BLOB = "leaders";
+/** The leaderboard is saved at most this often; flights in the air re-score on every rebuild anyway. */
+export const LEADERS_SAVE_S = 5 * 60;
 
 /** The known-set document (see saveKnown). */
 interface SavedKnown {
@@ -210,6 +215,13 @@ export class Engine {
    * re-evaluated. Most traffic is short-haul, so skipping these keeps rebuild() cheap.
    */
   private neverCurated = new Map<string, number>();
+  private leaders = new Leaderboard();
+  /**
+   * Whether the saved leaderboard has been loaded. Until it has, the board holds only flights in
+   * the air, and saving it would erase the past weeks.
+   */
+  private leadersLoaded = false;
+  private leadersSavedAt = 0;
   private adsbdbBackoffUntil = 0;
   private creditsRemaining: number | null = null;
   private lastFixAt = 0;
@@ -329,6 +341,9 @@ export class Engine {
     }
     const types = store.getBlob(TYPES_BLOB);
     if (types) for (const [id, t] of JSON.parse(types) as [string, string | null][]) if (!this.types.has(id)) this.types.set(id, t);
+    const leaders = store.getBlob(LEADERS_BLOB);
+    if (leaders) this.leaders.load(leaders);
+    this.leadersLoaded = true;
     this.rebuild();
   }
 
@@ -598,6 +613,7 @@ export class Engine {
     }
     this.typeQueue.clear();
     for (const c of chosen) if (!this.types.has(c.k.s.icao24)) this.typeQueue.add(c.k.s.icao24);
+    this.updateLeaders(eligible, nowS);
     this.snapshot = {
       v: 1,
       generatedAt: nowS,
@@ -605,6 +621,20 @@ export class Engine {
       meta: { known: this.known.size, routed, creditsRemaining: this.creditsRemaining, stepMs, entry: this.entryLag() },
     };
     return this.snapshot;
+  }
+
+  /** Rank every scored flight, not just the curated ones, and save the board when it changed. */
+  private updateLeaders(eligible: Candidate[], nowS: number) {
+    this.leaders.update(eligible, (c) => this.flightId(c), (c) => this.describe(c), nowS);
+    if (!this.leadersLoaded || !this.leaders.dirty || nowS - this.leadersSavedAt < LEADERS_SAVE_S) return;
+    this.deps.store.putBlob(LEADERS_BLOB, this.leaders.toJSON());
+    this.leaders.dirty = false;
+    this.leadersSavedAt = nowS;
+  }
+
+  /** The leaderboard, or null until restore() has loaded the saved one. */
+  getLeaders(): Leaders | null {
+    return this.leadersLoaded ? this.leaders.top(this.nowS()) : null;
   }
 
   /** Note when newly shown flights joined the globe, and forget the ones that left. */
@@ -785,14 +815,16 @@ export class Engine {
     };
   }
 
-  private materialize(c: Candidate): Flight {
+  private flightId(c: Candidate): string {
+    return `${c.icao24}-${utcDay(c.depTime)}`;
+  }
+
+  /** A candidate's flight without its position: what the snapshot and the leaderboard share. */
+  private describe(c: Candidate): LeaderFlight {
     const { k, route, ow, dw } = c;
     const { s } = k;
-    // Always the great-circle projection, never the raw fix: mixing the two made every flight
-    // jump by its cross-track offset a minute after each refresh. Clients draw along the route.
-    const pos = interpolate(route.origin, route.dest, c.flownKm / c.distKm);
     return {
-      id: `${s.icao24}-${utcDay(c.depTime)}`,
+      id: this.flightId(c),
       icao24: s.icao24,
       callsign: s.callsign,
       flightNo: route.callsignIata,
@@ -800,6 +832,22 @@ export class Engine {
       aircraftType: this.types.get(s.icao24) ?? null,
       origin: { ...route.origin, tz: ow.tz, utcOffsetS: ow.utcOffsetS },
       dest: { ...route.dest, tz: dw.tz, utcOffsetS: dw.utcOffsetS },
+      distKm: Math.round(c.distKm),
+      depTime: c.depTime,
+      eta: c.eta,
+      depTempC: c.depTempC,
+      arrTempC: c.arrTempC,
+      flags: { depTimeSource: c.depObserved ? "observed" : "estimated" },
+    };
+  }
+
+  private materialize(c: Candidate): Flight {
+    const { s } = c.k;
+    // Always the great-circle projection, never the raw fix: mixing the two made every flight
+    // jump by its cross-track offset a minute after each refresh. Clients draw along the route.
+    const pos = interpolate(c.route.origin, c.route.dest, c.flownKm / c.distKm);
+    return {
+      ...this.describe(c),
       pos: {
         lat: Math.round(pos.lat * 1e4) / 1e4,
         lon: Math.round(pos.lon * 1e4) / 1e4,
@@ -808,15 +856,9 @@ export class Engine {
         trackDeg: Math.round((s.trackDeg ?? 0) * 10) / 10,
         vRateMs: Math.round((s.vRateMs ?? 0) * 10) / 10,
         t: this.nowS(),
-        fixT: k.t,
+        fixT: c.k.t,
       },
-      distKm: Math.round(c.distKm),
       flownKm: Math.round(c.flownKm),
-      depTime: c.depTime,
-      eta: c.eta,
-      depTempC: c.depTempC,
-      arrTempC: c.arrTempC,
-      flags: { depTimeSource: c.depObserved ? "observed" : "estimated" },
     };
   }
 

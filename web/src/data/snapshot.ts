@@ -60,6 +60,6 @@ export function positionAt(f: Flight, nowS: number): LatLon {
 }
 
 /** Blended temperature at a fraction along the route (the two-stop gradient). */
-export function tempAtProgress(f: Flight, p: number): number {
+export function tempAtProgress(f: Pick<Flight, "depTempC" | "arrTempC">, p: number): number {
   return f.depTempC + (f.arrTempC - f.depTempC) * p;
 }

@@ -122,6 +122,32 @@ describe("Engine", () => {
     expect(snap.meta).toMatchObject({ known: 2, routed: 1, creditsRemaining: 3000 });
   });
 
+  it("ranks scored flights on the leaderboard and keeps them through a restore after landing", async () => {
+    const world = fakeWorld();
+    world.states = [sv("aa9300", "UAL880", interpolate(IAH, LHR, 0.4), 11000)];
+    const { engine, store } = makeEngine(world);
+    expect(engine.getLeaders()).toBeNull(); // nothing loaded yet: never served or saved as empty
+    engine.restore();
+    const f = (await warm(engine)).flights[0]!;
+    const board = engine.getLeaders()!;
+    expect(board.windows["24h"].map((x) => x.id)).toEqual([f.id]);
+    expect(board.windows["24h"][0]).toMatchObject({ depTempC: 30, arrTempC: 12, flightNo: "UA880" });
+    expect(board.windows["24h"][0]).not.toHaveProperty("pos");
+
+    // It lands and is forgotten; a fresh instance (an eviction) still has it on the board.
+    world.time = f.eta + 3600;
+    world.states = [];
+    const later = new Engine({
+      opensky: new OpenSkyClient("id", "secret", world.fetch, () => world.time * 1000),
+      adsbdb: new AdsbdbClient(world.fetch),
+      store,
+      fetchFn: world.fetch,
+      now: () => world.time * 1000,
+    });
+    later.restore();
+    expect(later.getLeaders()!.windows["24h"].map((x) => x.id)).toEqual([f.id]);
+  });
+
   it("advances a stale fix along the route at its ground speed", async () => {
     const world = fakeWorld();
     world.states = [sv("aa9300", "UAL880", interpolate(IAH, LHR, 0.4), 11000)];

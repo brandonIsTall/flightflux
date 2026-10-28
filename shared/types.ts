@@ -101,3 +101,18 @@ export interface FlightDetail extends Flight {
     photoThumbUrl: string | null;
   } | null;
 }
+
+/** A flight as the leaderboard keeps it: its values when last scored, without a live position. */
+export type LeaderFlight = Omit<Flight, "pos" | "flownKm">;
+
+export type LeaderWindow = "24h" | "7d" | "30d";
+
+/**
+ * The biggest temperature swings among flights landing (or due to land) within each rolling
+ * window, biggest first. Ranks every long-haul flight the server scored, not only the curated ones.
+ */
+export interface Leaders {
+  v: 1;
+  generatedAt: number;
+  windows: Record<LeaderWindow, LeaderFlight[]>;
+}

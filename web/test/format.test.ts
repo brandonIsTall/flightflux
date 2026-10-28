@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatAltitude, formatDelta, formatDuration, formatLocalTime, formatSpeed, formatTemp } from "../src/lib/format";
+import { formatAgo, formatAltitude, formatDelta, formatDuration, formatLocalTime, formatSpeed, formatTemp } from "../src/lib/format";
 
 describe("format", () => {
   it("temperatures follow the unit toggle", () => {
@@ -32,5 +32,13 @@ describe("format", () => {
   it("durations", () => {
     expect(formatDuration(45 * 60)).toBe("45 min");
     expect(formatDuration(3 * 3600 + 5 * 60)).toBe("3 h 05 min");
+  });
+
+  it("ages read in minutes, then hours, then days", () => {
+    expect(formatAgo(5 * 60)).toBe("5 min ago");
+    expect(formatAgo(3 * 3600)).toBe("3 h ago");
+    expect(formatAgo(47 * 3600)).toBe("47 h ago");
+    expect(formatAgo(3 * 86_400)).toBe("3 d ago");
+    expect(formatAgo(-30)).toBe("0 min ago");
   });
 });
