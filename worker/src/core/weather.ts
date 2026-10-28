@@ -20,10 +20,15 @@ export interface LatLonKey {
 /** Locations per request. Keeps URLs short; each location still counts toward the daily quota. */
 export const WEATHER_BATCH = 50;
 
+/**
+ * Hourly series for each location: yesterday to tomorrow in local time by default, or UTC dates
+ * `range.start` to `range.end` (YYYY-MM-DD, up to ~3 months back) for a past flight.
+ */
 export async function fetchTempSeries(
   locs: LatLonKey[],
   fetchFn: typeof fetch = fetch,
   now: () => number = Date.now,
+  range?: { start: string; end: string },
 ): Promise<Map<string, TempSeries>> {
   const out = new Map<string, TempSeries>();
   for (let i = 0; i < locs.length; i += WEATHER_BATCH) {
@@ -32,9 +37,7 @@ export async function fetchTempSeries(
       latitude: batch.map((l) => l.lat.toFixed(4)).join(","),
       longitude: batch.map((l) => l.lon.toFixed(4)).join(","),
       hourly: "temperature_2m",
-      past_days: "1",
-      forecast_days: "2",
-      timezone: "auto",
+      ...(range ? { start_date: range.start, end_date: range.end, timezone: "GMT" } : { past_days: "1", forecast_days: "2", timezone: "auto" }),
       timeformat: "unixtime",
     });
     const res = await fetchFn(`${OPEN_METEO_API}?${params}`);

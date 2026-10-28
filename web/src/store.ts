@@ -60,7 +60,8 @@ interface State {
   startReplay: (flight: Flight, rate: number) => void;
   /** Change the replay's clock: seek (`atS`), play or pause, change speed. Re-anchors it to now. */
   setReplayClock: (c: Partial<Pick<Replay, "atS" | "rate" | "playing">>) => void;
-  setReplayTrack: (id: string, track: Replay["track"]) => void;
+  /** The replayed flight's recorded positions and, when known, its en-route temperatures. */
+  setReplayTrack: (id: string, track: Replay["track"], profile?: number[]) => void;
   stopReplay: () => void;
   /** Which overlay sheet is open. */
   sheet: "none" | "list" | "sources";
@@ -104,13 +105,13 @@ export const useStore = create<State>((set, get) => ({
       const atS = Math.min(r.flight.eta, Math.max(r.flight.depTime, c.atS ?? replayTime(r, now)));
       return { replay: { ...r, ...c, atS, anchorMs: now } };
     }),
-  setReplayTrack: (id, track) =>
+  setReplayTrack: (id, track, profile) =>
     set((s) => {
       if (s.replay?.flight.id !== id) return {};
       // The median recorded altitude stands in for the cruise altitude.
       const alts = (track ?? []).map((p) => p[3]).sort((a, b) => a - b);
       const altM = alts.length ? alts[Math.floor(alts.length / 2)]! : 0;
-      const flight = { ...s.replay.flight, pos: { ...s.replay.flight.pos, altM } };
+      const flight = { ...s.replay.flight, pos: { ...s.replay.flight.pos, altM }, ...(profile ? { profile } : {}) };
       return { replay: { ...s.replay, track, flight } };
     }),
   stopReplay: () => get().select(null),

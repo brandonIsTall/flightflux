@@ -59,7 +59,14 @@ export function positionAt(f: Flight, nowS: number): LatLon {
   return interpolate(f.origin, f.dest, progressAt(f, nowS));
 }
 
-/** Blended temperature at a fraction along the route (the two-stop gradient). */
-export function tempAtProgress(f: Pick<Flight, "depTempC" | "arrTempC">, p: number): number {
-  return f.depTempC + (f.arrTempC - f.depTempC) * p;
+/**
+ * Temperature at a fraction along the route: from the flight's en-route profile when it has one
+ * (a replay), otherwise the straight blend from departure to arrival.
+ */
+export function tempAtProgress(f: Pick<Flight, "depTempC" | "arrTempC" | "profile">, p: number): number {
+  const pr = f.profile;
+  if (!pr || pr.length < 2) return f.depTempC + (f.arrTempC - f.depTempC) * p;
+  const x = Math.min(1, Math.max(0, p)) * (pr.length - 1);
+  const i = Math.min(pr.length - 2, Math.floor(x));
+  return pr[i]! + (pr[i + 1]! - pr[i]!) * (x - i);
 }

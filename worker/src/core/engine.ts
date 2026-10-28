@@ -14,6 +14,7 @@
 import type { Airport, EntryLag, Flight, FlightDetail, LeaderFlight, Leaders, Snapshot, Track } from "../../../shared/types";
 import { AdsbdbClient, type Aircraft, type Route } from "./adsbdb";
 import { curate, checkPlausible, hysteresisKey, isAirlineCallsign, MIN_ROUTE_KM, SWAPS_PER_HOUR } from "./curate";
+import { fetchProfile } from "./enroute";
 import { FIX_LOG_EVERY_S, fixRow, trackFrom } from "./fixlog";
 import { distanceKm, interpolate, trackOffsets } from "./geo";
 import { globalFetch } from "./http";
@@ -72,6 +73,8 @@ const TYPES_BLOB = "aircraft-types";
 export const MAX_SAVED_TYPES = 5000;
 /** The leaderboard's flights (core/leaders.ts): ~100 records of ~500 bytes. */
 export const LEADERS_BLOB = "leaders";
+/** En-route temperatures are fetched only this long after a flight's ETA, once it is surely down. */
+export const PROFILE_AFTER_LANDING_S = 30 * 60;
 /** How much later than its ETA a flight's track may still have fixes. */
 export const LATE_LANDING_S = 3600;
 /** The leaderboard is saved at most this often; flights in the air re-score on every rebuild anyway. */
@@ -673,7 +676,39 @@ export class Engine {
     // after it was taken.
     const until = f.eta + LATE_LANDING_S;
     const rows = this.deps.store.getFixes(f.depTime, Math.min(this.nowS(), until) + FIX_LOG_EVERY_S);
-    return { id, points: trackFrom(rows, f.icao24, f.callsign, f.depTime, until) };
+    const points = trackFrom(rows, f.icao24, f.callsign, f.depTime, until);
+    return "profile" in f && f.profile ? { id, points, profile: f.profile } : { id, points };
+  }
+
+  /** The engine's leaderboard, or null until restore() has loaded the saved one. */
+  leaderboard(): Leaderboard | null {
+    return this.leadersLoaded ? this.leaders : null;
+  }
+
+  /**
+   * A landed board flight's en-route temperatures (core/enroute.ts): fetched once, a while after
+   * landing, if `allow()` grants today's budget, then kept on its board record. Undefined when it
+   * isn't on `board`, hasn't landed, the budget is spent or Open-Meteo has no answer. The caller
+   * saves the board (saveLeaders, or the blob directly for a board read without a restore).
+   */
+  async enroute(id: string, board: Leaderboard, allow: () => boolean): Promise<number[] | undefined> {
+    const f = board.get(id);
+    if (!f) return undefined;
+    if (f.profile) return f.profile;
+    // Until then the flight may still be scored, and a rebuild would replace the record.
+    if (this.nowS() < f.eta + PROFILE_AFTER_LANDING_S || !allow()) return undefined;
+    const profile = await fetchProfile(f, this.fetchFn, this.now);
+    if (!profile) return undefined;
+    board.setProfile(id, profile);
+    return profile;
+  }
+
+  /** Save the leaderboard now (after enroute() added a profile to it). */
+  saveLeaders() {
+    if (!this.leadersLoaded) return;
+    this.deps.store.putBlob(LEADERS_BLOB, this.leaders.toJSON());
+    this.leaders.dirty = false;
+    this.leadersSavedAt = this.nowS();
   }
 
   /** The leaderboard, or null until restore() has loaded the saved one. */

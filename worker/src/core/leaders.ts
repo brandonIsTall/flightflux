@@ -74,6 +74,14 @@ export class Leaderboard {
     return this.byId.get(id);
   }
 
+  /** Keep a landed flight's en-route temperatures with it (saved with the board). */
+  setProfile(id: string, profile: number[]) {
+    const f = this.byId.get(id);
+    if (!f) return;
+    this.byId.set(id, { ...f, profile });
+    this.dirty = true;
+  }
+
   /**
    * Fold in this rebuild's scored flights. `describe` builds the record of one that stays on the
    * board; it isn't called for the rest, so scoring every eligible flight stays cheap.

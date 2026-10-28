@@ -6,12 +6,13 @@ import { tempToCss } from "./color";
 
 export const GRADIENT_STOPS = 12;
 
-type Temps = Pick<Flight, "depTempC" | "arrTempC">;
+type Temps = Pick<Flight, "depTempC" | "arrTempC" | "profile">;
 
-/** [offset 0..1, css color] pairs along the route. */
+/** [offset 0..1, css color] pairs along the route: one per profile point when it has more. */
 export function flightGradientStops(f: Temps): [number, string][] {
-  return Array.from({ length: GRADIENT_STOPS + 1 }, (_, i) => {
-    const p = i / GRADIENT_STOPS;
+  const n = Math.max(GRADIENT_STOPS, (f.profile?.length ?? 0) - 1);
+  return Array.from({ length: n + 1 }, (_, i) => {
+    const p = i / n;
     return [p, tempToCss(tempAtProgress(f, p))];
   });
 }

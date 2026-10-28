@@ -19,7 +19,7 @@ import { Engine, LEADERS_BLOB } from "./core/engine";
 import { Leaderboard } from "./core/leaders";
 import { isIngestBody, RESTING, type PlanResponse } from "./core/ingest";
 import { OpenSkyClient } from "./core/opensky";
-import { aheadOfWritePace, initialSched, overBudget, planNext, PRUNE_EVERY_MS, queueWatch, recordTileYield, watchOf, recordUsage, replaceTile, sweepSpread, takeSearch, takeWatch, watchAllowance, type Sched } from "./core/sched";
+import { aheadOfWritePace, initialSched, overBudget, planNext, PRUNE_EVERY_MS, queueWatch, recordTileYield, watchOf, recordUsage, replaceTile, sweepSpread, takeEnroute, takeSearch, takeWatch, watchAllowance, type Sched } from "./core/sched";
 import { AFTER_INGEST_MS, dispatchDue, HEARTBEAT_MS, nextAlarmDelay, STUCK_MS, untilDispatch } from "./core/wake";
 import { dispatchPoll } from "./dispatch";
 import { SqlStore } from "./sql-store";
@@ -250,11 +250,29 @@ export class SkyState extends DurableObject<Env> {
     const tr = path.match(/^\/api\/track\/([a-z0-9-]+)$/);
     if (tr) {
       const id = tr[1]!;
-      const track = this.engine.getLeaders() ? this.engine.track(id) : this.engine.track(id, this.savedBoard());
+      const live = this.engine.leaderboard();
+      const board = live ?? this.savedBoard();
+      const track = this.engine.track(id, board);
       if (!track) return json({ error: "not found" }, 404);
-      // A landed flight's track is final; one in the air gains a point every 5 minutes.
-      const f = this.engine.getSnapshot()?.flights.find((x) => x.id === id);
-      return json(track, 200, { "Cache-Control": f ? "public, max-age=60, s-maxage=300" : "public, max-age=3600, s-maxage=86400" });
+      // A landed board flight without en-route temperatures yet: fetch them once and keep them.
+      if (!track.profile && board.get(id)) {
+        try {
+          const profile = await this.engine.enroute(id, board, () => takeEnroute(this.sched, Date.now()));
+          if (profile) {
+            track.profile = profile;
+            if (live) this.engine.saveLeaders();
+            else this.store.putBlob(LEADERS_BLOB, board.toJSON());
+            await this.settle();
+          }
+        } catch (e) {
+          console.error(`enroute ${id}: ${(e as Error).message}`);
+        }
+      }
+      // A landed flight's track is final; one in the air gains a point every 5 minutes. One that
+      // landed but has no temperatures yet is asked again soon, in case they become available.
+      const flying = this.engine.getSnapshot()?.flights.some((x) => x.id === id);
+      const cache = flying || !track.profile ? "public, max-age=60, s-maxage=300" : "public, max-age=3600, s-maxage=86400";
+      return json(track, 200, { "Cache-Control": cache });
     }
 
     const m = path.match(/^\/api\/flight\/([a-z0-9-]+)$/);

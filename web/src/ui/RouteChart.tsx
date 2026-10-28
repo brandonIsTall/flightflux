@@ -19,8 +19,10 @@ export function RouteChart({ flight: f, nowS, units }: { flight: Flight; nowS: n
   const [hover, setHover] = useState<number | null>(null);
   const p = progressAt(f, nowS);
 
-  const lo = Math.min(f.depTempC, f.arrTempC);
-  const hi = Math.max(f.depTempC, f.arrTempC);
+  // The en-route profile when there is one (a replay), else the straight line between the ends.
+  const curve = f.profile && f.profile.length > 1 ? f.profile : [f.depTempC, f.arrTempC];
+  const lo = Math.min(...curve);
+  const hi = Math.max(...curve);
   const pad = Math.max(2, (hi - lo) * 0.15);
   const yMin = lo - pad;
   const yMax = hi + pad;
@@ -47,7 +49,8 @@ export function RouteChart({ flight: f, nowS, units }: { flight: Flight; nowS: n
         onPointerLeave={() => setHover(null)}
       >
         <defs>
-          <linearGradient id={gid} x1="0" x2="1" y1="0" y2="0">
+          {/* In user space: a bounding-box gradient vanishes on a perfectly flat line. */}
+          <linearGradient id={gid} gradientUnits="userSpaceOnUse" x1={x(0)} x2={x(1)} y1={0} y2={0}>
             {flightGradientStops(f).map(([o, c]) => (
               <stop key={o} offset={o} stopColor={c} />
             ))}
@@ -66,7 +69,14 @@ export function RouteChart({ flight: f, nowS, units }: { flight: Flight; nowS: n
           {f.dest.iata ?? f.dest.icao}
         </text>
 
-        <line x1={x(0)} y1={y(f.depTempC)} x2={x(1)} y2={y(f.arrTempC)} stroke={`url(#${gid})`} strokeWidth={2} strokeLinecap="round" />
+        <polyline
+          points={curve.map((t, i) => `${x(i / (curve.length - 1))},${y(t)}`).join(" ")}
+          fill="none"
+          stroke={`url(#${gid})`}
+          strokeWidth={2}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
 
         {hover !== null && hoverT !== null && (
           <g>
@@ -90,6 +100,7 @@ export function RouteChart({ flight: f, nowS, units }: { flight: Flight; nowS: n
           ? `${formatDistance(hover * f.distKm, units)} from ${f.origin.iata ?? f.origin.icao}: ${formatTemp(hoverT, units, 1)}`
           : `Now: ${formatTemp(nowT, units, 1)}, ${formatDistance(p * f.distKm, units)} flown`}
       </figcaption>
+      {f.profile && <p className="mt-0.5 text-[11px] text-ink-3">Ground temperature below the plane as it passed, from Open-Meteo.</p>}
       <table className="sr-only">
         <caption>Temperature along the route</caption>
         <thead>

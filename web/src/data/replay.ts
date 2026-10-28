@@ -1,5 +1,5 @@
 // Replaying a past flight: a Flight timed to fly from take-off to landing on the replay clock, and
-// its recorded positions from the Worker (GET /api/track/:id).
+// its recorded positions and en-route temperatures from the Worker (GET /api/track/:id).
 
 import { useEffect } from "react";
 import type { Flight, LeaderFlight, Track } from "../../../shared/types";
@@ -46,7 +46,7 @@ export function useReplayTrack() {
     let live = true;
     fetch(`${API_BASE}/api/track/${id}`)
       .then((r) => (r.ok ? (r.json() as Promise<Track>) : null))
-      .then((t) => live && setTrack(id, t && t.points.length > 0 ? t.points : null))
+      .then((t) => live && setTrack(id, t && t.points.length > 0 ? t.points : null, t?.profile))
       .catch(() => {});
     return () => {
       live = false;
