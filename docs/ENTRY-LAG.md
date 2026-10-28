@@ -31,7 +31,7 @@ Delays from take-off to the globe:
 | #30 | **Weighted sweep:** same number of boxes (same credits), but boxes that keep turning up new flights are visited more often. Weight is `sqrt(rate / mean)` held to 0.4–2.5, and no box waits more than 225 min. |
 | #31 | A box's yield counts only new **long-haul** flights (callsign with a cached route ≥ 2,500 km). Counting every airliner had made the weights noise. |
 | #32 | **Departure watch.** 15–35 min after a remembered flight's usual take-off, poll a 1-credit box around its origin. Budget: ≤ 600 boxes a day, ≤ 8 per poller run, none below 1,200 credits. |
-| #35 | Watch cap 600 → **900** a day. At ~34 boxes an hour, 600 ran out by about 17:30 UTC, leaving the evening departure wave (US East Coast transatlantic, 22:00–02:00 UTC) unwatched. |
+| #36 | Watch cap 600 → **900** a day. At ~34 boxes an hour, 600 ran out by about 17:30 UTC, leaving the evening departure wave (US East Coast transatlantic, 22:00–02:00 UTC) unwatched. |
 
 ## Measurements
 
@@ -54,7 +54,7 @@ Conclusion before #32: the weighted sweep works and curation is no longer the bo
 **Credits.** OpenSky allows 4,000 a day. The sweep and tracked refresh use about 103 an hour
 (about 2,500 a day): 3,803 at 04:06, 3,265 at 08:56, 2,364 at 17:26, 1,931 at 21:40, 3,994 at
 02:18 the next day. The allowance renews around 00:00 UTC, so compare hourly rates, not levels.
-#32 adds at most 900 a day (600 until #35).
+#32 adds at most 900 a day (600 until #36).
 
 ## How to read the numbers
 
@@ -77,7 +77,7 @@ Conclusion before #32: the weighted sweep works and curation is no longer the bo
 - **After about 24–27 h, success is:**
   - `watch.n` in the dozens with `watch.discoverP50Min` about 20–30 min;
   - `near.discoverP90Min` below 75;
-  - watch spend ≤ 900 a day (600 before #35): `today` in the plan-watch log lines, and credits falling no faster than about 103/h + 38/h.
+  - watch spend ≤ 900 a day (600 before #36): `today` in the plan-watch log lines, and credits falling no faster than about 103/h + 38/h.
 - **If watch boxes go out but find little:** take-off times may be off. They are estimated from distance flown, with a median error of about 6 min. Or the window (15–35 min) may be wrong for big hubs. Check a few watched callsigns against the logs.
 - **If credits run hot:** lower `WATCH_BOXES_PER_DAY` or `WATCH_PER_PLAN` in `sched.ts`.
 
