@@ -33,7 +33,7 @@ export interface Position {
 export type DepTimeSource = "observed" | "estimated";
 
 export interface Flight {
-  /** icao24 + departure day, stable for the life of one flight. */
+  /** icao24, departure day and callsign ("c06aaa-20261028-tsc284"), stable for the life of one flight. */
   id: string;
   icao24: string;
   callsign: string;

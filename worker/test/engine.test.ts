@@ -58,6 +58,18 @@ function fakeWorld() {
             },
           },
         });
+      if (url.includes("/callsign/UAL881"))
+        return json({
+          response: {
+            flightroute: {
+              callsign_icao: "UAL881",
+              callsign_iata: "UA881",
+              airline: { name: "United Airlines", icao: "UAL", iata: "UA" },
+              origin: airport("LHR", "EGLL", LHR),
+              destination: airport("IAH", "KIAH", IAH),
+            },
+          },
+        });
       if (url.includes("/callsign/")) return json({ response: "unknown callsign" }, 404);
       if (url.includes("/aircraft/aa9300"))
         return json({ response: { aircraft: { type: "787 9", manufacturer: "Boeing", icao_type: "B789", registration: "N1" } } });
@@ -177,6 +189,31 @@ describe("Engine", () => {
     expect(track.points.map((p) => p[0])).toEqual([T0, T0 + 300, T0 + 600]);
     expect(distanceKm({ lat: track.points[1]![1], lon: track.points[1]![2] }, interpolate(IAH, LHR, 0.42))).toBeLessThan(0.1);
     expect(engine.track("nope-20260101")).toBeNull();
+  });
+
+  it("gives an aircraft's out and back legs on one day their own ids, board entries and tracks", async () => {
+    // T0 is 02:13 UTC: start the outbound leg mid-morning so both legs take off the same UTC day.
+    const t1 = T0 + 7 * 3600;
+    const t2 = T0 + 17 * 3600;
+    const world = fakeWorld();
+    world.time = t1;
+    world.states = [sv("aa9300", "UAL880", interpolate(IAH, LHR, 0.4), 11000, t1)];
+    const { engine } = makeEngine(world);
+    engine.restore();
+    const out = (await warm(engine)).flights[0]!;
+    engine.logFixes();
+
+    // The same airframe flies back that evening under the return callsign.
+    world.time = t2;
+    world.states = [sv("aa9300", "UAL881", interpolate(LHR, IAH, 0.4), 11000, t2)];
+    const back = (await warm(engine)).flights[0]!;
+    engine.logFixes();
+
+    expect(back.id.slice(0, 15)).toBe(out.id.slice(0, 15)); // same aircraft, same day...
+    expect(back.id).not.toBe(out.id); // ...but each leg its own id
+    expect(engine.getLeaders()!.windows["24h"].map((f) => f.callsign).sort()).toEqual(["UAL880", "UAL881"]);
+    expect(engine.track(out.id)!.points.map((p) => p[0])).toEqual([t1]);
+    expect(engine.track(back.id)!.points.map((p) => p[0])).toEqual([t2]);
   });
 
   it("advances a stale fix along the route at its ground speed", async () => {
