@@ -209,6 +209,8 @@ export class SkyState extends DurableObject<Env> {
       this.restore();
       const { aircraft, next, fresh } = this.engine.ingest(body);
       const docBytes = this.engine.saveKnown();
+      // The globe's fresh positions: record them now, before the next run replaces them.
+      const fixesLogged = body.tile ? undefined : this.engine.logFixes();
       if (body.tile) {
         // Before any split, so both halves inherit what this box turned up.
         recordTileYield(this.sched, body.tile, fresh);
@@ -223,6 +225,7 @@ export class SkyState extends DurableObject<Env> {
           aircraft,
           kept: body.states.length,
           fresh,
+          fixesLogged,
           known: this.engine.knownCount(),
           ...(body.tile ? { boxGapsMin: sweepSpread(this.sched) } : {}),
           rowsRead: this.store.rowsRead - readsBefore,

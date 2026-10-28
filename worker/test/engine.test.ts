@@ -163,12 +163,18 @@ describe("Engine", () => {
     engine.rebuild();
     expect(engine.logFixes()).toBe(1);
 
-    world.time = T0 + 600; // no new fix: nothing to log
+    world.time = T0 + 540; // no new fix: nothing to log
     engine.rebuild();
     expect(engine.logFixes()).toBe(0);
 
+    // A tracked refresh logs its fixes as they arrive, before any rebuild.
+    world.time = T0 + 600;
+    world.states = [sv("aa9300", "UAL880", interpolate(IAH, LHR, 0.44), 11000, world.time)];
+    await engine.refreshTracked();
+    expect(engine.logFixes()).toBe(1);
+
     const track = engine.track(f.id)!;
-    expect(track.points.map((p) => p[0])).toEqual([T0, T0 + 300]);
+    expect(track.points.map((p) => p[0])).toEqual([T0, T0 + 300, T0 + 600]);
     expect(distanceKm({ lat: track.points[1]![1], lon: track.points[1]![2] }, interpolate(IAH, LHR, 0.42))).toBeLessThan(0.1);
     expect(engine.track("nope-20260101")).toBeNull();
   });
