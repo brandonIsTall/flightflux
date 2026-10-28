@@ -1,6 +1,7 @@
 // The flight list: every curated flight, sorted by temperature change, as a keyboard-navigable
 // list. It's the table-view counterpart to the globe and the only way to reach a flight without a
-// pointer. On phones it also holds the search box.
+// pointer. On phones it also holds the search box. Curated flights are numbered by rank; flights
+// added by search are listed in place but unnumbered, since curation didn't pick them.
 
 import { MagnifyingGlass, X } from "@phosphor-icons/react";
 import { AnimatePresence, motion } from "motion/react";
@@ -10,6 +11,7 @@ import { searchErrorMessage, searchFlight, SearchError } from "../data/detail";
 import { progressAt, useSnapshot, USING_FIXTURE } from "../data/snapshot";
 import { formatDelta, formatTemp } from "../lib/format";
 import { flightGradientCss } from "../lib/gradient";
+import { bySwing, rankBySwing } from "../lib/rank";
 import { useStore } from "../store";
 
 export function FlightList({ flights }: { flights: Flight[] }) {
@@ -44,11 +46,14 @@ function ListBody({ flights, onClose }: { flights: Flight[]; onClose: () => void
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   // The curated flights only: `flights` also holds searched ones.
-  const curatedCount = useSnapshot().data?.flights.length ?? 0;
+  const curated = useSnapshot().data?.flights;
+  const curatedCount = curated?.length ?? 0;
   const listRef = useRef<HTMLUListElement>(null);
   const nowS = Date.now() / 1000;
 
-  const sorted = useMemo(() => [...flights].sort((a, b) => Math.abs(b.arrTempC - b.depTempC) - Math.abs(a.arrTempC - a.depTempC)), [flights]);
+  const sorted = useMemo(() => bySwing(flights), [flights]);
+  // Ranked before filtering, so a flight keeps its number while the list is searched.
+  const ranks = useMemo(() => rankBySwing(sorted, new Set(curated?.map((f) => f.id))), [sorted, curated]);
   const key = q.toUpperCase().replace(/\s+/g, "");
   const shown = key
     ? sorted.filter((f) => [f.callsign, f.flightNo, f.origin.iata, f.dest.iata, f.origin.city, f.dest.city, f.airline?.name].some((v) => v?.toUpperCase().includes(key)))
@@ -134,14 +139,23 @@ function ListBody({ flights, onClose }: { flights: Flight[]; onClose: () => void
         {shown.length === 0 && !message && <li className="px-3 py-6 text-[13px] text-ink-2">No flight on the globe matches. Press Enter to search every airborne flight.</li>}
         {shown.map((f) => {
           const p = progressAt(f, nowS);
+          const rank = ranks.get(f.id);
           return (
             <li key={f.id}>
               <button
                 type="button"
                 data-row
                 onClick={() => choose(f)}
-                className="focus-ring grid w-full grid-cols-[auto_1fr_auto] items-center gap-x-3 rounded-[10px] px-3 py-2.5 text-left transition-colors hover:bg-white/[0.04]"
+                className="focus-ring grid w-full grid-cols-[auto_auto_1fr_auto] items-center gap-x-3 rounded-[10px] px-3 py-2.5 text-left transition-colors hover:bg-white/[0.04]"
               >
+                <span className="num w-6 text-right text-[12px] text-ink-3">
+                  {rank !== undefined && (
+                    <>
+                      <span className="sr-only">Rank </span>
+                      {rank}
+                    </>
+                  )}
+                </span>
                 <span className="num w-14 text-[13px] text-ink-1">{f.flightNo ?? f.callsign}</span>
                 <span className="min-w-0">
                   <span className="block truncate text-[13px] text-ink-2">
