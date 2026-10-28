@@ -45,6 +45,7 @@ Delays from take-off to the globe:
 | Oct 19 02:20 | #31 | 36 / 76 (n=149) | 4 | 18 | 12 | avg fresh **19**/visit (clean); visit gaps 32/111/204 min |
 | Oct 19 06:05 | #32 (+70 min) | 30 / 70 (n=149) | 4 | 19 | 11 | watch n=0, schedule 109; no plan-watch lines yet; avg fresh 19/visit; visit gaps 49/81/215 min; credits 3,613 (~101/h since 02:18); no errors. Early check only |
 | Oct 20 06:30 | #32 (+25.5 h) | **22 / 66** (n=174) | 4 | 9 | 12 | **watch n=14, P50 28 min**, schedule 1,500 (at `MAX_SCHEDULE`); 29 watch boxes last hour, 159 today (~24/h, on pace for the 600 cap); credits 3,428 (~88/h since 00:00 incl. watch); avg fresh **10**/visit (watch finds flights before the sweep does); visit gaps 36/95/203 min; no errors |
+| Oct 28 06:30 | #32 (+9 d) | **24 / 59** (n=153) | 1 | 9 | 10 | watch n=8, P50 20 min, schedule 1,500; 34 watch boxes last hour, 110 today. **The 600 cap runs out in the early evening** (17:36 on Oct 27), and sweep avg fresh then jumps from ~8 to ~20–25/visit until 00:00. Daily avg fresh 12.4 / 12.1 / 10.4 / 10.6 (Oct 21/23/25/27), a slow drift. Credits 3,471 (~81/h since 00:00); visit gaps 31/99/204 min; 3 errors in 7 days (2 DO "connection closed"); one 50-min zero-yield dip Oct 27 13:05–13:56, recovered by itself |
 
 Conclusion before #32: the weighted sweep works and curation is no longer the bottleneck. The
 `near` P90 stays at about 75 min whatever the sweep does. Only extra polling around take-off
