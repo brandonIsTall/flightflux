@@ -65,8 +65,9 @@ object between events (often between two alarms), so every event is treated as a
 - The leaderboard is one document of ~100 flights: a flight is dropped once 10 others landing no
   earlier swing more, since it can then never rank in any rolling window. It is saved when it
   changes, at most every 5 min. Read without a restore, `/api/leaders` costs 1 row.
-- The fix log keeps real positions for replay: every 5 min, one row with the new fix of every
-  long-haul flight scored since the last (~250 entries, ~13 KB), so 288 rows written a day and
+- The fix log keeps real positions for replay: as each poller run delivers the globe's positions
+  (every ~5 min, at least 4 min apart), one row with the new fix of every long-haul flight scored
+  since the last (~250 entries, ~13 KB), so ~300 rows written a day and
   ~115 MB over its 31 days. Keyed by an `INTEGER PRIMARY KEY` (the rowid: no index to write),
   so a track reads one row per 5 min flown and the daily prune deletes by a seek, not a scan.
 - Rows read and written are tallied per UTC day in the scheduler state. Past 4M read or 80k

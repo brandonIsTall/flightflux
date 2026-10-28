@@ -642,7 +642,8 @@ export class Engine {
 
   /**
    * Write a fix-log row (core/fixlog.ts) if FIX_LOG_EVERY_S has passed since the last: the new fix
-   * of every flight the last rebuild scored. Returns the entries written (0 when not due).
+   * of every flight the last rebuild scored, as known now (an ingest since then may have brought a
+   * newer one). Returns the entries written (0 when not due).
    */
   logFixes(): number {
     const { store } = this.deps;
@@ -650,11 +651,17 @@ export class Engine {
     const last = (this.fixesLoggedAt ??= store.lastFixesAt() ?? 0);
     if (nowS - last < FIX_LOG_EVERY_S) return 0;
     const row = fixRow(
-      this.scored.map(({ k }) => ({ icao24: k.s.icao24, callsign: k.s.callsign, t: k.t, lat: k.s.lat!, lon: k.s.lon!, altM: k.s.baroAltM ?? k.s.geoAltM ?? 0 })),
+      this.scored.map((c) => {
+        const now = this.known.get(c.icao24);
+        const k = now && now.s.callsign === c.callsign ? now : c.k;
+        return { icao24: k.s.icao24, callsign: k.s.callsign, t: k.t, lat: k.s.lat!, lon: k.s.lon!, altM: k.s.baroAltM ?? k.s.geoAltM ?? 0 };
+      }),
       last,
     );
+    // Nothing new isn't a row: leave the gap open for the fixes the next ingest brings.
+    if (row.length === 0) return 0;
+    store.putFixes(nowS, JSON.stringify(row));
     this.fixesLoggedAt = nowS;
-    if (row.length > 0) store.putFixes(nowS, JSON.stringify(row));
     return row.length;
   }
 

@@ -1,14 +1,20 @@
 // The fix log: real positions kept for replaying a flight after it lands.
 //
-// Positions can't be fetched again later (OpenSky only serves the present), so every 5 minutes one
-// row records the new transponder fix of every long-haul flight the engine scored since the last
-// row: ~250 entries, ~9 KB. That is 288 rows written a day, read back only to build one flight's
+// Positions can't be fetched again later (OpenSky only serves the present), so about every 5 minutes
+// one row records the new transponder fix of every long-haul flight the engine scored since the
+// last row: ~250 entries, ~13 KB. Only each flight's latest fix is held, so a row is written as each
+// poller run delivers the globe's positions (every ~5 min), not on a timer that could fall between
+// two runs and lose one. That is ~300 rows written a day, read back only to build one flight's
 // track (~150 rows for a 12-hour flight, then edge-cached). Rows older than FIX_LOG_KEEP_S go in
 // the daily prune, so a flight on the 30-day leaderboard can still be replayed.
 
 import type { TrackPoint } from "../../../shared/types";
 
-export const FIX_LOG_EVERY_S = 5 * 60;
+/**
+ * The least time between rows. Under the poller's 5 minutes, so a run that comes a little early
+ * still gets its row; a timer alarm in between writes one only if this much has passed.
+ */
+export const FIX_LOG_EVERY_S = 4 * 60;
 /** A little over the longest leaderboard window. */
 export const FIX_LOG_KEEP_S = 31 * 86_400;
 
