@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { FIX_LOG_KEEP_S } from "../src/core/fixlog";
 import { ROUTE_TTL_S } from "../src/core/store";
 import { SqlStore } from "../src/sql-store";
 import { fakeSql } from "./fake-sql";
@@ -56,10 +57,24 @@ describe("SqlStore", () => {
     s.prune(T); // per-wake expiry: memory only
     expect(f.queries).toEqual([]);
     s.pruneStorage(T);
-    expect(f.queries).toHaveLength(2);
+    expect(f.queries).toHaveLength(3);
     const count = () => (f.db.prepare("SELECT COUNT(*) AS n FROM route_cache").get() as { n: number }).n;
     expect(count()).toBe(1);
     expect(s.rowsWritten).toBe(3); // two inserts, one delete
+  });
+
+  it("keeps the fix log in storage only, read by a seek over its key and pruned after a month", () => {
+    const f = fakeSql();
+    const s = new SqlStore(f.sql);
+    expect(s.lastFixesAt()).toBeUndefined();
+    for (let i = 0; i < 10; i++) s.putFixes(T + i * 300, `[${i}]`);
+    expect(s.fixes.size).toBe(0); // never held in memory
+    expect(new SqlStore(f.sql).lastFixesAt()).toBe(T + 9 * 300);
+    expect(s.getFixes(T + 300, T + 900)).toEqual(["[1]", "[2]", "[3]"]);
+    expect(f.plan("SELECT v FROM fix_log WHERE t BETWEEN ? AND ? ORDER BY t", T, T)).toMatch(/USING INTEGER PRIMARY KEY/);
+    s.putFixes(T - FIX_LOG_KEEP_S - 1, "[old]");
+    s.pruneStorage(T);
+    expect(s.getFixes(0, T + 9 * 300)).toHaveLength(10);
   });
 
   it("moves the first version's cache into the new tables once", () => {
@@ -72,7 +87,7 @@ describe("SqlStore", () => {
     s.migrateLegacy();
     expect(new SqlStore(f.sql).getRoute("UAL880")).toEqual(entry(T));
     const tables = (f.db.prepare("SELECT name FROM sqlite_master WHERE type = 'table'").all() as { name: string }[]).map((t) => t.name);
-    expect(tables.sort()).toEqual(["blobs", "route_cache", "weather_cache"]);
+    expect(tables.sort()).toEqual(["blobs", "fix_log", "route_cache", "weather_cache"]);
     s.migrateLegacy(); // nothing left to move
   });
 

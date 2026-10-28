@@ -148,6 +148,31 @@ describe("Engine", () => {
     expect(later.getLeaders()!.windows["24h"].map((x) => x.id)).toEqual([f.id]);
   });
 
+  it("logs real fixes every 5 minutes and replays them as the flight's track", async () => {
+    const world = fakeWorld();
+    world.states = [sv("aa9300", "UAL880", interpolate(IAH, LHR, 0.4), 11000)];
+    const { engine } = makeEngine(world);
+    engine.restore();
+    const f = (await warm(engine)).flights[0]!;
+    expect(engine.logFixes()).toBe(1);
+    expect(engine.logFixes()).toBe(0); // not due
+
+    world.time = T0 + 300;
+    world.states = [sv("aa9300", "UAL880", interpolate(IAH, LHR, 0.42), 11000, world.time)];
+    await engine.refreshTracked();
+    engine.rebuild();
+    expect(engine.logFixes()).toBe(1);
+
+    world.time = T0 + 600; // no new fix: nothing to log
+    engine.rebuild();
+    expect(engine.logFixes()).toBe(0);
+
+    const track = engine.track(f.id)!;
+    expect(track.points.map((p) => p[0])).toEqual([T0, T0 + 300]);
+    expect(distanceKm({ lat: track.points[1]![1], lon: track.points[1]![2] }, interpolate(IAH, LHR, 0.42))).toBeLessThan(0.1);
+    expect(engine.track("nope-20260101")).toBeNull();
+  });
+
   it("advances a stale fix along the route at its ground speed", async () => {
     const world = fakeWorld();
     world.states = [sv("aa9300", "UAL880", interpolate(IAH, LHR, 0.4), 11000)];
