@@ -859,8 +859,12 @@ export class Engine {
     };
   }
 
+  /**
+   * The aircraft, the UTC day it took off and its callsign: an airframe often flies a leg out and
+   * back the same day (Quebec City to St Maarten and back), and each leg needs its own id.
+   */
   private flightId(c: Candidate): string {
-    return `${c.icao24}-${utcDay(c.depTime)}`;
+    return `${c.icao24}-${utcDay(c.depTime)}-${c.callsign.toLowerCase()}`;
   }
 
   /** A candidate's flight without its position: what the snapshot and the leaderboard share. */
