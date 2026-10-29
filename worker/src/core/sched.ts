@@ -72,11 +72,14 @@ export interface WatchState {
 }
 
 /**
- * Departure watch budget, on top of the sweep and the tracked refresh (~2,500 credits a day):
- * at most this many 1-credit boxes a UTC day, and none while credits are below WATCH_MIN_CREDITS.
+ * Departure watch budget, on top of the sweep and the tracked refresh (~2,600 credits a day):
+ * at most this many 1-credit boxes a UTC day, spread evenly over it (plus WATCH_PACE_HEADROOM) so
+ * the evening departure wave is still watched, and none while credits are below WATCH_MIN_CREDITS,
+ * which stays above LOW_CREDITS so the watch never slows the sweep down.
  */
-export const WATCH_BOXES_PER_DAY = 900;
-export const WATCH_MIN_CREDITS = 1200;
+export const WATCH_BOXES_PER_DAY = 500;
+export const WATCH_PACE_HEADROOM = 30;
+export const WATCH_MIN_CREDITS = 900;
 /** Watch boxes planned per alarm; the poller runs every 5 min. */
 export const WATCH_PER_PLAN = 8;
 /** Planned watch boxes older than this are dropped: their flights' window has moved on. */
@@ -91,12 +94,18 @@ export function watchOf(s: Sched, now: number): WatchState {
   return s.watch;
 }
 
-/** How many watch boxes may be planned now: 0 while some wait, credits are low or today's are spent. */
+/**
+ * How many watch boxes may be planned now: 0 while some wait, credits are low, or today's are spent
+ * so far, against an even spread of WATCH_BOXES_PER_DAY over the UTC day. Quiet hours leave budget
+ * for busy ones.
+ */
 export function watchAllowance(s: Sched, now: number, creditsRemaining: number | null): number {
   const w = watchOf(s, now);
   if (w.pending.length > 0 && now - w.at < WATCH_PENDING_TTL_MS) return 0;
   if (creditsRemaining !== null && creditsRemaining < WATCH_MIN_CREDITS) return 0;
-  return Math.max(0, Math.min(WATCH_PER_PLAN, WATCH_BOXES_PER_DAY - w.boxes));
+  const dayFraction = (now % 86_400_000) / 86_400_000;
+  const pace = Math.floor(WATCH_PACE_HEADROOM + (WATCH_BOXES_PER_DAY - WATCH_PACE_HEADROOM) * dayFraction);
+  return Math.max(0, Math.min(WATCH_PER_PLAN, pace - w.boxes));
 }
 
 export function queueWatch(s: Sched, now: number, boxes: Bbox[]) {
