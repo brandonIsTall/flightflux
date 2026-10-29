@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { queueWatch, takeWatch, watchAllowance, WATCH_BOXES_PER_DAY, WATCH_MIN_CREDITS, WATCH_PENDING_TTL_MS, WATCH_PER_PLAN, aheadOfWritePace, FIRST_SWEEP_TILE_MS, MAX_TILE_GAP_MS, PACE_HEADROOM, initialSched, overBudget, planNext, READ_BUDGET, recordTileYield, recordUsage, replaceTile, SEARCH_BUDGET, SWEEP_MS, takeSearch, tileStatsOf, TRACK_INTERVAL_MS, WRITE_BUDGET, type Sched } from "../src/core/sched";
+import { queueWatch, takeWatch, watchAllowance, WATCH_BOXES_PER_DAY, WATCH_MIN_CREDITS, WATCH_PACE_HEADROOM, WATCH_PENDING_TTL_MS, WATCH_PER_PLAN, LOW_CREDITS, aheadOfWritePace, FIRST_SWEEP_TILE_MS, MAX_TILE_GAP_MS, PACE_HEADROOM, initialSched, overBudget, planNext, READ_BUDGET, recordTileYield, recordUsage, replaceTile, SEARCH_BUDGET, SWEEP_MS, takeSearch, tileStatsOf, TRACK_INTERVAL_MS, WRITE_BUDGET, type Sched } from "../src/core/sched";
 import { INITIAL_TILES } from "../src/core/tiles";
 
 const T = 1_791_080_000_000;
@@ -258,5 +258,23 @@ describe("departure watch budget", () => {
     takeWatch(s, T);
     expect(watchAllowance(s, T, 3000)).toBe(0);
     expect(watchAllowance(s, T + 86_400_000, 3000)).toBe(WATCH_PER_PLAN);
+  });
+
+  it("spreads the day's boxes evenly, so the evening still has some", () => {
+    const midnight = T - (T % 86_400_000);
+    const s = initialSched();
+    queueWatch(s, midnight, Array(WATCH_PACE_HEADROOM).fill(box));
+    takeWatch(s, midnight);
+    expect(watchAllowance(s, midnight + 60_000, 3000)).toBe(0); // the headroom is spent: wait for the pace
+    const noon = midnight + 43_200_000;
+    expect(watchAllowance(s, noon, 3000)).toBe(WATCH_PER_PLAN); // a quiet morning left budget
+    queueWatch(s, noon, Array(Math.floor((WATCH_PACE_HEADROOM + WATCH_BOXES_PER_DAY) / 2) - WATCH_PACE_HEADROOM).fill(box));
+    takeWatch(s, noon);
+    expect(watchAllowance(s, noon, 3000)).toBe(0); // on pace at noon: half the day's boxes
+    expect(watchAllowance(s, noon + 3_600_000, 3000)).toBeGreaterThan(0); // and more an hour later
+  });
+
+  it("stops before credits get low enough to slow the sweep", () => {
+    expect(WATCH_MIN_CREDITS).toBeGreaterThan(LOW_CREDITS);
   });
 });
