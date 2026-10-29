@@ -4,7 +4,7 @@
 import { useEffect, useState } from "react";
 import type { CanvasTexture } from "three";
 import { ready } from "../boot";
-import { coastlineSegments, loadLand, renderEarthTexture, sampleLand } from "../lib/earthTexture";
+import { coastlineSegments, loadElevation, loadLand, renderEarthTexture, sampleLand, type Elevation } from "../lib/earthTexture";
 
 export interface EarthAssets {
   texture: CanvasTexture;
@@ -12,6 +12,8 @@ export interface EarthAssets {
   landSamples: Float32Array;
   /** Coastline edges as xyz pairs, just above the globe surface. */
   coast: Float32Array;
+  /** Land elevation, for the earth shader's relief and the cockpit's ground clearance. */
+  elevation: Elevation;
 }
 
 /** Just above the textured sphere (1.0005) so the coastline never z-fights with it. */
@@ -20,11 +22,11 @@ const COAST_RADIUS = 1.0008;
 let promise: Promise<EarthAssets> | null = null;
 
 export function getEarthAssets(): Promise<EarthAssets> {
-  promise ??= loadLand().then((land) => {
+  promise ??= Promise.all([loadLand(), loadElevation()]).then(([land, elevation]) => {
     const texture = renderEarthTexture(land);
     const landSamples = sampleLand(texture.image as HTMLCanvasElement, 1.004);
     ready.texture = true;
-    return { texture, landSamples, coast: coastlineSegments(land, COAST_RADIUS) };
+    return { texture, landSamples, coast: coastlineSegments(land, COAST_RADIUS), elevation };
   });
   return promise;
 }

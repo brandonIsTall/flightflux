@@ -10,6 +10,7 @@ const SOURCES: { name: string; what: string; terms: string; url: string }[] = [
   { name: "adsbdb", what: "Callsign routes, aircraft types and photos", terms: "Free API", url: "https://www.adsbdb.com" },
   { name: "Open-Meteo", what: "Hourly temperatures at departure and arrival", terms: "CC BY 4.0, non-commercial", url: "https://open-meteo.com" },
   { name: "Natural Earth via world-atlas", what: "The land shapes on the globe", terms: "Public domain", url: "https://github.com/topojson/world-atlas" },
+  { name: "NASA Blue Marble topography via three-globe", what: "The terrain relief", terms: "Public domain imagery, MIT packaging", url: "https://github.com/vasturiano/three-globe" },
   { name: "Geist by Vercel", what: "Typefaces", terms: "SIL Open Font License", url: "https://vercel.com/font" },
 ];
 
