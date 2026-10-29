@@ -7,7 +7,7 @@ export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
-    // Service worker: precaches the shell, fonts and the land atlas; keeps the last API answers
+    // Service worker: precaches the shell, fonts, the land atlas and the elevation map; keeps the last API answers
     // for offline and slow networks. The snapshot itself is also persisted in IndexedDB.
     VitePWA({
       registerType: "autoUpdate",
@@ -23,7 +23,7 @@ export default defineConfig({
         icons: [{ src: "favicon.svg", sizes: "any", type: "image/svg+xml" }],
       },
       workbox: {
-        globPatterns: ["**/*.{js,css,html,woff2,svg}"],
+        globPatterns: ["**/*.{js,css,html,woff2,svg,png}"],
         maximumFileSizeToCacheInBytes: 3_000_000,
         runtimeCaching: [
           {

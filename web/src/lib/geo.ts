@@ -56,3 +56,16 @@ export function arcLift(f: number, angleRad: number): number {
   const peak = 0.02 + 0.16 * Math.min(1, angleRad / Math.PI);
   return peak * Math.sin(Math.PI * f);
 }
+
+/** The cockpit seat rides this far above its route line, in globe radii (~25 km stylized). */
+export const SEAT_ABOVE_LINE = 0.004;
+/** ...and never closer than this to the (raised) ground under it, so it clears high airports. */
+export const SEAT_CLEARANCE = 0.003;
+
+/**
+ * Distance from the globe's centre of the cockpit seat at fraction f: just above the route line, so
+ * it climbs out of the origin and descends into the destination, floored above the ground's lift.
+ */
+export function seatRadius(f: number, angleRad: number, groundLift = 0): number {
+  return Math.max(1 + arcLift(f, angleRad) + SEAT_ABOVE_LINE, 1 + groundLift + SEAT_CLEARANCE);
+}

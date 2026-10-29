@@ -4,8 +4,9 @@
 import { geoEquirectangular, geoPath } from "d3-geo";
 import { feature } from "topojson-client";
 import type { Topology, GeometryCollection } from "topojson-specification";
-import { CanvasTexture, SRGBColorSpace, Vector3 } from "three";
-import { toVec3 } from "./geo";
+import { CanvasTexture, RepeatWrapping, SRGBColorSpace, Vector3 } from "three";
+import elevationUrl from "../assets/earth-elevation.png";
+import { toVec3, type LatLon } from "./geo";
 
 export const OCEAN = "#0F141B";
 export const LAND = "#1E2633";
@@ -44,6 +45,55 @@ export function renderEarthTexture(land: GeoJSON.FeatureCollection, width = 4096
   tex.colorSpace = SRGBColorSpace;
   tex.anisotropy = 8;
   return tex;
+}
+
+/** Land elevation on the same equirectangular grid as the texture: 0 at sea level, 1 at the top. */
+export interface Elevation {
+  /** One byte per pixel, row 0 at the north pole. Oceans are 0 (no bathymetry). */
+  data: Uint8Array;
+  width: number;
+  height: number;
+  /** The same grid for the shaders (linear data, not color). */
+  texture: CanvasTexture;
+}
+
+/**
+ * Loads the bundled elevation map (NASA Blue Marble topography, 2048 x 1024 grayscale, roughly
+ * 0 to 9 km) into a texture for the earth shader and a byte grid for sampling on the CPU.
+ */
+export async function loadElevation(): Promise<Elevation> {
+  const img = new Image();
+  img.src = elevationUrl;
+  await img.decode();
+  const canvas = document.createElement("canvas");
+  canvas.width = img.naturalWidth;
+  canvas.height = img.naturalHeight;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true })!;
+  ctx.drawImage(img, 0, 0);
+  const rgba = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+  const data = new Uint8Array(canvas.width * canvas.height);
+  for (let i = 0; i < data.length; i++) data[i] = rgba[i * 4]!;
+  const texture = new CanvasTexture(canvas);
+  texture.wrapS = RepeatWrapping; // across the antimeridian
+  texture.anisotropy = 4;
+  return { data, width: canvas.width, height: canvas.height, texture };
+}
+
+/** Elevation at a point, 0..1, bilinear between pixel centres (wrapping in longitude). */
+export function elevationAt(e: Pick<Elevation, "data" | "width" | "height">, p: LatLon): number {
+  const { data, width, height } = e;
+  const x = ((((p.lon + 180) / 360) * width - 0.5) % width + width) % width;
+  const y = Math.min(height - 1, Math.max(0, ((90 - p.lat) / 180) * height - 0.5));
+  const x0 = Math.floor(x);
+  const y0 = Math.floor(y);
+  const x1 = (x0 + 1) % width;
+  const y1 = Math.min(height - 1, y0 + 1);
+  const fx = x - x0;
+  const fy = y - y0;
+  const at = (i: number, j: number) => data[j * width + i]!;
+  const top = at(x0, y0) + (at(x1, y0) - at(x0, y0)) * fx;
+  const bottom = at(x0, y1) + (at(x1, y1) - at(x0, y1)) * fx;
+  return (top + (bottom - top) * fy) / 255;
 }
 
 /**

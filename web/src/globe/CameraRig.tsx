@@ -2,9 +2,11 @@
 //
 // The cockpit pose rides the plane: each frame it is recomputed from the flight's projected
 // position and the globe's spin, so the view keeps moving along the route while the user is in
-// it. The flight to and from it blends the orbit pose and the cockpit pose with an ease and a
-// bulge away from the globe, so the camera swings out and dives in rather than cutting straight
-// through the surface.
+// it. Its height follows the route line, so the view climbs out and descends in with the nose
+// tilting part of the way along; the terrain stands up while seated and the seat keeps clear of it.
+// The flight to and from it blends the orbit pose and the cockpit pose with an ease and a bulge
+// away from the globe, so the camera swings out and dives in rather than cutting straight through
+// the surface.
 
 import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
@@ -12,18 +14,19 @@ import { Matrix4, PerspectiveCamera, Quaternion, Vector3 } from "three";
 import type { Flight } from "../../../shared/types";
 import { progressAt } from "../data/snapshot";
 import { nowS as clockNowS } from "../lib/clock";
-import { interpolate, toVec3 } from "../lib/geo";
+import { elevationAt } from "../lib/earthTexture";
+import { arcLift, centralAngle, interpolate, seatRadius, toVec3 } from "../lib/geo";
 import { useStore } from "../store";
+import { useEarthAssets } from "./earthAssets";
+import { HEIGHT_SCALE, relief } from "./relief";
 import { spin } from "./spin";
 
 /** Camera flight duration. Reduced motion makes it a quick cross-dissolve instead. */
 const FLIGHT_S = 2.4;
 const FLIGHT_REDUCED_S = 0.25;
-/**
- * Seat height above the surface, in globe radii (~220 km: stylized, so the horizon curves and the
- * route ribbon arches overhead). The route line itself is lifted higher mid-route.
- */
-const SEAT_HEIGHT = 0.035;
+/** The nose follows this share of the route line's climb or descent angle, up to NOSE_MAX. */
+const PITCH_FOLLOW = 0.5;
+const NOSE_MAX = (10 * Math.PI) / 180;
 /** The horizon sits this far above the screen centre, so the ground fills the lower half. */
 const HORIZON_ABOVE_CENTER = (4 * Math.PI) / 180;
 const ORBIT_FOV = 40;
@@ -32,7 +35,8 @@ const COCKPIT_FOV = 58;
 const YAW_MAX = (40 * Math.PI) / 180;
 const PITCH_MAX = (16 * Math.PI) / 180;
 const LOOK_SENSITIVITY = 0.0032;
-const COCKPIT_NEAR = 0.0015;
+/** Close enough for the ground under a seat that rides just above the route line at the ends. */
+const COCKPIT_NEAR = 0.0005;
 const ORBIT_NEAR = 0.1;
 
 const UP = new Vector3(0, 1, 0);
@@ -64,6 +68,8 @@ export function CameraRig({ flights }: { flights: Flight[] }) {
   const selectedId = useStore((s) => s.selectedId);
   const mode = useStore((s) => s.cameraMode);
   const flight = useMemo(() => flights.find((f) => f.id === selectedId) ?? null, [flights, selectedId]);
+  const angle = useMemo(() => (flight ? centralAngle(flight.origin, flight.dest) : 0), [flight]);
+  const elevation = useEarthAssets()?.elevation ?? null;
 
   // Mutable per-frame state, outside React.
   const st = useRef({
@@ -135,21 +141,32 @@ export function CameraRig({ flights }: { flights: Flight[] }) {
 
   useFrame((_, dt) => {
     const s = st.current;
-    if (mode === "orbit") return;
+    if (mode === "orbit") {
+      relief.k = 0;
+      return;
+    }
 
     // Where the seat is right now (world space, including the globe's spin).
     if (flight) {
       const nowS = clockNowS();
       const p = progressAt(flight, nowS);
-      const r = 1 + SEAT_HEIGHT;
-      toVec3(interpolate(flight.origin, flight.dest, p), r, seatPos).applyAxisAngle(UP, spin.y);
-      toVec3(interpolate(flight.origin, flight.dest, Math.min(1, p + 0.004)), r, ahead).applyAxisAngle(UP, spin.y);
+      const here = interpolate(flight.origin, flight.dest, p);
+      const ground = elevation ? elevationAt(elevation, here) * HEIGHT_SCALE * relief.k : 0;
+      const r = seatRadius(p, angle, ground);
+      toVec3(here, r, seatPos).applyAxisAngle(UP, spin.y);
+      // Heading: toward a point a little further on at the same height (progress stops short of 1).
+      const q = Math.min(1, p + 0.004);
+      toVec3(interpolate(flight.origin, flight.dest, q), r, ahead).applyAxisAngle(UP, spin.y);
       const up = tmpPos.copy(seatPos).normalize();
       m.lookAt(seatPos, ahead, up);
       seatQuat.setFromRotationMatrix(m);
-      // Pitch down so the horizon (acos(1/r) below level) lands just above centre, then look-around.
+      // The route line's climb (or descent) angle here; the nose follows part of it.
+      const climb = q > p ? Math.atan2(arcLift(q, angle) - arcLift(p, angle), (q - p) * angle) : 0;
+      const nose = clamp(PITCH_FOLLOW * climb, -NOSE_MAX, NOSE_MAX);
+      // Pitch down so the horizon (acos(1/r) below level) lands just above centre, tilt with the
+      // climb, then look-around.
       const pitchDown = Math.acos(1 / r) - HORIZON_ABOVE_CENTER;
-      seatQuat.multiply(tmpQuat.setFromAxisAngle(X_AXIS, -pitchDown));
+      seatQuat.multiply(tmpQuat.setFromAxisAngle(X_AXIS, nose - pitchDown));
       seatQuat.multiply(tmpQuat.setFromAxisAngle(Y_AXIS, s.look.yaw));
       seatQuat.multiply(tmpQuat.setFromAxisAngle(X_AXIS, s.look.pitch));
     }
@@ -163,6 +180,7 @@ export function CameraRig({ flights }: { flights: Flight[] }) {
         s.look.yaw *= Math.exp(-dt / 0.35);
         s.look.pitch *= Math.exp(-dt / 0.35);
       }
+      relief.k = 1;
       camera.position.copy(seatPos);
       camera.quaternion.copy(seatQuat);
       setLens(camera, COCKPIT_NEAR, COCKPIT_FOV);
@@ -173,6 +191,8 @@ export function CameraRig({ flights }: { flights: Flight[] }) {
     const duration = reduced ? FLIGHT_REDUCED_S : FLIGHT_S;
     s.t = Math.min(1, s.t + dt / duration);
     const k = easeInOutCubic(s.t);
+    // The terrain rises as the camera dives in and settles flat again on the way out.
+    relief.k = mode === "to-cockpit" ? k : 1 - k;
     const toPos = mode === "to-cockpit" ? seatPos : s.orbitPos;
     if (mode === "to-cockpit" && !flight) {
       useStore.getState().setCameraMode("orbit");
