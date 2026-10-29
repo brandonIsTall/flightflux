@@ -51,6 +51,13 @@ export interface Flight {
   depTempC: number;
   arrTempC: number;
   flags: { depTimeSource: DepTimeSource };
+  /**
+   * The temperature along the route, when known: entry i is at fraction i / (length - 1), the 2 m
+   * temperature below the plane when it passed there (ends pinned to depTempC and arrTempC).
+   * Without it the route blends straight from depTempC to arrTempC. Only landed leaderboard flights
+   * have one, for replays.
+   */
+  profile?: number[];
 }
 
 export interface Snapshot {
@@ -117,6 +124,8 @@ export type TrackPoint = [number, number, number, number];
 export interface Track {
   id: string;
   points: TrackPoint[];
+  /** The flight's en-route temperatures (see Flight.profile), when it has landed and they're known. */
+  profile?: number[];
 }
 
 /**

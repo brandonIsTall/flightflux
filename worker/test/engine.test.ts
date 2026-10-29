@@ -216,6 +216,29 @@ describe("Engine", () => {
     expect(engine.track(back.id)!.points.map((p) => p[0])).toEqual([t2]);
   });
 
+  it("fetches a landed board flight's en-route temperatures once, within the day's budget", async () => {
+    const world = fakeWorld();
+    world.states = [sv("aa9300", "UAL880", interpolate(IAH, LHR, 0.4), 11000)];
+    const { engine } = makeEngine(world);
+    engine.restore();
+    const f = (await warm(engine)).flights[0]!;
+    const board = engine.leaderboard()!;
+    const meteoCalls = () => world.calls.filter((u) => u.includes("start_date")).length;
+    let allowed = 0;
+    const allow = () => (allowed++, true);
+
+    expect(await engine.enroute(f.id, board, allow)).toBeUndefined(); // still flying
+    world.time = f.eta + 3600;
+    expect(await engine.enroute(f.id, board, () => false)).toBeUndefined(); // budget spent
+    const profile = (await engine.enroute(f.id, board, allow))!;
+    expect(profile).toHaveLength(17);
+    expect([profile[0], profile.at(-1)]).toEqual([30, 12]);
+    expect(await engine.enroute(f.id, board, allow)).toBe(profile); // kept, not fetched again
+    expect([meteoCalls(), allowed]).toEqual([1, 1]);
+    expect(engine.track(f.id)!.profile).toEqual(profile);
+    expect(await engine.enroute("nope-20260101-xxx1", board, allow)).toBeUndefined();
+  });
+
   it("advances a stale fix along the route at its ground speed", async () => {
     const world = fakeWorld();
     world.states = [sv("aa9300", "UAL880", interpolate(IAH, LHR, 0.4), 11000)];

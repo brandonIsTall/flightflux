@@ -260,6 +260,8 @@ export interface Usage {
   written: number;
   /** Searches answered today: each can cost an adsbdb lookup, an Open-Meteo call and a few writes. */
   searches?: number;
+  /** En-route temperature lookups today (core/enroute.ts): PROFILE_POINTS Open-Meteo calls each. */
+  enroute?: number;
 }
 
 /** Searches per UTC day across all visitors. The Worker also limits each visitor (wrangler.jsonc). */
@@ -298,6 +300,19 @@ export function aheadOfWritePace(s: Sched, now: number): boolean {
 }
 
 /** Count a search against today's cap. False when the cap is reached (the search is refused). */
+/**
+ * En-route lookups per UTC day: 100 x 17 points = 1,700 Open-Meteo calls at most, beside the
+ * ~4,800 the airport weather uses, under its 10,000. Each landed flight needs one, ever.
+ */
+export const ENROUTE_BUDGET = 100;
+
+export function takeEnroute(s: Sched, now: number): boolean {
+  recordUsage(s, now, 0, 0);
+  if ((s.usage.enroute ?? 0) >= ENROUTE_BUDGET) return false;
+  s.usage.enroute = (s.usage.enroute ?? 0) + 1;
+  return true;
+}
+
 export function takeSearch(s: Sched, now: number): boolean {
   recordUsage(s, now, 0, 0);
   if ((s.usage.searches ?? 0) >= SEARCH_BUDGET) return false;
