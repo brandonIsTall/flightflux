@@ -32,6 +32,7 @@ Delays from take-off to the globe:
 | #31 | A box's yield counts only new **long-haul** flights (callsign with a cached route ≥ 2,500 km). Counting every airliner had made the weights noise. |
 | #32 | **Departure watch.** 15–35 min after a remembered flight's usual take-off, poll a 1-credit box around its origin. Budget: ≤ 600 boxes a day, ≤ 8 per poller run, none below 1,200 credits. |
 | #36 | Watch cap 600 → **900** a day. At ~34 boxes an hour, 600 ran out by about 17:30 UTC, leaving the evening departure wave (US East Coast transatlantic, 22:00–02:00 UTC) unwatched. |
+| #44 | Watch credit floor 1,200 → **600**. With the watch running all evening, credits reached 1,200 at about 22:20 UTC and the floor, not the 900 cap, stopped the watch at the start of the transatlantic departure wave. 600 still leaves the sweep about 5–6 h of credits. |
 
 ## Measurements
 
@@ -54,7 +55,7 @@ Conclusion before #32: the weighted sweep works and curation is no longer the bo
 
 **Credits.** OpenSky allows 4,000 a day. The sweep and tracked refresh use about 103 an hour
 (about 2,500 a day): 3,803 at 04:06, 3,265 at 08:56, 2,364 at 17:26, 1,931 at 21:40, 3,994 at
-02:18 the next day. The allowance renews around 00:00 UTC, so compare hourly rates, not levels.
+02:18 the next day. The allowance renews once a day, so compare hourly rates, not levels. The doc used to say 00:00 UTC, but 3,994 left at 02:18 on Oct 19, and the watch restarting only after 01:20 on Oct 29, point to a renewal between about 01:00 and 02:15 UTC.
 #32 adds at most 900 a day (600 until #36).
 
 ## How to read the numbers
@@ -88,7 +89,7 @@ Conclusion before #32: the weighted sweep works and curation is no longer the bo
 |---|---|---|
 | `SWAP_MARGIN`, `SWAPS_PER_HOUR`, `MIN_DWELL_S` | `core/curate.ts` | 5, 12, 45 min |
 | `SWEEP_MS`, `MAX_TILE_GAP_MS`, `MIN/MAX_TILE_WEIGHT`, `TILE_RATE_ALPHA` | `core/sched.ts` | 75 min, 225 min, 0.4/2.5, 0.3 |
-| `WATCH_BOXES_PER_DAY`, `WATCH_MIN_CREDITS`, `WATCH_PER_PLAN` | `core/sched.ts` | 900, 1,200, 8 |
+| `WATCH_BOXES_PER_DAY`, `WATCH_MIN_CREDITS`, `WATCH_PER_PLAN` | `core/sched.ts` | 900, 600, 8 |
 | `WATCH_FROM_S`, `WATCH_UNTIL_S`, `WATCH_HALF_DEG`, `MAX_SCHEDULE`, `SCHEDULE_TTL_S` | `core/engine.ts` | 15 min, 35 min, 2.4°, 1,500, 3 days |
 | `KNOWN_TTL_S`, `MAX_DEAD_RECKON_S`, `SEEN_FAR_KM` | `core/engine.ts` | 100 min, 18 h, 1,000 km |
 

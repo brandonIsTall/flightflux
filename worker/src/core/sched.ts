@@ -76,7 +76,7 @@ export interface WatchState {
  * at most this many 1-credit boxes a UTC day, and none while credits are below WATCH_MIN_CREDITS.
  */
 export const WATCH_BOXES_PER_DAY = 900;
-export const WATCH_MIN_CREDITS = 1200;
+export const WATCH_MIN_CREDITS = 600;
 /** Watch boxes planned per alarm; the poller runs every 5 min. */
 export const WATCH_PER_PLAN = 8;
 /** Planned watch boxes older than this are dropped: their flights' window has moved on. */
