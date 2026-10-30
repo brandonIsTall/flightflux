@@ -86,6 +86,19 @@ Conclusion before #32: the weighted sweep works and curation is no longer the bo
 - **If watch boxes go out but find little:** take-off times may be off. They are estimated from distance flown, with a median error of about 6 min. Or the window (15–35 min) may be wrong for big hubs. Check a few watched callsigns against the logs.
 - **If credits run hot:** lower `WATCH_BOXES_PER_DAY` or `WATCH_PER_PLAN` in `sched.ts`.
 
+## Log volume and Observability pricing (from Dec 1, 2026)
+
+From Dec 1, 2026, Cloudflare Observability charges by GB ingested and stored instead of by event. Free: 0.5 GB ingested a day, 7-day retention, and ingestion pauses at the cap until it resets. Paid: 50 GB ingested and 10 GB-month stored per billing cycle, then $0.25/GB and $0.10/GB-month. Workers Logs, Workers Traces, R2 access logs, AI Gateway logs and the other datasets share one allowance.
+
+**Our volume (Oct 24–29):** 7,500–8,820 log events a day from `flightflux-api` (Oct 28 was the peak). The events view can't parse Durable Object events, so bytes are estimated: the largest line (`step: "enrich"`) has a 332-byte `entry`, so at 2–5 KB an event including Cloudflare's metadata that is **about 18–45 MB a day**, 4–9% of the Free cap and about 1–3% of the Paid monthly allowance. No charge on either plan.
+
+**What it touches:** only the logs read by hand in the dashboard (the calculations view above). The Worker never reads its own logs: no tail consumers, Logpush, traces or other datasets are configured, and `console.log` keeps working when ingestion pauses. Polling, ingest, enrichment, curation, the departure watch, `/api/*` and `meta.entry` don't depend on Observability.
+
+**Keep it that way:**
+- Log summaries, not whole objects. Logging a snapshot or `body.states` on every alarm or ingest could reach the Free cap, and logs would go dark until the reset.
+- Check usage before turning on Workers Traces or another dataset, since they share the allowance.
+- If volume ever nears the cap, set `observability.head_sampling_rate` in `worker/wrangler.jsonc`.
+
 ## Tunables
 
 | Constant | File | Value |
