@@ -1,6 +1,7 @@
 // Worker entry: forwards /api/* to the single SkyState Durable Object and keeps its loop running.
 
 import { normalizeQuery } from "./core/engine";
+import { callObject } from "./do-call";
 import { SkyState, type Env } from "./sky-state";
 
 export { SkyState };
@@ -20,6 +21,13 @@ const isPollerPath = (p: string) => p === "/api/_plan" || p === "/api/_ingest";
  */
 const sky = (env: Env) => env.SKY.get(env.SKY.idFromName("global-weur"), { locationHint: "weur" });
 
+/** Forward to the object, retrying once on a fresh stub if it was reset (do-call.ts). */
+async function toSky(env: Env, req: Request): Promise<Response> {
+  // A POST body is a stream that the first try consumes: buffer it so a retry can resend it.
+  const body = req.method === "POST" ? await req.arrayBuffer() : null;
+  return callObject(() => sky(env).fetch(body === null ? req : new Request(req, { body })));
+}
+
 function json(body: unknown, status: number): Response {
   return new Response(JSON.stringify(body), { status, headers: { ...CORS, "Content-Type": "application/json; charset=utf-8" } });
 }
@@ -31,7 +39,7 @@ export default {
     if (!url.pathname.startsWith("/api/") || (req.method !== "GET" && !(req.method === "POST" && isPollerPath(url.pathname)))) {
       return new Response("Not found", { status: 404 });
     }
-    if (isPollerPath(url.pathname)) return sky(env).fetch(req);
+    if (isPollerPath(url.pathname)) return toSky(env, req);
 
     // Search: reject what can't be a flight number before waking the object, and limit each
     // visitor (10 a minute per data centre; see wrangler.jsonc). The object enforces a daily cap.
@@ -51,7 +59,7 @@ export default {
       if (hit) return hit;
     }
 
-    const upstream = await sky(env).fetch(req);
+    const upstream = await toSky(env, req);
     const res = new Response(upstream.body, upstream);
     for (const [k, v] of Object.entries(CORS)) res.headers.set(k, v);
     if (cacheable && res.ok) ctx.waitUntil(cache.put(req, res.clone()));
