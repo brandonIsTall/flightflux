@@ -13,6 +13,7 @@ cannot reach OpenSky (`docs/PLAN.md` §1). Design: `docs/PLAN.md` §1-§4.
 | `GET /api/track/:id` | `Track`: the real positions recorded for a flight on the leaderboard or the globe, oldest first, for replay (`src/core/fixlog.ts`); for a landed leaderboard flight also its en-route temperatures (`profile`, `src/core/enroute.ts`): 17 points along the route, the ground temperature below the plane as it passed, fetched from Open-Meteo once per flight (at most 100 flights a day) and kept on its board record. Edge-cached 5 min while in the air or until the profile is known, a day after. |
 | `GET /api/flight/:id` | `FlightDetail`: one flight plus aircraft type, registration and photo. `:id` is a flight id or icao24. |
 | `GET /api/search?q=BA117` | `Flight` for any airborne flight by flight number or callsign. Malformed queries get 400 without waking the object; 10 searches a minute per visitor IP (Workers rate-limit binding); 1,000 a day in total (tallied in the object). |
+| `GET /api/meta` | Poller health for an uptime monitor: `{ poller: { lastPlanAt, ageMin, stale } }`. 503 once no poller has asked for a plan in 20 min (`src/core/wake.ts` `pollerHealth`), else 200. Never cached; reads no rows on a warm object. |
 | `GET /api/_plan` | Poller only (bearer `INGEST_SECRET`): the tracked icao24s if due, and the region boxes due now. Marks them issued. `?restart` begins a fresh sweep at first-sweep pace. |
 | `POST /api/_ingest` | Poller only: one OpenSky response, pre-filtered compact rows (`src/core/ingest.ts`). |
 

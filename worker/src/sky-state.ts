@@ -20,7 +20,7 @@ import { Leaderboard } from "./core/leaders";
 import { isIngestBody, RESTING, type PlanResponse } from "./core/ingest";
 import { OpenSkyClient } from "./core/opensky";
 import { aheadOfWritePace, initialSched, overBudget, planNext, PRUNE_EVERY_MS, queueWatch, recordTileYield, watchOf, recordUsage, replaceTile, sweepSpread, takeEnroute, takeSearch, takeWatch, watchAllowance, type Sched } from "./core/sched";
-import { AFTER_INGEST_MS, dispatchDue, HEARTBEAT_MS, nextAlarmDelay, STUCK_MS, untilDispatch } from "./core/wake";
+import { AFTER_INGEST_MS, dispatchDue, HEARTBEAT_MS, nextAlarmDelay, pollerHealth, STUCK_MS, untilDispatch } from "./core/wake";
 import { dispatchPoll } from "./dispatch";
 import { SqlStore } from "./sql-store";
 
@@ -234,6 +234,13 @@ export class SkyState extends DurableObject<Env> {
         }),
       );
       return json({ ok: true, known: this.engine.knownCount(), tiles: this.sched.tiles.length });
+    }
+
+    // Health for an uptime monitor: 503 once no poller has asked for a plan in 20 min. Reads no
+    // rows beyond the cold start (the scheduler is already in memory); never cached.
+    if (path === "/api/meta") {
+      const poller = pollerHealth(Date.now(), this.sched.lastPlanAt ?? 0);
+      return json({ poller }, poller.stale ? 503 : 200, { "Cache-Control": "no-store" });
     }
 
     if (path === "/api/snapshot") {
