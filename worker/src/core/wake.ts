@@ -42,3 +42,25 @@ export function untilDispatch(now: number, lastDispatchAt: number, lastPlanAt: n
 
 /** An alarm this far overdue never fired (e.g. it was dropped while storage was blocked). */
 export const STUCK_MS = 2 * 60_000;
+
+/**
+ * No poller has asked for a plan in this long: positions are going stale. Above the ~18 min a
+ * GitHub outage cost on 2026-11-09 (3 runs where GitHub created no job), so one short hiccup stays
+ * quiet, and at the point where the object's own fallback poll would kick in.
+ */
+export const POLLER_STALE_MS = 20 * 60_000;
+
+export interface PollerHealth {
+  /** When a poller last asked for a plan (ms since epoch), or null if none ever has. */
+  lastPlanAt: number | null;
+  /** Whole minutes since then, or null if never. */
+  ageMin: number | null;
+  stale: boolean;
+}
+
+/** What /api/meta reports about the poller; `stale` drives its 503 for uptime monitors. */
+export function pollerHealth(now: number, lastPlanAt: number): PollerHealth {
+  if (!lastPlanAt) return { lastPlanAt: null, ageMin: null, stale: true };
+  const age = Math.max(0, now - lastPlanAt);
+  return { lastPlanAt, ageMin: Math.floor(age / 60_000), stale: age > POLLER_STALE_MS };
+}
